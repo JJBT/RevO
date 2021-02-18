@@ -34,7 +34,3 @@ def show_image_by_id(image_id, coco, show_ann=False, path=None):
         coco.showAnns(anns)
 
     plt.show()
-
-
-
-
