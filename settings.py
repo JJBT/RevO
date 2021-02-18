@@ -1,4 +1,8 @@
 import os
+from dotenv import load_dotenv, find_dotenv
+
+dotenv_path = os.path.join(find_dotenv())
+load_dotenv(dotenv_path)
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 if os.getenv('coco_path') is None:
