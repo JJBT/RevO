@@ -3,6 +3,7 @@ import os
 import pandas as pd
 from collections import defaultdict
 from tqdm import tqdm
+import settings
 
 
 def get_scale(ann):
@@ -28,11 +29,7 @@ def get_kps_set2idx(anns):
     return {kps_set: i for i, kps_set in enumerate(list(kps_sets))}
 
 
-data_path = os.getenv('coco_path')
-dataDir = 'annotations'
-
-annFile = os.path.join(data_path, dataDir, 'person_keypoints_train2017.json')
-coco = COCO(annFile)
+coco = COCO(settings.COCO_KPS_TRAIN_PATH)
 anns = coco.loadAnns(coco.getAnnIds())
 cats = coco.loadCats(coco.getCatIds())[0]
 
@@ -78,4 +75,4 @@ for i, ann in tqdm(enumerate(anns)):
         anns_info['kps_set_idx'].append(-1)
 
 anns_info = pd.DataFrame(anns_info)
-anns_info.to_csv('data/anns_info.csv')
+anns_info.to_csv(os.path.join(settings.BASE_DIR, 'data/anns_info.csv'))
