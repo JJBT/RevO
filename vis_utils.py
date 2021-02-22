@@ -1,5 +1,6 @@
 import cv2
 import matplotlib.pyplot as plt
+import matplotlib.patches as patches
 import os
 import settings
 
@@ -32,5 +33,21 @@ def show_image_by_id(image_id, coco, show_ann=False, path=None):
         anns = coco.loadAnns(ann_ids)
         plt.gca()
         coco.showAnns(anns)
+
+    plt.show()
+
+
+def vis_bboxes(img, bboxes):
+    if not isinstance(bboxes[0], list) and not isinstance(bboxes[0], tuple):
+        bboxes = [bboxes]
+
+    fig, ax = plt.subplots()
+
+    ax.imshow(img)
+
+    for bbox in bboxes:
+        x, y, w, h = bbox  # [x_l, y_t, w, h] -> [x_l, y_b, w, h] (matplotlib считает началом координат левый нижний угол)
+        rect = patches.Rectangle((x, y), w, h, linewidth=1, edgecolor='r', facecolor='none')
+        ax.add_patch(rect)
 
     plt.show()

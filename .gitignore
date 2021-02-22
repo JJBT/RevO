@@ -134,3 +134,4 @@ dmypy.json
 # Custom
 .idea/
 .env
+experiments.py
