@@ -39,9 +39,9 @@ class NarrowSelfAttention(nn.Module):
         # causal self-attention; Self-attend: (B, nh, T, hs) x (B, nh, hs, T) -> (B, nh, T, T)
         att = (q @ k.transpose(-2, -1)) * (1.0 / math.sqrt(k.size(-1)))
         mask = mask.unsqueeze(1)  # (B, T, T) -> (B, 1, T, T)
-        att = att.masked_fill(mask == 0, float('-inf'))
+        att = att.masked_fill(mask == 0, float('-inf')).clone()
         att = F.softmax(att, dim=-1)
-        att[att != att] = 0.
+        att = torch.where(torch.isnan(att), torch.tensor(0.), att)
         att = self.attn_drop(att)
         y = att @ v  # (B, nh, T, T) x (B, nh, T, hs) -> (B, nh, T, hs)
         y = y.transpose(1, 2).contiguous().view(B, T, C)
