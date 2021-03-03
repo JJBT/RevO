@@ -1,6 +1,7 @@
 import torch
 from torch import nn
 from .backbone import resnet_backbone
+from .transformer import SimpleTransformer
 
 SUPPORT_SHAPE = (320, 320)
 
@@ -19,10 +20,10 @@ class PrikolNet(nn.Module):
                                         self.backbone_returned_layers)
 
         self.center_pool = CenterPool(original_shape=SUPPORT_SHAPE)
+        self.transformer = SimpleTransformer()
 
     def forward(self, sample):
         q_img = sample['q_img']
-        q_target = sample['q_target']
         s_imgs = sample['s_imgs']
         s_targets = sample['s_targets']
 
@@ -37,10 +38,26 @@ class PrikolNet(nn.Module):
         q_feature_vectors = q_feature_map.contiguous().permute(0, 2, 3, 1).view(-1, W_q_fm * H_q_fm, C_q_fm)
         s_feature_vectors_listed = self.center_pool(s_feature_maps, s_targets)
 
-        seq = recollate_fn(q_feature_vectors, s_feature_vectors_listed)
-        return seq
+        seq, mask = self._collate_fn(q_feature_vectors, s_feature_vectors_listed)
+        seq_out = self.transformer({'x': seq, 'mask': mask})
+        preds = seq_out[:, -(W_q_fm * H_q_fm):]
 
+        return preds
 
+    def _collate_fn(self, q_vectors, s_vectors_listed):
+        batch_size, q_seq_len, embd_dim = q_vectors.shape
+        max_s_seq_len = max(map(len, s_vectors_listed))
+
+        batch = torch.zeros(batch_size, max_s_seq_len + q_seq_len, embd_dim)
+        mask = torch.zeros(size=(batch_size, max_s_seq_len + q_seq_len, max_s_seq_len + q_seq_len), dtype=torch.bool)
+        for i, s_vectors in enumerate(s_vectors_listed):
+            s_seq_len = len(s_vectors)
+            batch[i, :s_seq_len] = torch.stack(s_vectors)
+            mask[i, -q_seq_len:, :s_seq_len] = 1
+
+        batch[:, -q_seq_len:] = q_vectors
+
+        return batch, mask
 
 
 class CenterPool(nn.Module):
@@ -49,9 +66,9 @@ class CenterPool(nn.Module):
         self.original_shape = original_shape
 
     def forward(self, input, bboxes):
-        orig_h, orig_w = self.original_shape[-2:]
-        fm_h, fm_w = input.shape[-2:]
-        cell_w, cell_h = orig_h / fm_h, orig_w / fm_w
+        orig_w, orig_h = self.original_shape[-2:]
+        fm_w, fm_h = input.shape[-2:]
+        cell_w, cell_h = orig_w / fm_w, orig_h / fm_h
 
         batch_size = len(bboxes)
         k_shot = len(bboxes[0])
@@ -63,24 +80,9 @@ class CenterPool(nn.Module):
                 for bbox in bboxes[i][j]:
                     img_x, img_y = bbox[0] + bbox[2] // 2, bbox[1] + bbox[3] // 2
                     cell_x, cell_y = int(img_x / cell_w), int(img_y / cell_h)
-                    feature_vector = input[i * k_shot + j, :, cell_x, cell_y]
+                    feature_vector = input[i * k_shot + j, :, cell_y, cell_x]
                     feature_vectors.append(feature_vector)
 
             feature_vectors_listed.append(feature_vectors)
 
         return feature_vectors_listed
-
-
-def recollate_fn(q_vectors, s_vectors_listed):
-    batch_size, q_seq_len, embed_dim = q_vectors.shape
-    max_s_seq_len = max(map(len, s_vectors_listed))
-
-    batch = torch.zeros(batch_size, max_s_seq_len + q_seq_len, embed_dim)
-
-    for i, s_vectors in enumerate(s_vectors_listed):
-        s_seq_len = len(s_vectors)
-        batch[i, :s_seq_len] = torch.stack(s_vectors)
-
-    batch[:, -q_seq_len:] = q_vectors
-
-    return batch

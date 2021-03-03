@@ -40,7 +40,6 @@ class BBoxDataset(Dataset):
         # self.s_coco = COCO(annFileSupport)
         self.q_ids = sorted(get_coco_img_ids(self.q_coco))
         self.s_ids = sorted(get_coco_img_ids(self.s_coco))
-        print(len(self.s_ids))
 
     def __getitem__(self, idx: int):
         sample = {}
