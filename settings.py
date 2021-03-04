@@ -5,11 +5,7 @@ dotenv_path = os.path.join(find_dotenv())
 load_dotenv(dotenv_path)
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-if os.getenv('coco_path') is None:
-    # COCO_PATH = os.path.join(BASE_DIR, 'coco')
-    COCO_PATH = os.path.join('D:/datasets')
-else:
-    COCO_PATH = os.getenv('coco_path')
+COCO_PATH = os.getenv('coco_path')
 
 COCO_TRAIN_PATH = os.path.join(COCO_PATH, 'train2017')
 COCO_VAL_PATH = os.path.join(COCO_PATH, 'val2017')
