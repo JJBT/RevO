@@ -11,8 +11,6 @@ from torchvision.models import resnet18
 from metrics import Accuracy
 from callbacks import *
 
-DEFAULT_LOGGER_FORMAT = "%(asctime)s - %(message)s"
-
 
 def get_timestamp():
     return time.strftime("%Y%m%d_%H%M%S", time.localtime())
@@ -58,21 +56,3 @@ def create_callbacks(cfg, trainer):
     trainer.register_callback((10, MetricCallback))
     trainer.register_callback((10, ValidationCallback))
     trainer.register_callback((10, SaveCheckpointCallback))
-
-
-def create_logger(log_dir, log_format=DEFAULT_LOGGER_FORMAT):
-    logging.basicConfig(format=log_format, level=logging.INFO)
-    logger = logging.getLogger(__name__)
-    logger.setLevel(logging.INFO)
-    rank = dist.get_rank()
-    logger.addHandler(logging.StreamHandler())
-
-    if rank == 0:
-        log_file = os.path.join(log_dir, 'train.log')
-
-        file_handler = logging.FileHandler(log_file, mode='w')
-        file_handler.setFormatter(logging.Formatter(log_format))
-        file_handler.setLevel(logging.INFO)
-        logger.addHandler(file_handler)
-
-    return logger

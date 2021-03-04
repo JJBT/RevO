@@ -1,0 +1,22 @@
+description: ''
+
+backbone:
+  architecture: resnet
+  pretrained: True
+  trainable_layers: 3
+  returned_layers: 4
+
+optimizer:
+  type: adam
+  lr: 0.1
+  beta: 0.01
+
+dataset:
+  name: coco
+
+hydra:
+  job_logging:
+    formatters:
+      simple:
+        format: '[%(asctime)s]  %(message)s'
+        datefmt: '%Y-%m-%d %H:%M:%S'

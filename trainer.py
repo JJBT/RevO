@@ -1,12 +1,13 @@
 import signal
 import torch
-from factory import create_logger, create_loss, create_model, create_optimizer, create_val_dataloader, \
+from factory import create_loss, create_model, create_optimizer, create_val_dataloader, \
     create_train_dataloader, create_metrics, create_callbacks
 import os
 import callbacks
+import logging
 
 
-logger = create_logger(os.getcwd())
+logger = logging.getLogger(__name__)
 
 
 class State:
