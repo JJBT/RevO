@@ -3,16 +3,26 @@ description: ''
 train:
   n_steps: 1000
 
-backbone:
-  architecture: resnet
-  pretrained: True
-  trainable_layers: 3
-  returned_layers: 4
+model:
+  backbone:
+    architecture: resnet
+    pretrained: True
+    trainable_layers: 3
+    returned_layers: 4
+    stride: int
 
 optimizer:
   type: adam
   lr: 0.1
   beta: 0.01
+
+scheduler:
+  type: str
+  steps: int
+  gamma: float
+
+augmentation:
+
 
 dataset:
   name: coco

@@ -15,5 +15,3 @@ class AveragePrecision(Metric):
 
     def reset(self):
         pass
-
-

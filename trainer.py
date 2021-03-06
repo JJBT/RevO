@@ -1,10 +1,9 @@
 import signal
 import torch
-from factory import *
+from factory import create_scheduler, create_callbacks, create_metrics, create_model, create_loss, create_optimizer, \
+    create_train_dataloader, create_val_dataloader
 import os
-from callbacks.stop_criterion import StopAtStep
-from callbacks.callback import Callback
-
+from callbacks import Callback, StopAtStep
 import logging
 
 
@@ -19,12 +18,12 @@ class State:
     def get(self, attribute_name: str):
         return getattr(self, attribute_name)
 
-    def set(self, state):
-        if not isinstance(state, State):
-            raise TypeError("state argument should be of type State.")
-
-        for k, v in state.__dict__.items():
+    def load_state_dict(self, state_dict):
+        for k, v in state_dict.items():
             setattr(self, k, v)
+
+    def state_dict(self):
+        return self.__dict__
 
     def add_attribute(self, name, value):
         if not hasattr(self, name):
@@ -38,6 +37,15 @@ class State:
         self.step += 1
         if loss is not None:
             self.last_train_loss = loss
+        self.log_info()
+
+    def log_info(self):
+        msg = f'Step - {self.step} '
+        for attr in self.__dict__:
+            if attr.startswith('last_'):
+                msg += f'{attr} - {getattr(self, attr):.3f} '
+
+        logger.info(msg)
 
 
 class Trainer:
@@ -77,6 +85,9 @@ class Trainer:
         loss = self.loss(outputs, target_tensor)
         loss.backward()
         self.optimizer.step()
+        if self.scheduler is not None:
+            self.scheduler.step()
+
         self.state.update(loss.detach())
 
     def run_train(self, n_steps=None):
@@ -114,7 +125,7 @@ class Trainer:
                 outputs = self.model(input_tensor.float())
 
                 for metric in metrics:
-                    metric.step(y=outputs, y_pred=target_tensor)
+                    metric.step(y=torch.argmax(outputs, dim=1), y_pred=target_tensor)
 
         metrics_computed = {metric.name: metric.compute() for metric in metrics}
         self.model.train(previous_training_flag)

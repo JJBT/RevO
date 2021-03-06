@@ -1,16 +1,16 @@
 import torch
 import hydra
-import omegaconf
 from omegaconf import DictConfig
 import os
-import factory
 import logging
-from trainer import Trainer
+
 
 logger = logging.getLogger(__name__)
+logger.setLevel(level=logging.DEBUG)
 
 
 def run_train(cfg):
+    from trainer import Trainer
     trainer = Trainer(cfg)
     trainer.run_train()
 

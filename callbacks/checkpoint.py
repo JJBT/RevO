@@ -1,14 +1,17 @@
 import os
 from callbacks.callback import Callback
 import torch
-from factory import get_state_dict, load_state_dict
+from utils import get_state_dict, load_state_dict
 from settings import BASE_DIR
+import logging
 
 
 cwd = os.getcwd()
 savedir = os.path.join(cwd, 'checkpoints')
 ckpt_filename = 'checkpoint-{}.pt'
 best_ckpt_filename = 'best-checkpoint-{}.pt'
+
+logger = logging.getLogger(__name__)
 
 
 class SaveCheckpointCallback(Callback):
@@ -34,10 +37,10 @@ class SaveCheckpointCallback(Callback):
             'model_state_dict': get_state_dict(trainer.model),
             'optimizer_state_dict': get_state_dict(trainer.optimizer),
             'scheduler_state_dict': get_state_dict(trainer.scheduler),
-            'trainer_state': trainer.state,
+            'trainer_state': get_state_dict(trainer.state),
             'model_class': str(trainer.model.__class__),
             'optimizer_class': str(trainer.optimizer.__class__),
-            'scheduler_class': str(trainer.optimier.__class__)
+            'scheduler_class': str(trainer.scheduler.__class__)
         }, os.path.join(savedir, filename))
 
 
@@ -59,6 +62,7 @@ class LoadCheckpointCallback(Callback):
 
     def _load_checkpoint(self, trainer):
         checkpoint = torch.load(self.filename_to_load)
+
         # checks
         if checkpoint['model_class'] != str(trainer.model.__class__):
             raise TypeError(f'Models do not match: {checkpoint["model_class"]} and {trainer.model.__class__}')
@@ -69,10 +73,10 @@ class LoadCheckpointCallback(Callback):
             raise TypeError(
                 f'Schedulers do not match: {checkpoint["scheduler_class"]} and {trainer.scheduler.__class__}')
 
-        trainer.model = load_state_dict(trainer.model, checkpoint['model_state_dict'])
-        trainer.optimizer = load_state_dict(trainer.optimizer, checkpoint['optimizer_state_dict'])
-        trainer.scheduler = load_state_dict(trainer.optimizer, checkpoint['scheduler_state_dict'])
-        trainer.state.set(checkpoint['trainer_state'])
+        load_state_dict(trainer.model, checkpoint['model_state_dict'])
+        trainer.optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
+        trainer.scheduler.load_state_dict(checkpoint['scheduler_state_dict'])
+        trainer.state.load_state_dict(checkpoint['trainer_state'])
 
     def _search_checkpoint(self):
         filelist = os.listdir(self.directory)
