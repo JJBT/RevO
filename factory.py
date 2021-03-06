@@ -9,7 +9,24 @@ from torch.utils.data import DataLoader
 import numpy as np
 from torchvision.models import resnet18
 from metrics import Accuracy
-from callbacks import *
+
+
+def unwrap_model(model):
+    return model.module if hasattr(model, 'module') else model
+
+
+def get_state_dict(model):
+    if model is None:
+        return None
+    else:
+        return unwrap_model(model).state_dict()
+
+
+def load_state_dict(model, state_dict):
+    if model is None:
+        return None
+    else:
+        return model.load_state_dict(state_dict)
 
 
 def get_timestamp():
@@ -24,6 +41,11 @@ def create_model(cfg: dict):
 def create_optimizer(cfg: dict, model: torch.nn.Module):
     # TODO
     return torch.optim.Adam(params=filter(lambda x: x.requires_grad, model.parameters()))
+
+
+def create_scheduler(cfg: dict, optimizer: torch.optim.Optimizer):
+    # TODO
+    return torch.optim.lr_scheduler.StepLR(optimizer, step_size=100, gamma=0.9)
 
 
 def create_loss(cfg: dict):

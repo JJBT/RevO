@@ -1,9 +1,10 @@
 import signal
 import torch
-from factory import create_loss, create_model, create_optimizer, create_val_dataloader, \
-    create_train_dataloader, create_metrics, create_callbacks
+from factory import *
 import os
-import callbacks
+from callbacks.stop_criterion import StopAtStep
+from callbacks.callback import Callback
+
 import logging
 
 
@@ -15,12 +16,19 @@ class State:
         self.step = 0
         self.last_train_loss = None
 
+    def get(self, attribute_name: str):
+        return getattr(self, attribute_name)
+
     def set(self, state):
         if not isinstance(state, State):
             raise TypeError("state argument should be of type State.")
 
         for k, v in state.__dict__.items():
             setattr(self, k, v)
+
+    def add_attribute(self, name, value):
+        if not hasattr(self, name):
+            setattr(self, name, value)
 
     def reset(self):
         self.step = 0
@@ -34,7 +42,7 @@ class State:
 
 class Trainer:
     def __init__(self, cfg):
-        signal.signal(signal.SIGINT, self.__soft_exit)
+        signal.signal(signal.SIGINT, self._soft_exit)
 
         self.train_dataloader = create_train_dataloader(cfg)
         self.train_iter = iter(self.train_dataloader)
@@ -43,11 +51,13 @@ class Trainer:
         self.loss = create_loss(cfg)
         self.model = create_model(cfg)
         self.optimizer = create_optimizer(cfg, self.model)
-        self.n_steps = 5
-        self.stop_condition = callbacks.StopAtStep(last_step=self.n_steps)
-        self.metrics = create_metrics(cfg)
+        self.scheduler = create_scheduler(cfg, self.optimizer)
+        self.n_steps = cfg.train.n_steps
+        self.stop_condition = StopAtStep(last_step=self.n_steps)
+        self.metrics = create_metrics(cfg)  # list
         self.callbacks = []
         create_callbacks(cfg, self)
+        self.cfg = cfg
 
     def get_train_batch(self):
         try:
@@ -71,15 +81,19 @@ class Trainer:
 
     def run_train(self, n_steps=None):
         if n_steps is not None:
-            self.stop_condition = callbacks.StopAtStep(last_step=n_steps)
+            self.stop_condition = StopAtStep(last_step=n_steps)
 
         self.state.reset()
         self.model.train()
 
+        self._before_run_callbacks()
+
         while not self.stop_condition(self.state):
             batch = self.get_train_batch()
             self.run_step(batch)
-            self.__run_callbacks()
+            self._run_callbacks()
+
+        self._after_run_callbacks()
 
     def evaluate(self, dataloader=None, metrics=None):
         if dataloader is None:
@@ -90,7 +104,8 @@ class Trainer:
         previous_training_flag = self.model.training
 
         self.model.eval()
-        self.metrics.reset()
+        for metric in metrics:
+            metric.reset()
 
         with torch.no_grad():
             for batch in dataloader:
@@ -98,22 +113,32 @@ class Trainer:
                 target_tensor = batch['target']
                 outputs = self.model(input_tensor.float())
 
-                metrics.step(y=outputs, y_pred=target_tensor)
+                for metric in metrics:
+                    metric.step(y=outputs, y_pred=target_tensor)
 
+        metrics_computed = {metric.name: metric.compute() for metric in metrics}
         self.model.train(previous_training_flag)
-        return metrics.compute()
 
-    def register_callback(self, callback: callbacks.Callback, frequency=1):
-        if frequency < 0:
-            raise ValueError("frequency argument should be positive.")
+        return metrics_computed
+
+    def register_callback(self, callback: Callback):
         callback.set_trainer(self)
-        self.callbacks.append((frequency, callback))
+        self.callbacks.append(callback)
 
-    def __soft_exit(self, sig, frame):
-        logger.info('Currently running steps will be finished')
+    def _soft_exit(self, sig, frame):
+        logger.info('Soft exit... Currently running steps will be finished')
         self.stop_condition = lambda state: True
 
-    def __run_callbacks(self):
-        for frequency, callback in self.callbacks:
-            if frequency != 0 and self.state.step % frequency == 0:
+    def _before_run_callbacks(self):
+        for callback in self.callbacks:
+            callback.before_run(self)
+
+    def _after_run_callbacks(self):
+        for callback in self.callbacks:
+            callback.after_run(self)
+
+    def _run_callbacks(self):
+        for callback in self.callbacks:
+            freq = callback.frequency
+            if freq != 0 and self.state.step % freq == 0:
                 callback(self)

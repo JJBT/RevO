@@ -1,5 +1,8 @@
 description: ''
 
+train:
+  n_steps: 1000
+
 backbone:
   architecture: resnet
   pretrained: True
