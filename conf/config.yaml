@@ -1,28 +1,49 @@
 description: ''
 
 train:
-  n_steps: 1000
+  n_steps: 1000000
+  bs: 4
+  k_shot: 3
+
+  hooks:
+    validation:
+      frequency: 50000
 
 model:
   backbone:
-    architecture: resnet
+    architecture: resnet50
     pretrained: True
     trainable_layers: 3
     returned_layers: 4
-    stride: int
+    stride: 32
+
+  transformer:
+    embd_dim: 2048
+    n_head: 4
+    attn_pdrop: 0
+    resid_pdrop: 0
+    embd_pdrop: 0
+    n_layer: 1
+    out_dim: 1
 
 optimizer:
   type: adam
   lr: 0.1
-  beta: 0.01
+
+loss:
+  type: bcewithlogits
 
 scheduler:
-  type: str
-  steps: int
-  gamma: float
+  type: null
+  steps: null
+  gamma: null
 
-augmentation:
-
+data:
+  bbox_format: coco
+  query:
+    input_size: 320
+  support:
+    input_size: 320
 
 dataset:
   name: coco

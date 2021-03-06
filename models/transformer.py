@@ -52,16 +52,20 @@ class NarrowSelfAttention(nn.Module):
 
 
 class Block(nn.Module):
-    def __init__(self):
+    def __init__(self, embd_dim, n_head, resid_pdrop):
+        self.embd_dim = embd_dim
+        self.n_head = n_head
+        self.resid_pdrop = resid_pdrop
+
         super().__init__()
-        self.ln1 = nn.LayerNorm(EMBD_DIM)
-        self.ln2 = nn.LayerNorm(EMBD_DIM)
-        self.attn = NarrowSelfAttention(EMBD_DIM, N_HEAD)
+        self.ln1 = nn.LayerNorm(self.embd_dim)
+        self.ln2 = nn.LayerNorm(self.embd_dim)
+        self.attn = NarrowSelfAttention(self.embd_dim, self.n_head)
         self.mlp = nn.Sequential(
-            nn.Linear(EMBD_DIM, 4 * EMBD_DIM),
+            nn.Linear(self.embd_dim, 4 * self.embd_dim),
             nn.GELU(),
-            nn.Linear(4 * EMBD_DIM, EMBD_DIM),
-            nn.Dropout(resid_pdrop),
+            nn.Linear(4 * self.embd_dim, self.embd_dim),
+            nn.Dropout(self.resid_pdrop),
         )
 
     def forward(self, input):
@@ -73,14 +77,21 @@ class Block(nn.Module):
 
 
 class SimpleTransformer(nn.Module):
-    def __init__(self):
+    def __init__(self, embd_dim, n_head, attn_pdrop, resid_pdrop, embd_pdrop, n_layer, out_dim):
         super().__init__()
+        self.embd_dim = embd_dim
+        self.n_head = n_head
+        self.attn_pdrop = attn_pdrop
+        self.resid_pdrop = resid_pdrop
+        self.embd_pdrop = embd_pdrop
+        self.n_layer = n_layer
+        self.out_dim = out_dim
 
-        self.drop = nn.Dropout(EMBD_PDROP)
-        self.blocks = nn.Sequential(*[Block() for _ in range(N_LAYER)])
+        self.drop = nn.Dropout(self.embd_dim)
+        self.blocks = nn.Sequential(*[Block(self.embd_dim, self.n_head, self.resid_pdrop) for _ in range(self.n_layer)])
 
-        self.ln_f = nn.LayerNorm(EMBD_DIM)
-        self.head = nn.Linear(EMBD_DIM, OUT_DIM, bias=False)
+        self.ln_f = nn.LayerNorm(self.embd_dim)
+        self.head = nn.Linear(self.embd_dim, self.out_dim, bias=False)
 
     def forward(self, input):
         x, mask = input['x'], input['mask']

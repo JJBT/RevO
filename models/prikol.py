@@ -3,24 +3,33 @@ from torch import nn
 from .backbone import resnet_backbone
 from .transformer import SimpleTransformer
 
-SUPPORT_SHAPE = (320, 320)
-
 
 class PrikolNet(nn.Module):
-    def __init__(self, backbone_name, backbone_pratrained, backbone_trainable_layers, backbone_returned_layers):
+    def __init__(self, backbone_name, backbone_pratrained,
+                 backbone_trainable_layers, backbone_returned_layers,
+                 pool_shape, embd_dim, n_head, attn_pdrop, resid_pdrop,
+                 embd_pdrop, n_layer, out_dim):
         super(PrikolNet, self).__init__()
         self.backbone_name = backbone_name
         self.backbone_pretrained = backbone_pratrained
         self.backbone_trainable_layers = backbone_trainable_layers
         self.backbone_returned_layers = backbone_returned_layers
+        self.embd_dim = embd_dim
+        self.n_head = n_head
+        self.attn_pdrop = attn_pdrop
+        self.resid_pdrop = resid_pdrop
+        self.embd_pdrop = embd_pdrop
+        self.n_layer = n_layer
+        self.out_dim = out_dim
 
         self.backbone = resnet_backbone(self.backbone_name,
                                         self.backbone_pretrained,
                                         self.backbone_trainable_layers,
                                         self.backbone_returned_layers)
 
-        self.center_pool = CenterPool(original_shape=SUPPORT_SHAPE)
-        self.transformer = SimpleTransformer()
+        self.center_pool = CenterPool(original_shape=pool_shape)
+        self.transformer = SimpleTransformer(self.embd_dim, self.n_head, self.attn_pdrop, self.resid_pdrop,
+                                             self.embd_pdrop, self.n_layer, self.out_dim)
 
     def forward(self, sample):
         q_img = sample['q_img']

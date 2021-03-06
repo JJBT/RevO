@@ -6,8 +6,6 @@ import torch
 from torch.utils.data import Dataset, DataLoader
 from torch.utils.data._utils.collate import default_collate
 
-K_SHOT = 3
-
 
 def get_coco_img_ids(coco):
     img_ids = set()
@@ -24,11 +22,12 @@ class BBoxDataset(Dataset):
             s_root: str,
             annFileQuery: str,
             annFileSupport: str,
+            k_shot: int,
             q_transform=None,
             s_transform=None
     ):
         super(Dataset, self).__init__()
-
+        self.k_shot = k_shot
         self.q_root = q_root
         self.s_root = s_root
         self.q_transform = q_transform
@@ -56,7 +55,7 @@ class BBoxDataset(Dataset):
 
         s_coco = self.s_coco
         s_img_ids = [self.s_ids[idx]
-                     for idx in np.random.randint(len(self.s_ids), size=(K_SHOT,))]
+                     for idx in np.random.randint(len(self.s_ids), size=(self.k_shot,))]
         s_anns = []
         s_targets = []
         s_targets_cats = []

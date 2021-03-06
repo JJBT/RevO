@@ -1,12 +1,10 @@
-import torch
 import hydra
-from omegaconf import DictConfig
+from omegaconf import DictConfig, OmegaConf
 import os
 import logging
 
 
 logger = logging.getLogger(__name__)
-logger.setLevel(level=logging.DEBUG)
 
 
 def run_train(cfg):
@@ -17,6 +15,7 @@ def run_train(cfg):
 
 @hydra.main(config_path='conf', config_name='config')
 def run(cfg: DictConfig):
+    cfg = OmegaConf.create(cfg)
     run_train(cfg)
 
 
