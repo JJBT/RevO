@@ -34,18 +34,18 @@ class PrikolNet(nn.Module):
     def forward(self, sample):
         q_img = sample['q_img']
         s_imgs = sample['s_imgs']
-        s_targets = sample['s_targets']
+        s_bboxes = sample['s_bboxes']
 
         B, K, C_s, W_s, H_s = s_imgs.shape
-        s_imgs = s_imgs.contiguous().view((B * K, C_s, W_s, H_s))
+        s_imgs = s_imgs.view((B * K, C_s, W_s, H_s))
 
         layer = 'layer' + str(self.backbone_returned_layers)
         q_feature_map = self.backbone(q_img)[layer]
         s_feature_maps = self.backbone(s_imgs)[layer]
 
         _, C_q_fm, W_q_fm, H_q_fm = q_feature_map.shape
-        q_feature_vectors = q_feature_map.contiguous().permute(0, 2, 3, 1).view(-1, W_q_fm * H_q_fm, C_q_fm)
-        s_feature_vectors_listed = self.center_pool(s_feature_maps, s_targets)
+        q_feature_vectors = q_feature_map.permute(0, 2, 3, 1).contiguous().view(-1, W_q_fm * H_q_fm, C_q_fm)
+        s_feature_vectors_listed = self.center_pool(s_feature_maps, s_bboxes)
 
         seq, mask = self._collate_fn(q_feature_vectors, s_feature_vectors_listed)
         seq_out = self.transformer({'x': seq, 'mask': mask})

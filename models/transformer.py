@@ -32,12 +32,12 @@ class NarrowSelfAttention(nn.Module):
         x, mask = input['x'], input['mask']
         B, T, C = x.size()
 
-        k = self.key(x).view(B, T, self.n_head, C // self.n_head).transpose(1, 2)  # (B, nh, T, hs)
-        q = self.query(x).view(B, T, self.n_head, C // self.n_head).transpose(1, 2)  # (B, nh, T, hs)
-        v = self.value(x).view(B, T, self.n_head, C // self.n_head).transpose(1, 2)  # (B, nh, T, hs)
+        k = self.key(x).view(B, T, self.n_head, C // self.n_head).transpose(1, 2).contiguous()  # (B, nh, T, hs)
+        q = self.query(x).view(B, T, self.n_head, C // self.n_head).transpose(1, 2).contiguous()  # (B, nh, T, hs)
+        v = self.value(x).view(B, T, self.n_head, C // self.n_head).transpose(1, 2).contiguous()  # (B, nh, T, hs)
 
         # causal self-attention; Self-attend: (B, nh, T, hs) x (B, nh, hs, T) -> (B, nh, T, T)
-        att = (q @ k.transpose(-2, -1)) * (1.0 / math.sqrt(k.size(-1)))
+        att = (q @ k.transpose(-2, -1)).contiguous() * (1.0 / math.sqrt(k.size(-1)))
         mask = mask.unsqueeze(1)  # (B, T, T) -> (B, 1, T, T)
         att = att.masked_fill(mask == 0, float('-inf')).clone()
         att = F.softmax(att, dim=-1)
@@ -87,7 +87,7 @@ class SimpleTransformer(nn.Module):
         self.n_layer = n_layer
         self.out_dim = out_dim
 
-        self.drop = nn.Dropout(self.embd_dim)
+        self.drop = nn.Dropout(self.embd_pdrop)
         self.blocks = nn.Sequential(*[Block(self.embd_dim, self.n_head, self.resid_pdrop) for _ in range(self.n_layer)])
 
         self.ln_f = nn.LayerNorm(self.embd_dim)
