@@ -17,21 +17,25 @@ from datasets.dataset import BBoxDataset
 
 
 def create_model(cfg):
+    device = create_device(cfg)
+    input_size = cfg.data.support.input_size
+    input_size = (input_size, input_size)
     model = PrikolNet(
         backbone_name=cfg.model.backbone.architecture,
         backbone_pratrained=cfg.model.backbone.pretrained,
         backbone_trainable_layers=cfg.model.backbone.trainable_layers,
         backbone_returned_layers=cfg.model.backbone.returned_layers,
-        pool_shape=cfg.data.support.input_size,
+        pool_shape=input_size,
         embd_dim=cfg.model.transformer.embd_dim,
         n_head=cfg.model.transformer.n_head,
         attn_pdrop=cfg.model.transformer.attn_pdrop,
         n_layer=cfg.model.transformer.n_layer,
         out_dim=cfg.model.transformer.out_dim,
         embd_pdrop=cfg.model.transformer.embd_pdrop,
-        resid_pdrop=cfg.model.transformer.resid_pdrop
+        resid_pdrop=cfg.model.transformer.resid_pdrop,
+        device=device
     )
-    return model
+    return model.to(device)
 
 
 def create_optimizer(cfg, model: torch.nn.Module):
@@ -52,11 +56,26 @@ def create_loss(cfg):
 
 
 def create_train_dataloader(cfg):
-    dataset = BB
-    return
+    batch_size = cfg.train.bs
+    params = dict()
+    params['q_root'] = cfg.data.query.root
+    params['s_root'] = cfg.data.support.root
+    params['annFileQuery'] = cfg.data.query.annotation
+    params['annFileSupport'] = cfg.data.support.annotation
+    params['k_shot'] = cfg.train.k_shot
+    input_size = cfg.data.query.input_size
+    params['q_img_size'] = (input_size, input_size)
+    params['backbone_stride'] = cfg.model.backbone.stride
+    q_transform, s_transform = create_augmentations(cfg)
+    params['q_transform'] = q_transform
+    params['s_transform'] = s_transform
+
+    dataset = BBoxDataset(**params)
+    dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=True, collate_fn=dataset.collate_fn)
+    return dataloader
 
 
-def create_val_dataloader(cfg: dict):
+def create_val_dataloader(cfg):
     # TODO
     return create_train_dataloader(cfg)
 
@@ -66,12 +85,16 @@ def create_metrics(cfg):
     return []
 
 
+def create_device(cfg):
+    return torch.device(cfg.train.device)
+
+
 def create_callbacks(cfg, trainer):
     # TODO
     # trainer.register_callback(ValidationCallback(create_metrics(cfg), frequency=2))
     # trainer.register_callback(SaveCheckpointCallback(frequency=3))
     # trainer.register_callback(SaveBestCheckpointCallback(frequency=2, state_metric_name='last_validation_accuracy'))
-    trainer.register_callback(LoadCheckpointCallback('outputs/2021-03-06/10-58-42/checkpoints/', 'checkpoint-3.pt'))
+    pass
 
 
 def create_augmentations(cfg):
@@ -79,7 +102,7 @@ def create_augmentations(cfg):
         albu.Resize(320, 320),
         albu.Normalize(),
         ToTensorV2()
-    ], bbox_params=albu.BboxParams(format='coco', label_fields=['bboxes_cats'])),
+    ], bbox_params=albu.BboxParams(format='coco', label_fields=['bboxes_cats']))
     s_transform = albu.Compose([
         albu.Resize(320, 320),
         albu.Normalize(),

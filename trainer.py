@@ -1,10 +1,11 @@
 import signal
 import torch
 from factory import create_scheduler, create_callbacks, create_metrics, create_model, create_loss, create_optimizer, \
-    create_train_dataloader, create_val_dataloader
+    create_train_dataloader, create_val_dataloader, create_device
 import os
 from callbacks import Callback, StopAtStep
 import logging
+import utils
 
 
 logger = logging.getLogger(__name__)
@@ -66,29 +67,41 @@ class Trainer:
         self.callbacks = []
         create_callbacks(cfg, self)
         self.cfg = cfg
+        self.device = create_device(cfg)
+
+        self.first_batch = next(self.train_iter)
+
+    # def get_train_batch(self):
+    #     try:
+    #         batch = next(self.train_iter)
+    #     except StopIteration:
+    #         self.train_iter = iter(self.train_dataloader)
+    #         batch = next(self.train_iter)
+    #
+    #     return batch
 
     def get_train_batch(self):
-        try:
-            batch = next(self.train_iter)
-        except StopIteration:
-            self.train_iter = iter(self.train_dataloader)
-            batch = next(self.train_iter)
-
-        return batch
+        return self.first_batch
 
     def run_step(self, batch):
         # accumulation gradient
         self.optimizer.zero_grad()
         input_tensor = batch['input']
         target_tensor = batch['target']
-        outputs = self.model(input_tensor.float())
+        target_tensor = target_tensor.to(self.device)
+
+        outputs = self.model(input_tensor)
+
         loss = self.loss(outputs, target_tensor)
         loss.backward()
         self.optimizer.step()
         if self.scheduler is not None:
             self.scheduler.step()
 
-        self.state.update(loss.detach())
+        if self.state.step % 10 == 0:
+            utils.draw(input_tensor['q_img'][0], outputs[0], target_tensor[0], self.state.step)
+
+        return loss.detach()
 
     def run_train(self, n_steps=None):
         if n_steps is not None:
@@ -101,7 +114,10 @@ class Trainer:
 
         while not self.stop_condition(self.state):
             batch = self.get_train_batch()
-            self.run_step(batch)
+            loss = self.run_step(batch)
+            # if self.state.step % 10 == 0:
+            self.state.update(loss)
+
             self._run_callbacks()
 
         self._after_run_callbacks()

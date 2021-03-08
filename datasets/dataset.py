@@ -32,14 +32,14 @@ def get_object_presence_map(bboxes, shape, stride):
 class BBoxDataset(Dataset):
     def __init__(
             self,
-            q_root: str,
-            s_root: str,
-            annFileQuery: str,
-            annFileSupport: str,
-            k_shot: int,
+            q_root,
+            s_root,
+            annFileQuery,
+            annFileSupport,
+            k_shot,
             q_img_size,
             backbone_stride,
-            q_transform = None,
+            q_transform=None,
             s_transform=None
     ):
         super(Dataset, self).__init__()
@@ -53,8 +53,8 @@ class BBoxDataset(Dataset):
 
         from pycocotools.coco import COCO
         self.q_coco = COCO(annFileQuery)
-        self.s_coco = self.q_coco
-        # self.s_coco = COCO(annFileSupport)
+        # self.s_coco = self.q_coco
+        self.s_coco = COCO(annFileSupport)
         self.q_ids = sorted(get_coco_img_ids(self.q_coco))
         self.s_ids = sorted(get_coco_img_ids(self.s_coco))
 
@@ -111,8 +111,6 @@ class BBoxDataset(Dataset):
         sample['input']['s_bboxes'] = s_bboxes
         sample['target'] = target
         return sample
-
-
 
     def __len__(self) -> int:
         return len(self.q_ids)

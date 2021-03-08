@@ -8,7 +8,7 @@ class PrikolNet(nn.Module):
     def __init__(self, backbone_name, backbone_pratrained,
                  backbone_trainable_layers, backbone_returned_layers,
                  pool_shape, embd_dim, n_head, attn_pdrop, resid_pdrop,
-                 embd_pdrop, n_layer, out_dim):
+                 embd_pdrop, n_layer, out_dim, device):
         super(PrikolNet, self).__init__()
         self.backbone_name = backbone_name
         self.backbone_pretrained = backbone_pratrained
@@ -21,6 +21,7 @@ class PrikolNet(nn.Module):
         self.embd_pdrop = embd_pdrop
         self.n_layer = n_layer
         self.out_dim = out_dim
+        self.device = device
 
         self.backbone = resnet_backbone(self.backbone_name,
                                         self.backbone_pretrained,
@@ -36,22 +37,36 @@ class PrikolNet(nn.Module):
         s_imgs = sample['s_imgs']
         s_bboxes = sample['s_bboxes']
 
+        q_img = q_img.to(self.device)
+        s_imgs = s_imgs.to(self.device)
+
         B, K, C_s, W_s, H_s = s_imgs.shape
         s_imgs = s_imgs.view((B * K, C_s, W_s, H_s))
+        # print('q_img', q_img[0][0])
+        # print('\n=============================\n')
+        # print('s_imgs', s_imgs[0][0])
+        # print('\n=============================\n')
 
         layer = 'layer' + str(self.backbone_returned_layers)
         q_feature_map = self.backbone(q_img)[layer]
         s_feature_maps = self.backbone(s_imgs)[layer]
+
+        # print('q_feture map', q_feature_map[0][0])
+        # print('\n=============================\n')
+        # print('s_feature_maps', s_feature_maps[0][0])
 
         _, C_q_fm, W_q_fm, H_q_fm = q_feature_map.shape
         q_feature_vectors = q_feature_map.permute(0, 2, 3, 1).contiguous().view(-1, W_q_fm * H_q_fm, C_q_fm)
         s_feature_vectors_listed = self.center_pool(s_feature_maps, s_bboxes)
 
         seq, mask = self._collate_fn(q_feature_vectors, s_feature_vectors_listed)
+        seq = seq.to(self.device)
+        mask = mask.to(self.device)
+
         seq_out = self.transformer({'x': seq, 'mask': mask})
         preds = seq_out[:, -(W_q_fm * H_q_fm):]
 
-        return preds
+        return preds.squeeze(-1)
 
     def _collate_fn(self, q_vectors, s_vectors_listed):
         batch_size, q_seq_len, embd_dim = q_vectors.shape
