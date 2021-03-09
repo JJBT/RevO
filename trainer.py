@@ -69,19 +69,14 @@ class Trainer:
         self.cfg = cfg
         self.device = create_device(cfg)
 
-        self.first_batch = next(self.train_iter)
-
-    # def get_train_batch(self):
-    #     try:
-    #         batch = next(self.train_iter)
-    #     except StopIteration:
-    #         self.train_iter = iter(self.train_dataloader)
-    #         batch = next(self.train_iter)
-    #
-    #     return batch
-
     def get_train_batch(self):
-        return self.first_batch
+        try:
+            batch = next(self.train_iter)
+        except StopIteration:
+            self.train_iter = iter(self.train_dataloader)
+            batch = next(self.train_iter)
+
+        return batch
 
     def run_step(self, batch):
         # accumulation gradient
@@ -98,8 +93,8 @@ class Trainer:
         if self.scheduler is not None:
             self.scheduler.step()
 
-        if self.state.step % 10 == 0:
-            utils.draw(input_tensor['q_img'][0], outputs[0], target_tensor[0], self.state.step)
+        # if self.state.step % 10 == 0:
+        #     utils.draw(input_tensor['q_img'][0], outputs[0], target_tensor[0], self.state.step)
 
         return loss.detach()
 
@@ -115,8 +110,8 @@ class Trainer:
         while not self.stop_condition(self.state):
             batch = self.get_train_batch()
             loss = self.run_step(batch)
-            # if self.state.step % 10 == 0:
-            self.state.update(loss)
+            if self.state.step % 10 == 0:
+                self.state.update(loss)
 
             self._run_callbacks()
 
