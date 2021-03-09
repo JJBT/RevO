@@ -18,6 +18,7 @@ class NarrowSelfAttention(nn.Module):
         assert embd_dim % n_head == 0
 
         self.n_head = n_head
+        self.register_buffer('zero_tensor', torch.tensor(0.), persistent=False)
 
         self.key = nn.Linear(embd_dim, embd_dim)
         self.query = nn.Linear(embd_dim, embd_dim)
@@ -41,7 +42,7 @@ class NarrowSelfAttention(nn.Module):
         mask = mask.unsqueeze(1)  # (B, T, T) -> (B, 1, T, T)
         att = att.masked_fill(mask == 0, float('-inf')).clone()
         att = F.softmax(att, dim=-1)
-        att = torch.where(torch.isnan(att), torch.tensor(0.), att)
+        att = torch.where(torch.isnan(att), self.zero_tensor, att)
         att = self.attn_drop(att)
         y = att @ v  # (B, nh, T, T) x (B, nh, T, hs) -> (B, nh, T, hs)
         y = y.transpose(1, 2).contiguous().view(B, T, C)
