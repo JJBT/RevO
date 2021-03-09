@@ -12,7 +12,9 @@ logger = logging.getLogger(__name__)
 
 
 class State:
-    def __init__(self):
+    def __init__(self, loss_update_frequency):
+        self.losses = []
+        self.loss_update_frequency = loss_update_frequency
         self.step = 0
         self.last_train_loss = None
 
@@ -38,7 +40,9 @@ class State:
         self.step += 1
         if loss is not None:
             self.last_train_loss = loss
-        self.log_info()
+
+            if self.step % self.loss_update_frequency == 0:
+                self.losses.append(self.last_train_loss)
 
     def log_info(self):
         msg = f'Step - {self.step} '
@@ -56,7 +60,7 @@ class Trainer:
         self.train_dataloader = create_train_dataloader(cfg)
         self.train_iter = iter(self.train_dataloader)
         self.val_dataloader = create_val_dataloader(cfg)
-        self.state = State()
+        self.state = State(10)
         self.loss = create_loss(cfg)
         self.model = create_model(cfg)
         self.optimizer = create_optimizer(cfg, self.model)
@@ -110,12 +114,12 @@ class Trainer:
         while not self.stop_condition(self.state):
             batch = self.get_train_batch()
             loss = self.run_step(batch)
-            if self.state.step % 10 == 0:
-                self.state.update(loss)
+            self.state.update(loss)
 
             self._run_callbacks()
 
         self._after_run_callbacks()
+        logger.info('Done')
 
     def evaluate(self, dataloader=None, metrics=None):
         if dataloader is None:

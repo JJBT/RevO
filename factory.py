@@ -9,7 +9,8 @@ from torch.utils.data import DataLoader
 import numpy as np
 from torchvision.models import resnet18
 from metrics import Accuracy
-from callbacks import LoadCheckpointCallback, SaveBestCheckpointCallback, SaveCheckpointCallback, ValidationCallback
+from callbacks import LoadCheckpointCallback, SaveBestCheckpointCallback, \
+    SaveCheckpointCallback, ValidationCallback, LogCallback
 import albumentations as albu
 from albumentations.pytorch.transforms import ToTensorV2
 from models.prikol import PrikolNet
@@ -91,6 +92,7 @@ def create_device(cfg):
 
 def create_callbacks(cfg, trainer):
     # TODO
+    trainer.register_callback(LogCallback(frequency=5))
     # trainer.register_callback(ValidationCallback(create_metrics(cfg), frequency=2))
     # trainer.register_callback(SaveCheckpointCallback(frequency=3))
     # trainer.register_callback(SaveBestCheckpointCallback(frequency=2, state_metric_name='last_validation_accuracy'))
