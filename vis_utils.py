@@ -3,6 +3,13 @@ import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 import os
 import settings
+import torch
+from torchvision.transforms import Normalize
+from PIL import ImageDraw, Image
+import numpy as np
+
+mean = [0.485, 0.456, 0.406]
+std = [0.229, 0.224, 0.225]
 
 
 def show_annotation_by_id(ann_id, coco, path=None):
@@ -51,3 +58,54 @@ def vis_bboxes(img, bboxes):
         ax.add_patch(rect)
 
     plt.show()
+
+
+def draw(img, output, target, step):
+    pred = torch.nonzero(output > 0, as_tuple=False).tolist()
+    gt = torch.nonzero(target > 0, as_tuple=False).tolist()
+    inv_normalize = Normalize(
+        mean=[-m / s for m, s in zip(mean, std)],
+        std=[1 / s for s in std]
+    )
+
+    img = inv_normalize(img)
+    img = img.permute(1, 2, 0).numpy()
+    img = (img * 255 / np.max(img)).astype('uint8')
+
+    points_true = []
+    points_pred = []
+    r = 2
+
+    for idx in pred:
+        y, x = divmod(idx[0], 10)
+        y *= 32
+        x *= 32
+        y += 16
+        x += 16
+        p = list()
+        p.append((x-r, y-r))
+        p.append((x+r, y+r))
+        points_pred.append(p)
+
+    for idx in gt:
+        y, x = divmod(idx[0], 10)
+        y *= 32
+        x *= 32
+        y += 16
+        x += 16
+        p = list()
+        p.append((x - r, y - r))
+        p.append((x + r, y + r))
+        points_true.append(p)
+
+    img_pil = Image.fromarray(img)
+    img_d = ImageDraw.Draw(img_pil)
+    print((target > 0).sum())
+    print((output > 0).sum())
+    for p in points_true:
+        img_d.ellipse(p, fill=(255, 0, 0))
+    for p in points_pred:
+        img_d.ellipse(p, fill=(0, 255, 0))
+
+    img_pil.save(os.path.join(os.getcwd(), f'output{step}.png'))
+

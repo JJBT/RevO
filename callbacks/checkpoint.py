@@ -84,8 +84,8 @@ class LoadCheckpointCallback(Callback):
 
 
 class SaveBestCheckpointCallback(SaveCheckpointCallback):
-    def __init__(self, frequency, state_metric_name: str, comparison_function=lambda metric, best: metric < best):
-        super().__init__(frequency=frequency)
+    def __init__(self, frequency, state_metric_name: str, num=0, comparison_function=lambda metric, best: metric < best):
+        super().__init__(frequency=frequency, num=num)
         self.state_metric_name = state_metric_name  # last_(train/validation)_{metric}
         self.comparison_function = comparison_function
         self.current_best = None

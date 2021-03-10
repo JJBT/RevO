@@ -3,11 +3,29 @@ import torch
 import numpy as np
 import os
 import matplotlib.pyplot as plt
-from torchvision.transforms import Normalize
-from PIL import ImageDraw, Image
+import pydoc
+from omegaconf.dictconfig import DictConfig
 
-mean = [0.485, 0.456, 0.406]
-std = [0.229, 0.224, 0.225]
+
+def object_from_dict(d, parent=None, **default_kwargs):
+    assert (isinstance(d, dict) or isinstance(d, DictConfig)) and "type" in d
+    kwargs = d.copy()
+    kwargs = dict(kwargs)
+    object_type = kwargs.pop("type")
+
+    for name, value in default_kwargs.items():
+        kwargs.setdefault(name, value)
+
+    # support nested constructions
+    for key, value in kwargs.items():
+        if isinstance(value, dict) and "type" in value:
+            value = object_from_dict(value)
+            kwargs[key] = value
+
+    if parent is not None:
+        return getattr(parent, object_type)(**kwargs)
+    else:
+        return pydoc.locate(object_type)(**kwargs)
 
 
 def unwrap_model(model):
@@ -16,56 +34,6 @@ def unwrap_model(model):
 
 def data2device(data, device):
     return data.to(device)
-
-
-def draw(img, output, target, step):
-    pred = torch.nonzero(output > 0, as_tuple=False).tolist()
-    gt = torch.nonzero(target > 0, as_tuple=False).tolist()
-    inv_normalize = Normalize(
-        mean=[-m / s for m, s in zip(mean, std)],
-        std=[1 / s for s in std]
-    )
-
-    img = inv_normalize(img)
-    img = img.permute(1, 2, 0).numpy()
-    img = (img * 255 / np.max(img)).astype('uint8')
-
-    points_true = []
-    points_pred = []
-    r = 2
-
-    for idx in pred:
-        y, x = divmod(idx[0], 10)
-        y *= 32
-        x *= 32
-        y += 16
-        x += 16
-        p = list()
-        p.append((x-r, y-r))
-        p.append((x+r, y+r))
-        points_pred.append(p)
-
-    for idx in gt:
-        y, x = divmod(idx[0], 10)
-        y *= 32
-        x *= 32
-        y += 16
-        x += 16
-        p = list()
-        p.append((x - r, y - r))
-        p.append((x + r, y + r))
-        points_true.append(p)
-
-    img_pil = Image.fromarray(img)
-    img_d = ImageDraw.Draw(img_pil)
-    print((target > 0).sum())
-    print((output > 0).sum())
-    for p in points_true:
-        img_d.ellipse(p, fill=(255, 0, 0))
-    for p in points_pred:
-        img_d.ellipse(p, fill=(0, 255, 0))
-
-    img_pil.save(os.path.join(os.getcwd(), f'output{step}.png'))
 
 
 def get_state_dict(model):

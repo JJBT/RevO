@@ -1,10 +1,9 @@
 import torch
-from torch import nn
 import logging
 import time
 import os
 import dist
-from models.backbone import resnet_backbone
+from utils import object_from_dict
 from torch.utils.data import DataLoader
 import numpy as np
 from torchvision.models import resnet18
@@ -19,7 +18,7 @@ from datasets.dataset import BBoxDataset
 
 def create_model(cfg):
     device = create_device(cfg)
-    input_size = cfg.data.support.input_size
+    input_size = cfg.data.input_size
     input_size = (input_size, input_size)
     model = PrikolNet(
         backbone_name=cfg.model.backbone.architecture,
@@ -40,34 +39,33 @@ def create_model(cfg):
 
 
 def create_optimizer(cfg, model: torch.nn.Module):
-    if cfg.optimizer.type == 'adam':
-        optimizer = torch.optim.Adam(params=filter(lambda x: x.requires_grad, model.parameters()), lr=cfg.optimizer.lr)
-        return optimizer
-    return None
+    optimizer = object_from_dict(cfg.optimizer, params=filter(lambda x: x.requires_grad, model.parameters()))
+    return optimizer
 
 
 def create_scheduler(cfg, optimizer: torch.optim.Optimizer):
-    # TODO
-    return torch.optim.lr_scheduler.StepLR(optimizer, step_size=100, gamma=0.9)
+    scheduler = object_from_dict(cfg.scheduler, optimizer=optimizer)
+    return scheduler
 
 
 def create_loss(cfg):
-    if cfg.loss.type == 'bcewithlogits':
-        return nn.BCEWithLogitsLoss()
+    loss = object_from_dict(cfg.loss)
+    return loss
 
 
 def create_train_dataloader(cfg):
     batch_size = cfg.train.bs
     params = dict()
-    params['q_root'] = cfg.data.query.root
-    params['s_root'] = cfg.data.support.root
-    params['annFileQuery'] = cfg.data.query.annotation
-    params['annFileSupport'] = cfg.data.support.annotation
+    params['q_root'] = cfg.data.train.query.root
+    params['s_root'] = cfg.data.train.support.root
+    params['annFileQuery'] = cfg.data.train.query.annotation
+    params['annFileSupport'] = cfg.data.train.support.annotation
     params['k_shot'] = cfg.train.k_shot
-    input_size = cfg.data.query.input_size
+    input_size = cfg.data.train.query.input_size
     params['q_img_size'] = (input_size, input_size)
     params['backbone_stride'] = cfg.model.backbone.stride
-    q_transform, s_transform = create_augmentations(cfg)
+    q_transform = create_augmentations(cfg.data.train.query)
+    s_transform = create_augmentations(cfg.data.train.support)
     params['q_transform'] = q_transform
     params['s_transform'] = s_transform
 
@@ -77,13 +75,34 @@ def create_train_dataloader(cfg):
 
 
 def create_val_dataloader(cfg):
-    # TODO
-    return create_train_dataloader(cfg)
+    batch_size = cfg.train.bs
+    params = dict()
+    params['q_root'] = cfg.data.validation.query.root
+    params['s_root'] = cfg.data.validation.support.root
+    params['annFileQuery'] = cfg.data.validation.query.annotation
+    params['annFileSupport'] = cfg.data.validation.support.annotation
+    params['k_shot'] = cfg.train.k_shot
+    input_size = cfg.data.validation.query.input_size
+    params['q_img_size'] = (input_size, input_size)
+    params['backbone_stride'] = cfg.model.backbone.stride
+    q_transform = create_augmentations(cfg.data.validation.query)
+    s_transform = create_augmentations(cfg.data.validation.support)
+    params['q_transform'] = q_transform
+    params['s_transform'] = s_transform
+
+    dataset = BBoxDataset(**params)
+    dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=True, collate_fn=dataset.collate_fn)
+    return dataloader
 
 
 def create_metrics(cfg):
-    # TODO
-    return [Accuracy(), TorchLoss(nn.BCEWithLogitsLoss())]
+    metrics = []
+    for m in cfg.metrics:
+        m_dict = dict()
+        m_dict['type'] = m
+        metrics.append(object_from_dict(m_dict))
+
+    return metrics
 
 
 def create_device(cfg):
@@ -91,23 +110,36 @@ def create_device(cfg):
 
 
 def create_callbacks(cfg, trainer):
-    # TODO
-    trainer.register_callback(LogCallback(frequency=5))
-    trainer.register_callback(ValidationCallback(create_metrics(cfg), frequency=10))
-    # trainer.register_callback(SaveCheckpointCallback(frequency=3))
-    # trainer.register_callback(SaveBestCheckpointCallback(frequency=2, state_metric_name='last_validation_accuracy'))
-    pass
+    metrics = []
+    hooks_cfg = cfg.train.hooks
+    if 'log' in hooks_cfg:
+        trainer.register_callback(LogCallback(frequency=hooks_cfg.log.frequency))
+
+    if 'validation' in hooks_cfg:
+        metrics = create_metrics(hooks_cfg.validation)
+        trainer.register_callback(ValidationCallback(metrics, frequency=hooks_cfg.validation.frequency))
+
+    if 'save_checkpoint' in hooks_cfg:
+        trainer.register_callback(SaveCheckpointCallback(frequency=hooks_cfg.save_checkpoint.frequency))
+
+    if 'save_best_checkpoint' in hooks_cfg:
+        trainer.register_callback(SaveBestCheckpointCallback(frequency=hooks_cfg.save_best_checkpoint.frequency,
+                                                             num=hooks_cfg.save_best_checkpoint.num,
+                                                             state_metric_name=hooks_cfg.save_best_checkpoint.state_metric_name))
+    return metrics
 
 
 def create_augmentations(cfg):
-    q_transform = albu.Compose([
-        albu.Resize(320, 320),
-        albu.Normalize(),
-        ToTensorV2()
-    ], bbox_params=albu.BboxParams(format='coco', label_fields=['bboxes_cats']))
-    s_transform = albu.Compose([
-        albu.Resize(320, 320),
-        albu.Normalize(),
-        ToTensorV2()
-    ], bbox_params=albu.BboxParams(format='coco', label_fields=['bboxes_cats']))
-    return q_transform, s_transform
+    augmentations = []
+    for augm in cfg.transform:
+        augm_dict = dict()
+        augm_dict['type'] = augm
+        if augm == 'albumentations.Resize':
+            augm_dict['height'] = cfg.input_size
+            augm_dict['width'] = cfg.input_size
+
+        augmentations.append(object_from_dict(augm_dict))
+
+    transform = albu.Compose(augmentations,
+                             bbox_params=albu.BboxParams(format=cfg.bbox_format, label_fields=['bboxes_cats']))
+    return transform
