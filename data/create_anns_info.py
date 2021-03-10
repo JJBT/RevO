@@ -50,7 +50,9 @@ for i, ann in tqdm(enumerate(anns)):
     anns_info['image_id'].append(image_id)
     anns_info['is_crowd'].append(is_crowd)
 
-    if not is_crowd and num_keypoints > 0:
+    if not is_crowd:
+        anns_info['bbox_x'].append(bbox[0])
+        anns_info['bbox_y'].append(bbox[1])
         anns_info['bbox_width'].append(bbox[2])
         anns_info['bbox_height'].append(bbox[3])
 
