@@ -23,9 +23,6 @@ class Callback:
     def __call__(self, trainer):
         raise NotImplementedError()
 
-    def _log_call(self, trainer):
-        logger.debug(f'Callback {self.__class__.__name__} called at {trainer.state.step} step')
-
     def before_run(self, trainer):
         if self.before:
             self.__call__(trainer)

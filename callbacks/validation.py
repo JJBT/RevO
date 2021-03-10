@@ -10,7 +10,9 @@ class ValidationCallback(Callback):
         self.metrics = metrics
 
     def __call__(self, trainer):
-        self._log_call(trainer)
         self.computed_metrics = trainer.evaluate(dataloader=self.dataloader, metrics=self.metrics)
         for metric_name, metric_value in self.computed_metrics.items():
             setattr(trainer.state, f'last_validation_{metric_name}', metric_value)
+            trainer.state.add_validation_metric(name=metric_name, value=metric_value)
+
+        trainer.state.log_validation()

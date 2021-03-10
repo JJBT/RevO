@@ -13,10 +13,12 @@ logger = logging.getLogger(__name__)
 
 class State:
     def __init__(self, loss_update_frequency):
-        self.losses = []
-        self.loss_update_frequency = loss_update_frequency
         self.step = 0
         self.last_train_loss = None
+        self.losses = []
+        self.loss_update_frequency = loss_update_frequency
+
+        self.validation_metrics = dict()
 
     def get(self, attribute_name: str):
         return getattr(self, attribute_name)
@@ -32,6 +34,12 @@ class State:
         if not hasattr(self, name):
             setattr(self, name, value)
 
+    def add_validation_metric(self, name, value):
+        if name not in self.validation_metrics:
+            self.validation_metrics[name] = []
+
+        self.validation_metrics[name].append(value)
+
     def reset(self):
         self.step = 0
         self.last_train_loss = None
@@ -44,10 +52,13 @@ class State:
             if self.step % self.loss_update_frequency == 0:
                 self.losses.append(self.last_train_loss)
 
-    def log_info(self):
-        msg = f'Step - {self.step} '
+    def log_train(self):
+        logger.info(f'Step - {self.step} loss - {self.last_train_loss}')
+
+    def log_validation(self):
+        msg = f'Validation  '
         for attr in self.__dict__:
-            if attr.startswith('last_'):
+            if attr.startswith('last_') and attr != 'last_train_loss':
                 msg += f'{attr} - {getattr(self, attr):.3f} '
 
         logger.info(msg)
@@ -72,6 +83,7 @@ class Trainer:
         create_callbacks(cfg, self)
         self.cfg = cfg
         self.device = create_device(cfg)
+        self.stop_validation = False
 
     def get_train_batch(self):
         try:
@@ -96,9 +108,6 @@ class Trainer:
         self.optimizer.step()
         if self.scheduler is not None:
             self.scheduler.step()
-
-        # if self.state.step % 10 == 0:
-        #     utils.draw(input_tensor['q_img'][0], outputs[0], target_tensor[0], self.state.step)
 
         return loss.detach()
 
@@ -137,10 +146,14 @@ class Trainer:
             for batch in dataloader:
                 input_tensor = batch['input']
                 target_tensor = batch['target']
-                outputs = self.model(input_tensor.float())
+                target_tensor = target_tensor.to(self.device)
+                outputs = self.model(input_tensor)
 
                 for metric in metrics:
-                    metric.step(y=torch.argmax(outputs, dim=1), y_pred=target_tensor)
+                    metric.step(y=outputs, y_pred=target_tensor)
+
+                if self.stop_validation:
+                    break
 
         metrics_computed = {metric.name: metric.compute() for metric in metrics}
         self.model.train(previous_training_flag)
@@ -154,6 +167,7 @@ class Trainer:
     def _soft_exit(self, sig, frame):
         logger.info('Soft exit... Currently running steps will be finished')
         self.stop_condition = lambda state: True
+        self.stop_validation = True
 
     def _before_run_callbacks(self):
         for callback in self.callbacks:

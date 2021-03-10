@@ -8,7 +8,7 @@ from models.backbone import resnet_backbone
 from torch.utils.data import DataLoader
 import numpy as np
 from torchvision.models import resnet18
-from metrics import Accuracy
+from metrics import Accuracy, TorchLoss
 from callbacks import LoadCheckpointCallback, SaveBestCheckpointCallback, \
     SaveCheckpointCallback, ValidationCallback, LogCallback
 import albumentations as albu
@@ -83,7 +83,7 @@ def create_val_dataloader(cfg):
 
 def create_metrics(cfg):
     # TODO
-    return []
+    return [Accuracy(), TorchLoss(nn.BCEWithLogitsLoss())]
 
 
 def create_device(cfg):
@@ -93,7 +93,7 @@ def create_device(cfg):
 def create_callbacks(cfg, trainer):
     # TODO
     trainer.register_callback(LogCallback(frequency=5))
-    # trainer.register_callback(ValidationCallback(create_metrics(cfg), frequency=2))
+    trainer.register_callback(ValidationCallback(create_metrics(cfg), frequency=10))
     # trainer.register_callback(SaveCheckpointCallback(frequency=3))
     # trainer.register_callback(SaveBestCheckpointCallback(frequency=2, state_metric_name='last_validation_accuracy'))
     pass

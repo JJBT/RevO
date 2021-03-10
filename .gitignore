@@ -5,7 +5,7 @@ outputs/
 coco/
 
 # Configs
-conf/
+conf/config.yaml
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

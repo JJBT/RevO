@@ -3,7 +3,12 @@ class StopAtStep:
         self.last_step = last_step
 
     def __call__(self, state):
-        if state.step < self.last_step:
+        if isinstance(state, int):
+            state_step = state
+        else:
+            state_step = state.step
+
+        if state_step < self.last_step:
             return False
         else:
             return True

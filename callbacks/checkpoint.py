@@ -28,7 +28,6 @@ class SaveCheckpointCallback(Callback):
         os.makedirs(savedir, exist_ok=True)
 
     def __call__(self, trainer):
-        self._log_call(trainer)
         self._save_checkpoint(trainer, ckpt_filename.format(trainer.state.step))
 
     @staticmethod
@@ -57,7 +56,6 @@ class LoadCheckpointCallback(Callback):
         self.filename_to_load = os.path.join(self.directory, self.filename)
 
     def __call__(self, trainer):
-        self._log_call(trainer)
         self._load_checkpoint(trainer)
 
     def _load_checkpoint(self, trainer):
@@ -93,7 +91,6 @@ class SaveBestCheckpointCallback(SaveCheckpointCallback):
         self.current_best = None
 
     def __call__(self, trainer):
-        self._log_call(trainer)
         self.state_last_metric = trainer.state.get(self.state_metric_name)
         if self.current_best is None or self.comparison_function(self.state_last_metric, self.current_best):
             self.current_best = self.state_last_metric

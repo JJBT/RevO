@@ -6,4 +6,4 @@ class LogCallback(Callback):
         super().__init__(frequency=frequency, before=False, after=True)
 
     def __call__(self, trainer):
-        trainer.state.log_info()
+        trainer.state.log_train()
