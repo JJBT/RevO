@@ -140,3 +140,4 @@ dmypy.json
 # Custom
 .idea/
 experiments.py
+data/annotations/

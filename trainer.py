@@ -97,6 +97,7 @@ class Trainer:
 
     def run_step(self, batch):
         # accumulation gradient
+        torch.autograd.set_detect_anomaly(True)
         self.optimizer.zero_grad()
         input_tensor = batch['input']
         target_tensor = batch['target']
@@ -110,12 +111,15 @@ class Trainer:
         if self.scheduler is not None:
             self.scheduler.step()
 
-        if self.state.step % 20 == 0:
-            for name, param in self.model.named_parameters():
-                if 'bn' not in name:
-                    self.writer.add_histogram(name, param, self.state.step)
-                    if param.requires_grad:
-                        self.writer.add_histogram(name + '_grad', param.grad, self.state.step)
+        if self.state.step % 20 == 0 and self.state.step != 0:
+            self.writer.add_scalar('trn/loss', self.state.last_train_loss, self.state.step)
+            self.writer.add_scalar('vld/acc', self.state.last_validation_accuracy, self.state.step)
+            self.writer.add_scalar('lr', self.optimizer.param_groups[0]['lr'], self.state.step)
+            #for name, param in self.model.named_parameters():
+               # if 'bn' not in name:
+                #    self.writer.add_histogram(name, param, self.state.step)
+                 #   if param.requires_grad:
+                  #      self.writer.add_histogram(name + '_grad', param.grad, self.state.step)
 
         return loss.detach()
 

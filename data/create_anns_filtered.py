@@ -2,6 +2,10 @@ from pycocotools.coco import COCO
 import pandas as pd
 import os
 import json
+import sys
+
+import sys
+sys.path.append('..')
 import settings
 
 

@@ -11,6 +11,8 @@ EMBD_PDROP = 0.
 N_LAYER = 1
 OUT_DIM = 1
 
+INF = 1e6
+
 
 class NarrowSelfAttention(nn.Module):
     def __init__(self, embd_dim, n_head):
@@ -40,7 +42,7 @@ class NarrowSelfAttention(nn.Module):
         # causal self-attention; Self-attend: (B, nh, T, hs) x (B, nh, hs, T) -> (B, nh, T, T)
         att = (q @ k.transpose(-2, -1)).contiguous() * (1.0 / math.sqrt(k.size(-1)))
         mask = mask.unsqueeze(1)  # (B, T, T) -> (B, 1, T, T)
-        att = att.masked_fill(mask == 0, float('-inf')).clone()
+        att = att.masked_fill(mask == 0, -1*INF).clone()
         att = F.softmax(att, dim=-1)
         att = torch.where(torch.isnan(att), self.zero_tensor, att)
         att = self.attn_drop(att)
