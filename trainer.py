@@ -1,11 +1,11 @@
 import signal
 import torch
-from factory import create_scheduler, create_callbacks, create_metrics, create_model, create_loss, create_optimizer, \
+from factory import create_scheduler, create_callbacks, create_model, create_loss, create_optimizer, \
     create_train_dataloader, create_val_dataloader, create_device
 import os
 from callbacks import Callback, StopAtStep
 import logging
-import utils
+from torch.utils.tensorboard import SummaryWriter
 
 
 logger = logging.getLogger(__name__)
@@ -47,19 +47,19 @@ class State:
     def update(self, loss=None):
         self.step += 1
         if loss is not None:
-            self.last_train_loss = loss
+            self.last_train_loss = loss.item()
 
             if self.step % self.loss_update_frequency == 0:
                 self.losses.append(self.last_train_loss)
 
     def log_train(self):
-        logger.info(f'Step - {self.step} loss - {self.last_train_loss}')
+        logger.info(f'Step - {self.step} loss - {self.last_train_loss:.3f}')
 
     def log_validation(self):
         msg = f'Validation  '
         for attr in self.__dict__:
             if attr.startswith('last_') and attr != 'last_train_loss':
-                msg += f'{attr} - {getattr(self, attr):.3f} '
+                msg += f'{attr} - {getattr(self, attr):.4f} '
 
         logger.info(msg)
 
@@ -71,19 +71,19 @@ class Trainer:
         self.train_dataloader = create_train_dataloader(cfg)
         self.train_iter = iter(self.train_dataloader)
         self.val_dataloader = create_val_dataloader(cfg)
-        self.state = State(10)
+        self.state = State(loss_update_frequency=cfg.train.loss_update_frequency)
         self.loss = create_loss(cfg)
         self.model = create_model(cfg)
         self.optimizer = create_optimizer(cfg, self.model)
         self.scheduler = create_scheduler(cfg, self.optimizer)
         self.n_steps = cfg.train.n_steps
         self.stop_condition = StopAtStep(last_step=self.n_steps)
-        self.metrics = create_metrics(cfg)  # list
         self.callbacks = []
-        create_callbacks(cfg, self)
+        self.metrics = create_callbacks(cfg, self)
         self.cfg = cfg
         self.device = create_device(cfg)
         self.stop_validation = False
+        self.writer = SummaryWriter(log_dir=os.getcwd())
 
     def get_train_batch(self):
         try:
@@ -96,6 +96,7 @@ class Trainer:
 
     def run_step(self, batch):
         # accumulation gradient
+        torch.autograd.set_detect_anomaly(True)
         self.optimizer.zero_grad()
         input_tensor = batch['input']
         target_tensor = batch['target']
@@ -108,6 +109,16 @@ class Trainer:
         self.optimizer.step()
         if self.scheduler is not None:
             self.scheduler.step()
+
+        if self.state.step % 20 == 0 and self.state.step != 0:
+            self.writer.add_scalar('trn/loss', self.state.last_train_loss, self.state.step)
+            self.writer.add_scalar('vld/acc', self.state.last_validation_accuracy, self.state.step)
+            self.writer.add_scalar('lr', self.optimizer.param_groups[0]['lr'], self.state.step)
+            #for name, param in self.model.named_parameters():
+               # if 'bn' not in name:
+                #    self.writer.add_histogram(name, param, self.state.step)
+                 #   if param.requires_grad:
+                  #      self.writer.add_histogram(name + '_grad', param.grad, self.state.step)
 
         return loss.detach()
 
@@ -150,7 +161,7 @@ class Trainer:
                 outputs = self.model(input_tensor)
 
                 for metric in metrics:
-                    metric.step(y=outputs, y_pred=target_tensor)
+                    metric.step(y=target_tensor, y_pred=outputs)
 
                 if self.stop_validation:
                     break

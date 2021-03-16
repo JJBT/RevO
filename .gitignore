@@ -5,7 +5,7 @@ outputs/
 coco/
 
 # Configs
-conf/config.yaml
+
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
@@ -140,3 +140,4 @@ dmypy.json
 # Custom
 .idea/
 experiments.py
+data/annotations/

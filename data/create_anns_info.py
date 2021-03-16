@@ -3,6 +3,8 @@ import os
 import pandas as pd
 from collections import defaultdict
 from tqdm import tqdm
+import sys
+sys.path.append('..')
 import settings
 
 

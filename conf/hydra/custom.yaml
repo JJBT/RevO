@@ -1,0 +1,9 @@
+# @package _global_
+hydra:
+  output_subdir: cfg
+
+  job_logging:
+    formatters:
+      simple:
+        format: '[%(asctime)s]  %(message)s'
+        datefmt: '%Y-%m-%d %H:%M:%S'
