@@ -20,9 +20,11 @@ def run_validation(cfg):
     trainer._before_run_callbacks()
     metrics = trainer.evaluate()
     logger.info(f'Validation {os.path.join(ckpt_dir, cfg.ckpt)}')
+    metrics_report = ''
     for k, v in metrics.items():
-        logger.info(f'{k} : {v:.4f}')
+        metrics_report += f'{k} : {v:.4f} \n'
 
+    logger.info(metrics_report)
     logger.info('Done')
 
 
@@ -32,8 +34,8 @@ def run(cfg: DictConfig):
     trainer_cfg_filename = os.path.join(BASE_DIR, cfg.path, 'cfg', 'config.yaml')
     trainer_cfg = OmegaConf.load(trainer_cfg_filename)
     merged_cfg = OmegaConf.merge(trainer_cfg, cfg)
-    print(OmegaConf.to_yaml(merged_cfg))
-    # run_validation(merged_cfg)
+
+    run_validation(merged_cfg)
 
 
 if __name__ == '__main__':
