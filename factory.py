@@ -6,6 +6,7 @@ from callbacks import SaveBestCheckpointCallback, \
 import albumentations as albu
 from models.prikol import PrikolNet
 from datasets.dataset import BBoxDataset
+from pred_transforms import prediction_transforms_dict
 
 
 def create_model(cfg):
@@ -89,10 +90,13 @@ def create_val_dataloader(cfg):
 
 def create_metrics(cfg):
     metrics = []
-    for m in cfg.metrics:
-        m_dict = dict()
-        m_dict['type'] = m
-        metrics.append(object_from_dict(m_dict))
+    for metric in cfg.metrics:
+        metric_dict = dict()
+        metric_dict['type'] = metric
+        metric_name = metric.split('.')[-1].lower()
+        metric_dict['prediction_transform'] = prediction_transforms_dict.get(metric_name, lambda x: x)
+        metric_obj = object_from_dict(metric_dict)
+        metrics.append(metric_obj)
 
     return metrics
 

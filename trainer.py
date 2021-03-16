@@ -161,7 +161,7 @@ class Trainer:
                 outputs = self.model(input_tensor)
 
                 for metric in metrics:
-                    metric.step(y=outputs, y_pred=target_tensor)
+                    metric.step(y=target_tensor, y_pred=outputs)
 
                 if self.stop_validation:
                     break

@@ -5,6 +5,8 @@ import logging
 import sys
 from settings import BASE_DIR
 from callbacks import LoadCheckpointCallback
+from metrics import Recall
+from pred_transforms import prediction_transforms_dict
 
 logger = logging.getLogger(__name__)
 
@@ -18,7 +20,7 @@ def run_validation(cfg):
         filename=cfg.ckpt
     ))
     trainer._before_run_callbacks()
-    metrics = trainer.evaluate()
+    metrics = trainer.evaluate(metrics=[Recall(prediction_transform=prediction_transforms_dict['recall'])])
     logger.info(f'Validation {os.path.join(ckpt_dir, cfg.ckpt)}')
     metrics_report = ''
     for k, v in metrics.items():
