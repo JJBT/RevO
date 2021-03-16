@@ -67,6 +67,8 @@ for i, ann in tqdm(enumerate(anns)):
         anns_info['kps_set_idx'].append(kps_set2idx[visible_kps])
 
     else:
+        anns_info['bbox_x'].append(-1)
+        anns_info['bbox_y'].append(-1)
         anns_info['bbox_width'].append(-1)
         anns_info['bbox_height'].append(-1)
 
