@@ -3,17 +3,17 @@ data:
   train:
     query:
       root: /data/mscoco/train2017
-      annotation: /home/objdet/Prikol/data/annotations/q_person_keypoints_train2017.json
+      annotation: /home/objdet/FSKD/data/annotations/q_person_keypoints_train2017.json
 
     support:
       root: /data/mscoco/train2017
-      annotation: /home/objdet/Prikol/data/annotations/s_person_keypoints_train2017.json
+      annotation: /home/objdet/FSKD/data/annotations/s_person_keypoints_train2017.json
 
   validation:
     query:
-      root: /data/mscoco/train2017
+      root: /data/mscoco/val2017
       annotation: /data/mscoco/annotations/person_keypoints_val2017.json
 
     support:
-      root: /data/mscoco/train2017
+      root: /data/mscoco/val2017
       annotation: /data/mscoco/annotations/person_keypoints_val2017.json
