@@ -1,0 +1,19 @@
+# @package _global_
+data:
+  train:
+    query:
+      root: /home/vladimir/Diploma/coco/val2017
+      annotation: /home/vladimir/Diploma/coco/annotations/person_keypoints_val2017.json
+
+    support:
+      root: /home/vladimir/Diploma/coco/val2017
+      annotation: /home/vladimir/Diploma/coco/annotations/person_keypoints_val2017.json
+
+  validation:
+    query:
+      root: /home/vladimir/Diploma/coco/val2017
+      annotation: /home/vladimir/Diploma/coco/annotations/person_keypoints_val2017.json
+
+    support:
+      root: /home/vladimir/Diploma/coco/val2017
+      annotation: /home/vladimir/Diploma/coco/annotations/person_keypoints_val2017.json

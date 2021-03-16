@@ -1,7 +1,7 @@
 import os
 from callbacks.callback import Callback
 import torch
-from utils import get_state_dict, load_state_dict
+from utils.utils import get_state_dict, load_state_dict
 from settings import BASE_DIR
 import logging
 
@@ -57,13 +57,15 @@ class LoadCheckpointCallback(Callback):
 
     def __call__(self, trainer):
         self._load_checkpoint(trainer)
+        logger.info(f'Checkpoint {self.filename_to_load} loaded')
 
     def _load_checkpoint(self, trainer):
         checkpoint = torch.load(self.filename_to_load)
 
         # checks
         if checkpoint['model_class'] != str(trainer.model.__class__):
-            raise TypeError(f'Models do not match: {checkpoint["model_class"]} and {trainer.model.__class__}')
+            raise TypeError(
+                f'Models do not match: {checkpoint["model_class"]} and {trainer.model.__class__}')
         if checkpoint['optimizer_class'] != str(trainer.optimizer.__class__):
             raise TypeError(
                 f'Optimizers do not match: {checkpoint["optimizer_class"]} and {trainer.optimizer.__class__}')

@@ -1,11 +1,10 @@
 import signal
 import torch
-from factory import create_scheduler, create_callbacks, create_metrics, create_model, create_loss, create_optimizer, \
+from factory import create_scheduler, create_callbacks, create_model, create_loss, create_optimizer, \
     create_train_dataloader, create_val_dataloader, create_device
 import os
 from callbacks import Callback, StopAtStep
 import logging
-import utils
 from torch.utils.tensorboard import SummaryWriter
 
 
@@ -60,7 +59,7 @@ class State:
         msg = f'Validation  '
         for attr in self.__dict__:
             if attr.startswith('last_') and attr != 'last_train_loss':
-                msg += f'{attr} - {getattr(self, attr):.3f} '
+                msg += f'{attr} - {getattr(self, attr):.4f} '
 
         logger.info(msg)
 

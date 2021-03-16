@@ -1,0 +1,8 @@
+defaults:
+  - hydra: custom
+  - data_path: local_path
+
+description: 'Validation'
+
+path: outputs/2021-03-10/22-42-16/
+ckpt: checkpoint-20.pt

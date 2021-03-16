@@ -1,17 +1,9 @@
 import torch
-import logging
-import time
-import os
-import dist
-from utils import object_from_dict
+from utils.utils import object_from_dict
 from torch.utils.data import DataLoader
-import numpy as np
-from torchvision.models import resnet18
-from metrics import Accuracy, TorchLoss
-from callbacks import LoadCheckpointCallback, SaveBestCheckpointCallback, \
+from callbacks import SaveBestCheckpointCallback, \
     SaveCheckpointCallback, ValidationCallback, LogCallback
 import albumentations as albu
-from albumentations.pytorch.transforms import ToTensorV2
 from models.prikol import PrikolNet
 from datasets.dataset import BBoxDataset
 

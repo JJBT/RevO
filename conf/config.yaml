@@ -1,0 +1,90 @@
+defaults:
+  - hydra: custom
+  - data_path: local_path
+
+description: ''
+
+train:
+  n_steps: 150
+  bs: 2
+  k_shot: 3
+  device: cpu
+  loss_update_frequency: 10
+
+  hooks:
+    validation:
+      frequency: 50000
+      metrics: [metrics.Accuracy]
+
+    log:
+      frequency: 10
+
+    save_checkpoint:
+      frequency: 500
+
+
+
+model:
+  backbone:
+    architecture: resnet50
+    pretrained: True
+    trainable_layers: 3
+    returned_layers: 4
+    stride: 32
+
+  transformer:
+    embd_dim: 2048
+    n_head: 4
+    attn_pdrop: 0
+    resid_pdrop: 0
+    embd_pdrop: 0
+    n_layer: 1
+    out_dim: 1
+
+
+optimizer:
+  type: torch.optim.Adam
+  lr: 0.001
+
+loss:
+  type: torch.nn.BCEWithLogitsLoss
+
+scheduler:
+  type: torch.optim.lr_scheduler.StepLR
+  step_size: 1000
+  gamma: 0.9
+
+data:
+  name: coco
+  bbox_format: coco
+  input_size: 320
+
+  train:
+    query:
+      bbox_format: ${data.bbox_format}
+      input_size: ${data.input_size}
+      root: /home/vladimir/Diploma/coco/val2017
+      annotation: /home/vladimir/Diploma/coco/annotations/person_keypoints_val2017.json
+      transform: [albumentations.Resize, albumentations.Normalize, albumentations.pytorch.transforms.ToTensorV2]
+
+    support:
+      bbox_format: ${data.bbox_format}
+      input_size: ${data.input_size}
+      root: /home/vladimir/Diploma/coco/val2017
+      annotation: /home/vladimir/Diploma/coco/annotations/person_keypoints_val2017.json
+      transform: [albumentations.Resize, albumentations.Normalize, albumentations.pytorch.transforms.ToTensorV2]
+
+  validation:
+    query:
+      bbox_format: ${data.bbox_format}
+      input_size: ${data.input_size}
+      root: /home/vladimir/Diploma/coco/val2017
+      annotation: /home/vladimir/Diploma/coco/annotations/person_keypoints_val2017.json
+      transform: [albumentations.Resize, albumentations.Normalize, albumentations.pytorch.transforms.ToTensorV2]
+
+    support:
+      bbox_format: ${data.bbox_format}
+      input_size: ${data.input_size}
+      root: /home/vladimir/Diploma/coco/val2017
+      annotation: /home/vladimir/Diploma/coco/annotations/person_keypoints_val2017.json
+      transform: [albumentations.Resize, albumentations.Normalize, albumentations.pytorch.transforms.ToTensorV2]
