@@ -32,10 +32,8 @@ class Recall(Metric):
         y_pred = self.prediction_transform(y_pred)
         if y.size() != y_pred.size():
             raise TypeError("y and y_pred should have the same shape")
-        true_positives = (y * y_pred)
+        true_positives = (y * y_pred).sum().item()
         total_positives = y.sum().item()
-
-        true_positives = true_positives.sum().item()
 
         self._true_positives += true_positives
         self._total_positives += total_positives
@@ -48,6 +46,35 @@ class Recall(Metric):
     def reset(self):
         self._true_positives = 0
         self._total_positives = 0
+
+
+class Precision(Metric):
+    def __init__(self, prediction_transform=lambda x: x):
+        super().__init__('precision', default_value=0)
+        self._true_positives = 0
+        self._false_postitives = 0
+        self.prediction_transform = prediction_transform
+
+    def step(self, y: torch.Tensor, y_pred: torch.Tensor):
+        # Just for this case.
+        # TODO
+        y_pred = self.prediction_transform(y_pred)
+        if y.size() != y_pred.size():
+            raise TypeError("y and y_pred should have the same shape")
+        true_positives = (y * y_pred).sum().item()
+        false_positives = ((1 - y) * y_pred).sum().item()
+
+        self._true_positives += true_positives
+        self._false_postitives += false_positives
+
+    def compute(self):
+        result = self._true_positives / (self._true_positives + self._false_postitives)
+
+        return result
+
+    def reset(self):
+        self._true_positives = 0
+        self._false_postitives = 0
 
 
 class TorchLoss(PttTorchLoss):
