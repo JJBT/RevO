@@ -83,7 +83,6 @@ class Trainer:
         self.cfg = cfg
         self.device = create_device(cfg)
         self.stop_validation = False
-        self.writer = SummaryWriter(log_dir=os.getcwd())
 
     def get_train_batch(self):
         try:
@@ -109,16 +108,6 @@ class Trainer:
         self.optimizer.step()
         if self.scheduler is not None:
             self.scheduler.step()
-
-        if self.state.step % 20 == 0 and self.state.step != 0:
-            self.writer.add_scalar('trn/loss', self.state.last_train_loss, self.state.step)
-            self.writer.add_scalar('vld/acc', self.state.last_validation_accuracy, self.state.step)
-            self.writer.add_scalar('lr', self.optimizer.param_groups[0]['lr'], self.state.step)
-            #for name, param in self.model.named_parameters():
-               # if 'bn' not in name:
-                #    self.writer.add_histogram(name, param, self.state.step)
-                 #   if param.requires_grad:
-                  #      self.writer.add_histogram(name + '_grad', param.grad, self.state.step)
 
         return loss.detach()
 

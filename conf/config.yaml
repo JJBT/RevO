@@ -19,6 +19,9 @@ train:
     log:
       frequency: 10
 
+    tensorboard:
+      frequency: 20
+
     save_checkpoint:
       frequency: 500
 
@@ -48,6 +51,9 @@ optimizer:
 
 loss:
   type: torch.nn.BCEWithLogitsLoss
+  pos_weight:
+    type: torch.tensor
+    data: 1
 
 scheduler:
   type: torch.optim.lr_scheduler.StepLR

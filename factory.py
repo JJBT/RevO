@@ -2,7 +2,7 @@ import torch
 from utils.utils import object_from_dict
 from torch.utils.data import DataLoader
 from callbacks import SaveBestCheckpointCallback, \
-    SaveCheckpointCallback, ValidationCallback, LogCallback
+    SaveCheckpointCallback, ValidationCallback, LogCallback, TensorBoardCallback
 import albumentations as albu
 from models.prikol import PrikolNet
 from datasets.dataset import BBoxDataset
@@ -114,6 +114,9 @@ def create_callbacks(cfg, trainer):
     if 'validation' in hooks_cfg:
         metrics = create_metrics(hooks_cfg.validation)
         trainer.register_callback(ValidationCallback(metrics, frequency=hooks_cfg.validation.frequency))
+
+    if 'tensorboard' in hooks_cfg:
+        trainer.register_callback(TensorBoardCallback(frequency=hooks_cfg.tensorboard.frequency))
 
     if 'save_checkpoint' in hooks_cfg:
         trainer.register_callback(SaveCheckpointCallback(frequency=hooks_cfg.save_checkpoint.frequency))

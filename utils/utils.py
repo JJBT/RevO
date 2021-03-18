@@ -8,17 +8,17 @@ from omegaconf.dictconfig import DictConfig
 
 
 def object_from_dict(d, parent=None, **default_kwargs):
-    assert (isinstance(d, dict) or isinstance(d, DictConfig)) and "type" in d
+    assert isinstance(d, (dict, DictConfig)) and 'type' in d
     kwargs = d.copy()
     kwargs = dict(kwargs)
-    object_type = kwargs.pop("type")
+    object_type = kwargs.pop('type')
 
     for name, value in default_kwargs.items():
         kwargs.setdefault(name, value)
 
     # support nested constructions
     for key, value in kwargs.items():
-        if isinstance(value, dict) and "type" in value:
+        if isinstance(value, (dict, DictConfig)) and 'type' in value:
             value = object_from_dict(value)
             kwargs[key] = value
 
