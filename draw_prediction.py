@@ -20,6 +20,7 @@ def run_prediction(cfg):
     ))
     trainer._before_run_callbacks()
     dataloader = trainer.train_dataloader if cfg.dataloader == 'train' else trainer.val_dataloader
+    os.makedirs(os.path.join(os.getcwd(), 'output', os.path.splitext(cfg.ckpt)[0]), exist_ok=True)
     for i, batch in enumerate(dataloader):
         if i % 50 == 0:
             input_tensor = batch['input']
