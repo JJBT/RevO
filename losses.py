@@ -1,12 +1,12 @@
 import torch
 from torch import nn
-from torch import functional as F
+from torch.nn import functional as F
 
 
 class BinaryFocalLoss(nn.Module):
-    def __init__(self, pos_weight, gamma):
+    def __init__(self, alpha=.5, gamma=2):
         super(BinaryFocalLoss, self).__init__()
-        self.pos_weight = pos_weight
+        self.alpha = alpha
         self.gamma = gamma
 
     def forward(self, input, target):
@@ -19,6 +19,6 @@ class BinaryFocalLoss(nn.Module):
         pt = torch.exp(-bce)
         pt, target = pt.view(-1), target.view(-1)
 
-        fl = self.pos_weight * (1 - pt) ** self.gamma * pt
-        fl = torch.where(target, self.pos_weight * fl, (1 - self.pos_weight) * fl)
+        fl = self.alpha * (1 - pt) ** self.gamma * pt
+        fl = torch.where(target.bool(), self.alpha * fl, (1 - self.alpha) * fl)
         return fl.mean()
