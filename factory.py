@@ -91,11 +91,9 @@ def create_val_dataloader(cfg):
 def create_metrics(cfg):
     metrics = []
     for metric in cfg.metrics:
-        metric_dict = dict()
-        metric_dict['type'] = metric
-        metric_name = metric.split('.')[-1].lower()
-        metric_dict['prediction_transform'] = prediction_transforms_dict.get(metric_name, lambda x: x)
-        metric_obj = object_from_dict(metric_dict)
+        metric_name = metric.type.split('.')[-1].lower()
+        prediction_transform = prediction_transforms_dict.get(metric_name, lambda x: x)
+        metric_obj = object_from_dict(metric, prediction_transform=prediction_transform)
         metrics.append(metric_obj)
 
     return metrics

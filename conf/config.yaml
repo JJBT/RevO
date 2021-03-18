@@ -14,7 +14,9 @@ train:
   hooks:
     validation:
       frequency: 50000
-      metrics: [metrics.Accuracy]
+      metrics:
+        - type: metrics.Accuracy
+        - type: metrics.Recall
 
     log:
       frequency: 10
