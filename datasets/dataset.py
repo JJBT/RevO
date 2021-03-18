@@ -29,7 +29,7 @@ def get_object_presence_map(bboxes, shape, stride):
     return presence
 
 
-class BBoxDataset(Dataset):
+class ObjectPresenceDataset(Dataset):
     def __init__(
             self,
             q_root,
@@ -59,6 +59,16 @@ class BBoxDataset(Dataset):
         self.s_ids = sorted(get_coco_img_ids(self.s_coco))
 
     def __getitem__(self, idx: int):
+        """
+
+        Returns:
+             sample (dict): data sample
+                sample['input'] (dict): input data
+                    sample['input']['q_img'] (np.ndarray or torch.Tensor): query image
+                    sample['input']['s_imgs'] (List[np.ndarray] or List[torch.Tensor]): K_SHOT support images
+                    sample['input']['s_bboxes'] (List[List[float]]): bbox coordinates for support images
+                sample['target'] (List[float]): target object presence map (vector actually)
+        """
         q_coco = self.q_coco
         q_img_id = self.q_ids[idx]
         q_ann_ids = q_coco.getAnnIds(imgIds=q_img_id)
@@ -124,27 +134,27 @@ class BBoxDataset(Dataset):
 
         return img
 
-    @classmethod
-    def collate_fn(cls, batch):
-        q_img_batched = default_collate([sample['input']['q_img'] for sample in batch])
-        target_batched = torch.as_tensor([sample['target'] for sample in batch])
 
-        if type(batch[0]['input']['s_imgs'][0]).__module__ == 'numpy':
-            s_imgs_batched = default_collate(np.array([np.array(sample['input']['s_imgs']) for sample in batch]))
-        elif type(batch[0]['input']['s_imgs'][0]).__module__ == 'torch':
-            s_imgs_batched = torch.stack([torch.stack(sample['input']['s_imgs']) for sample in batch])
-        else:
-            raise TypeError('Unknown type of support image')
+def object_presence_collate_fn(batch):
+    q_img_batched = default_collate([sample['input']['q_img'] for sample in batch])
+    target_batched = torch.as_tensor([sample['target'] for sample in batch])
 
-        s_bboxes_batched = [sample['input']['s_bboxes'] for sample in batch]
+    if type(batch[0]['input']['s_imgs'][0]).__module__ == 'numpy':
+        s_imgs_batched = default_collate(np.array([np.array(sample['input']['s_imgs']) for sample in batch]))
+    elif type(batch[0]['input']['s_imgs'][0]).__module__ == 'torch':
+        s_imgs_batched = torch.stack([torch.stack(sample['input']['s_imgs']) for sample in batch])
+    else:
+        raise TypeError('Unknown type of support image')
 
-        sample_batched = {'input': {}, 'target': []}
-        sample_batched['input']['q_img'] = q_img_batched
-        sample_batched['input']['s_imgs'] = s_imgs_batched
-        sample_batched['input']['s_bboxes'] = s_bboxes_batched
-        sample_batched['target'] = target_batched
+    s_bboxes_batched = [sample['input']['s_bboxes'] for sample in batch]
 
-        return sample_batched
+    sample_batched = {'input': {}, 'target': []}
+    sample_batched['input']['q_img'] = q_img_batched
+    sample_batched['input']['s_imgs'] = s_imgs_batched
+    sample_batched['input']['s_bboxes'] = s_bboxes_batched
+    sample_batched['target'] = target_batched
+
+    return sample_batched
 
 
 

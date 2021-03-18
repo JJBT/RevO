@@ -28,11 +28,20 @@ class PrikolNet(nn.Module):
                                         self.backbone_trainable_layers,
                                         self.backbone_returned_layers)
 
-        self.center_pool = CenterPool(original_shape=pool_shape)
+        self.center_pool = CenterPool(original_size=pool_shape)
         self.transformer = SimpleTransformer(self.embd_dim, self.n_head, self.attn_pdrop, self.resid_pdrop,
                                              self.embd_pdrop, self.n_layer, self.out_dim)
 
     def forward(self, sample):
+        """
+        Args:
+            sample (dict): input sample
+                sampe['q_img'] (torch.Tensor): batch of query images (BxCxHxW)
+                sampe['s_imgs'] (torch.Tensor): batch of support set images (BxKxCxHxW)
+                sampe['s_bboxes'] (List[List[List[float, ..]]]): batch of bbox coordinates for support
+                                                                 set images (conditionally BxKxVx4, K - length of support set
+                                                                                                    V - number of instances per image)
+        """
         q_img = sample['q_img']
         s_imgs = sample['s_imgs']
         s_bboxes = sample['s_bboxes']
@@ -41,34 +50,40 @@ class PrikolNet(nn.Module):
         s_imgs = s_imgs.to(self.device)
 
         B, K, C_s, W_s, H_s = s_imgs.shape
-        s_imgs = s_imgs.view((B * K, C_s, W_s, H_s))
-        # print('q_img', q_img[0][0])
-        # print('\n=============================\n')
-        # print('s_imgs', s_imgs[0][0])
-        # print('\n=============================\n')
+        s_imgs = s_imgs.view((B * K, C_s, W_s, H_s))  # B x K x C x W x H -> B*K x W x H
 
+        # Getting feature maps of query and support images
+        # B x C_ x W_ x H_ -> B x C_fm x W_fm x H_fm
         layer = 'layer' + str(self.backbone_returned_layers)
         q_feature_map = self.backbone(q_img)[layer]
         s_feature_maps = self.backbone(s_imgs)[layer]
 
-        # print('q_feture map', q_feature_map[0][0])
-        # print('\n=============================\n')
-        # print('s_feature_maps', s_feature_maps[0][0])
-
+        # Getting sequences of query feature vectors images and support object instances feature vectors
         _, C_q_fm, W_q_fm, H_q_fm = q_feature_map.shape
-        q_feature_vectors = q_feature_map.permute(0, 2, 3, 1).contiguous().view(-1, W_q_fm * H_q_fm, C_q_fm)
+        q_feature_vectors = q_feature_map.permute(0, 2, 3, 1).contiguous().view(-1, W_q_fm * H_q_fm, C_q_fm)  # B x C_fm x H_fm x W_fm -> B x W_fm * H_fm x C_fm
         s_feature_vectors_listed = self.center_pool(s_feature_maps, s_bboxes)
 
+        # Shaping batch from feature vector sequences
+        # and creating mask for transformer
         seq, mask = self._collate_fn(q_feature_vectors, s_feature_vectors_listed)
         seq = seq.to(self.device)
         mask = mask.to(self.device)
 
-        seq_out = self.transformer({'x': seq, 'mask': mask})
-        preds = seq_out[:, -(W_q_fm * H_q_fm):]
+        # Getting predictions
+        seq_out = self.transformer({'x': seq, 'mask': mask})  # -> B x C_fm x (W_fm * H_fm + N_padded)
+        preds = seq_out[:, -(W_q_fm * H_q_fm):]  # only query vectors are responsible for prediction
+        preds = preds.squeeze(-1)                # -> B x output_dim x W_fm * H_fm
 
-        return preds.squeeze(-1)
+        return preds
 
     def _collate_fn(self, q_vectors, s_vectors_listed):
+        """
+        Collates batch from a sequences of feature vectors with varying length and creates mask for transformer
+        Args:
+            q_vectors (torch.Tensor): sequence of query feature vectors (embd_dim x H_fm * W_fm)
+            s_vectors_listed (List[List[List[float]]]): list of support feature vectors
+
+        """
         batch_size, q_seq_len, embd_dim = q_vectors.shape
         max_s_seq_len = max(map(len, s_vectors_listed))
 
@@ -85,12 +100,27 @@ class PrikolNet(nn.Module):
 
 
 class CenterPool(nn.Module):
-    def __init__(self, original_shape):
+    """
+    Pulls out feature vectors of object instances given feature map and bbox coordinates
+    """
+    def __init__(self, original_size):
+        """
+        Args:
+            original_size: image original size
+        """
         super(CenterPool, self).__init__()
-        self.original_shape = original_shape
+        self.original_size = original_size
 
     def forward(self, input, bboxes):
-        orig_w, orig_h = self.original_shape[-2:]
+        """
+        Args:
+            input (torch.Tensor): feature map (B x C_fm x W_fm x H_fm)
+            bboxes (List[List[List[float]]]): list of bbox coordinates
+
+        Returns:
+            (List[List[torch.Tensor]]): list of support feature vectors
+        """
+        orig_w, orig_h = self.original_size[-2:]
         fm_w, fm_h = input.shape[-2:]
         cell_w, cell_h = orig_w / fm_w, orig_h / fm_h
 

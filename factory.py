@@ -5,14 +5,13 @@ from callbacks import SaveBestCheckpointCallback, \
     SaveCheckpointCallback, ValidationCallback, LogCallback
 import albumentations as albu
 from models.prikol import PrikolNet
-from datasets.dataset import BBoxDataset
+from datasets.dataset import ObjectPresenceDataset, object_presence_collate_fn
 from pred_transforms import prediction_transforms_dict
 
 
 def create_model(cfg):
     device = create_device(cfg)
     input_size = cfg.data.input_size
-    input_size = (input_size, input_size)
     model = PrikolNet(
         backbone_name=cfg.model.backbone.architecture,
         backbone_pratrained=cfg.model.backbone.pretrained,
@@ -55,15 +54,15 @@ def create_train_dataloader(cfg):
     params['annFileSupport'] = cfg.data.train.support.annotation
     params['k_shot'] = cfg.train.k_shot
     input_size = cfg.data.train.query.input_size
-    params['q_img_size'] = (input_size, input_size)
+    params['q_img_size'] = input_size
     params['backbone_stride'] = cfg.model.backbone.stride
     q_transform = create_augmentations(cfg.data.train.query)
     s_transform = create_augmentations(cfg.data.train.support)
     params['q_transform'] = q_transform
     params['s_transform'] = s_transform
 
-    dataset = BBoxDataset(**params)
-    dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=True, collate_fn=dataset.collate_fn)
+    dataset = ObjectPresenceDataset(**params)
+    dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=True, collate_fn=object_presence_collate_fn)
     return dataloader
 
 
@@ -76,15 +75,15 @@ def create_val_dataloader(cfg):
     params['annFileSupport'] = cfg.data.validation.support.annotation
     params['k_shot'] = cfg.train.k_shot
     input_size = cfg.data.validation.query.input_size
-    params['q_img_size'] = (input_size, input_size)
+    params['q_img_size'] = input_size
     params['backbone_stride'] = cfg.model.backbone.stride
     q_transform = create_augmentations(cfg.data.validation.query)
     s_transform = create_augmentations(cfg.data.validation.support)
     params['q_transform'] = q_transform
     params['s_transform'] = s_transform
 
-    dataset = BBoxDataset(**params)
-    dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=True, collate_fn=dataset.collate_fn)
+    dataset = ObjectPresenceDataset(**params)
+    dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=True, collate_fn=object_presence_collate_fn)
     return dataloader
 
 
@@ -131,8 +130,8 @@ def create_augmentations(cfg):
         augm_dict = dict()
         augm_dict['type'] = augm
         if augm == 'albumentations.Resize':
-            augm_dict['height'] = cfg.input_size
-            augm_dict['width'] = cfg.input_size
+            augm_dict['height'] = cfg.input_size[0]
+            augm_dict['width'] = cfg.input_size[1]
 
         augmentations.append(object_from_dict(augm_dict))
 
