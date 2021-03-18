@@ -60,7 +60,7 @@ def vis_bboxes(img, bboxes):
     plt.show()
 
 
-def draw(img, output, target, step):
+def draw(img, output, target):
     pred = torch.nonzero(output > 0, as_tuple=False).tolist()
     gt = torch.nonzero(target > 0, as_tuple=False).tolist()
     inv_normalize = Normalize(
@@ -74,7 +74,8 @@ def draw(img, output, target, step):
 
     points_true = []
     points_pred = []
-    r = 2
+    r_gt = 5
+    r_pr = 2
 
     for idx in pred:
         y, x = divmod(idx[0], 10)
@@ -83,8 +84,8 @@ def draw(img, output, target, step):
         y += 16
         x += 16
         p = list()
-        p.append((x-r, y-r))
-        p.append((x+r, y+r))
+        p.append((x-r_pr, y-r_pr))
+        p.append((x+r_pr, y+r_pr))
         points_pred.append(p)
 
     for idx in gt:
@@ -94,18 +95,16 @@ def draw(img, output, target, step):
         y += 16
         x += 16
         p = list()
-        p.append((x - r, y - r))
-        p.append((x + r, y + r))
+        p.append((x - r_gt, y - r_gt))
+        p.append((x + r_gt, y + r_gt))
         points_true.append(p)
 
     img_pil = Image.fromarray(img)
     img_d = ImageDraw.Draw(img_pil)
-    print((target > 0).sum())
-    print((output > 0).sum())
     for p in points_true:
-        img_d.ellipse(p, fill=(255, 0, 0))
+        img_d.ellipse(p, outline=(255, 0, 0), width=3)
     for p in points_pred:
-        img_d.ellipse(p, fill=(0, 255, 0))
+        img_d.ellipse(p, outline=(0, 255, 0), width=3)
 
-    img_pil.save(os.path.join(os.getcwd(), f'output{step}.png'))
+    return img_pil
 

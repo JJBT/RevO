@@ -1,0 +1,9 @@
+defaults:
+  - hydra: custom
+  - data_path: local_path
+
+description: 'Drawing'
+
+path: outputs/2021-03-12/23-48-26/
+ckpt: checkpoint-5000.pt
+dataloader: train
