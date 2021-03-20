@@ -32,8 +32,9 @@ def print_dataset_info(ann_file):
 
 def main(coco, path_to_anns, path_to_images):
     print('Golden standard vaidation dataset creation.')
-    print('Press "y" to add image to the dataset or press "n" to pass it.')
-    print('Press "e" to terminate dataset collecting.')
+    print('To add image to the dataset press "y".')
+    print('To pass image press "n".')
+    print('To terminate dataset collecting press "e" or "q".')
     img_metas = coco.loadImgs(ids=coco.getImgIds())
 
     img_ids_to_keep = []
@@ -53,7 +54,7 @@ def main(coco, path_to_anns, path_to_images):
             elif k == ord('y') or k == ord('Y'):
                 img_ids_to_keep.append(img_id)
                 print(f'Saving image {img_id}')
-            elif k == ord('e') or ord('E'):
+            elif k == ord('e') or ord('E') or ord('q') or ord('Q'):
                 cv2.destroyAllWindows()
                 print('Golden standard dataset collecting terminated.')
                 break
@@ -81,7 +82,7 @@ if __name__ == '__main__':
     PATH_TO_COCO = 'D:/datasets/annotations/person_keypoints_val2017.json'
     PATH_TO_ANNS = PATH_TO_COCO
     PATH_TO_IMAGES = 'D:/datasets/val2017'
-    PATH_TO_SAVE = os.path.join(settings.BASE_DIR, 'data', 'test_gs_coco.json')
+    PATH_TO_SAVE = os.path.join(settings.BASE_DIR, 'data', 'gs_coco_object_presence_anns.json')
     coco = COCO(PATH_TO_COCO)
     gs_coco = main(coco, PATH_TO_ANNS, PATH_TO_IMAGES)
     save_anns(gs_coco, PATH_TO_SAVE)
