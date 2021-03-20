@@ -62,8 +62,8 @@ class ObjectPresenceDataset(Dataset):
         """
 
         Returns:
-             sample (dict): data sample
-                sample['input'] (dict): input data
+             sample (dict): data preprocessing sample
+                sample['input'] (dict): input data preprocessing
                     sample['input']['q_img'] (np.ndarray or torch.Tensor): query image
                     sample['input']['s_imgs'] (List[np.ndarray] or List[torch.Tensor]): K_SHOT support images
                     sample['input']['s_bboxes'] (List[List[float]]): bbox coordinates for support images

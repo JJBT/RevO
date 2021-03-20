@@ -140,4 +140,5 @@ dmypy.json
 # Custom
 .idea/
 experiments.py
-data/annotations/
+data preprocessing/annotations/
+data preprocessing/create_gs_anns_manually.py
