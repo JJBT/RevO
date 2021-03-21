@@ -29,6 +29,7 @@ def run_prediction(cfg):
             outputs = trainer.model(input_tensor)
             res_img = draw(input_tensor['q_img'][0], outputs[0], target_tensor[0])
             res_img.save(os.path.join(os.getcwd(), 'output', os.path.splitext(cfg.ckpt)[0], f'img{i}.png'))
+            logger.info(i)
 
 
 @hydra.main(config_path='conf', config_name='config_draw')

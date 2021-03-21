@@ -7,9 +7,36 @@ import torch
 from torchvision.transforms import Normalize
 from PIL import ImageDraw, Image
 import numpy as np
+from jinja2 import Template
+from settings import BASE_DIR
+import pdfkit
+
 
 mean = [0.485, 0.456, 0.406]
 std = [0.229, 0.224, 0.225]
+TEMPLATE_PATH = os.path.join(BASE_DIR, 'utils', 'template.html')
+REPORT_PATH_HTML = os.path.join(os.getcwd(), 'report.html')
+REPORT_PATH_PDF = os.path.join(os.getcwd(), 'report.pdf')
+
+
+def render_report(images_path, title):
+    images = [
+        os.path.join(images_path, image) for image in os.listdir(images_path)
+    ]
+
+    context = {
+        'title': title,
+        'images': images
+    }
+
+    with open(TEMPLATE_PATH, 'r') as html:
+        template = Template(html.read())
+        rendered_template = template.render(context)
+
+    with open(REPORT_PATH_HTML, 'w') as result_html:
+        result_html.write(rendered_template)
+
+    pdfkit.from_file(REPORT_PATH_HTML, REPORT_PATH_PDF)
 
 
 def show_annotation_by_id(ann_id, coco, path=None):
