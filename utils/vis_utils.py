@@ -19,7 +19,7 @@ REPORT_PATH_HTML = os.path.join(os.getcwd(), 'report.html')
 REPORT_PATH_PDF = os.path.join(os.getcwd(), 'report.pdf')
 
 
-def render_report(images_path, title):
+def render_report(images_path, title=''):
     images = [
         os.path.join(images_path, image) for image in os.listdir(images_path)
     ]
