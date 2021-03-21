@@ -60,7 +60,7 @@ class LoadCheckpointCallback(Callback):
         logger.info(f'Checkpoint {self.filename_to_load} loaded')
 
     def _load_checkpoint(self, trainer):
-        checkpoint = torch.load(self.filename_to_load)
+        checkpoint = torch.load(self.filename_to_load, map_location=trainer.device)
 
         # checks
         if checkpoint['model_class'] != str(trainer.model.__class__):

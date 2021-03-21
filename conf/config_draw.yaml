@@ -1,9 +1,29 @@
 defaults:
   - hydra: custom
-  - data_path: local_path
-
+  
 description: 'Drawing'
 
-path: outputs/2021-03-12/23-48-26/
-ckpt: checkpoint-5000.pt
-dataloader: train
+#path: outputs/2021-03-12/23-48-26/
+path: checkpoints/sec/
+ckpt: sec_checkpoint-10000.pt
+dataloader: validation
+
+data:
+  train:
+    query:
+      root: /home/vladimir/Diploma/coco/val2017
+      annotation: /home/vladimir/Diploma/coco/annotations/person_keypoints_val2017.json
+
+    support:
+      root: /home/vladimir/Diploma/coco/val2017
+      annotation: /home/vladimir/Diploma/coco/annotations/person_keypoints_val2017.json
+      
+  validation:
+    query:
+      root: /home/vladimir/Diploma/coco/val2017
+      annotation: /home/vladimir/Diploma/data/gs_coco_object_presence_anns.json
+
+    support:
+      root: /home/vladimir/Diploma/coco/val2017
+      annotation: /home/vladimir/Diploma/data/gs_coco_object_presence_anns.json
+

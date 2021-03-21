@@ -15,11 +15,16 @@ import pdfkit
 mean = [0.485, 0.456, 0.406]
 std = [0.229, 0.224, 0.225]
 TEMPLATE_PATH = os.path.join(BASE_DIR, 'utils', 'template.html')
-REPORT_PATH_HTML = os.path.join(os.getcwd(), 'report.html')
-REPORT_PATH_PDF = os.path.join(os.getcwd(), 'report.pdf')
 
 
-def render_report(images_path, title=''):
+def render_report(images_path, title='', report_name=None):
+    if report_name is not None:
+        html_path = os.path.join(os.getcwd(), f'{report_name}.html')
+        pdf_path = os.path.join(os.getcwd(), f'{report_name}.pdf')
+    else:
+        html_path = os.path.join(os.getcwd(), 'report.html')
+        pdf_path = os.path.join(os.getcwd(), 'report.pdf')
+
     images = [
         os.path.join(images_path, image) for image in os.listdir(images_path)
     ]
@@ -33,10 +38,10 @@ def render_report(images_path, title=''):
         template = Template(html.read())
         rendered_template = template.render(context)
 
-    with open(REPORT_PATH_HTML, 'w') as result_html:
+    with open(html_path, 'w') as result_html:
         result_html.write(rendered_template)
 
-    pdfkit.from_file(REPORT_PATH_HTML, REPORT_PATH_PDF)
+    pdfkit.from_file(html_path, pdf_path)
 
 
 def show_annotation_by_id(ann_id, coco, path=None):

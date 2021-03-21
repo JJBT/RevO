@@ -142,3 +142,5 @@ dmypy.json
 experiments.py
 data_preprocessing/annotations/
 data_preprocessing/create_gs_anns_manually.py
+img/
+checkpoints/
