@@ -1,0 +1,65 @@
+# @package _global_
+
+coco_train:
+  bs: ${bs}
+  k_shot: ${k_shot}
+  bbox_format: ${data.bbox_format}
+  input_size: ${data.input_size}
+  transforms: ${data.train_transforms}
+  backbone_stride: ${model.backbone_stride}
+  query:
+    root: ${data.coco_train_root}
+    annotation: ${data.coco_annotation_root}/person_keypoints_val2017.json
+  support:
+    root: ${data.coco_train_root}
+    annotation: ${data.coco_annotation_root}/person_keypoints_val2017.json
+  shuffle: true
+  draw: false
+
+coco_val:
+  bs: ${bs}
+  k_shot: ${k_shot}
+  bbox_format: ${data.bbox_format}
+  input_size: ${data.input_size}
+  transforms: ${data.val_transforms}
+  backbone_stride: ${model.backbone_stride}
+  query:
+    root: ${data.coco_val_root}
+    annotation: ${data.coco_annotation_root}/person_keypoints_val2017.json
+  support:
+    root: ${data.coco_val_root}
+    annotation: ${data.coco_annotation_root}/person_keypoints_val2017.json
+  shuffle: false
+  draw: false
+
+transferring:
+  bs: ${bs}
+  k_shot: ${k_shot}
+  bbox_format: ${data.bbox_format}
+  input_size: ${data.input_size}
+  transforms: ${data.val_transforms}
+  backbone_stride: ${model.backbone_stride}
+  query:
+    root: ${data.coco_val_root}
+    annotation: ${data.custom_annotation_root}/gs_coco_object_presence_anns.json
+  support:
+    root: ${data.coco_val_root}
+    annotation: ${data.custom_annotation_root}/gs_coco_object_presence_anns.json
+  shuffle: false
+  draw: true
+
+gold_stand:
+  bs: ${bs}
+  k_shot: ${k_shot}
+  bbox_format: ${data.bbox_format}
+  input_size: ${data.input_size}
+  transforms: ${data.val_transforms}
+  backbone_stride: ${model.backbone_stride}
+  query:
+    root: ${data.coco_val_root}
+    annotation: ${data.custom_annotation_root}/q_transferring_test_anns.json
+  support:
+    root: ${data.coco_val_root}
+    annotation: ${data.custom_annotation_root}/s_transferring_test_anns.json
+  shuffle: false
+  draw: true

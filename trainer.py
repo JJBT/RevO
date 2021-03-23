@@ -1,22 +1,20 @@
 import signal
 import torch
 from factory import create_scheduler, create_callbacks, create_model, create_loss, create_optimizer, \
-    create_train_dataloader, create_val_dataloader, create_device
+    create_train_dataloader, create_val_dataloader, create_device, create_metrics
 import os
 from callbacks import Callback, StopAtStep
 import logging
-from torch.utils.tensorboard import SummaryWriter
+from collections import OrderedDict
 
 
 logger = logging.getLogger(__name__)
 
 
 class State:
-    def __init__(self, loss_update_frequency):
+    def __init__(self):
         self.step = 0
         self.last_train_loss = None
-        self.losses = []
-        self.loss_update_frequency = loss_update_frequency
 
         self.validation_metrics = dict()
 
@@ -49,9 +47,6 @@ class State:
         if loss is not None:
             self.last_train_loss = loss.item()
 
-            if self.step % self.loss_update_frequency == 0:
-                self.losses.append(self.last_train_loss)
-
     def log_train(self):
         logger.info(f'Step - {self.step} loss - {self.last_train_loss:.3f}')
 
@@ -71,15 +66,16 @@ class Trainer:
         self.train_dataloader = create_train_dataloader(cfg)
         self.train_iter = iter(self.train_dataloader)
         self.val_dataloader = create_val_dataloader(cfg)
-        self.state = State(loss_update_frequency=cfg.train.loss_update_frequency)
+        self.state = State()
         self.loss = create_loss(cfg)
         self.model = create_model(cfg)
         self.optimizer = create_optimizer(cfg, self.model)
         self.scheduler = create_scheduler(cfg, self.optimizer)
-        self.n_steps = cfg.train.n_steps
+        self.n_steps = cfg.n_steps
         self.stop_condition = StopAtStep(last_step=self.n_steps)
-        self.callbacks = []
-        self.metrics = create_callbacks(cfg, self)
+        self.callbacks = OrderedDict()
+        create_callbacks(cfg, self)
+        self.metrics = create_metrics(cfg)
         self.cfg = cfg
         self.device = create_device(cfg)
         self.stop_validation = False
@@ -162,7 +158,8 @@ class Trainer:
 
     def register_callback(self, callback: Callback):
         callback.set_trainer(self)
-        self.callbacks.append(callback)
+        callback_name = callback.__class__.__name__
+        self.callbacks[callback_name] = callback
 
     def _soft_exit(self, sig, frame):
         logger.info('Soft exit... Currently running steps will be finished')
@@ -170,15 +167,15 @@ class Trainer:
         self.stop_validation = True
 
     def _before_run_callbacks(self):
-        for callback in self.callbacks:
+        for name, callback in self.callbacks.items():
             callback.before_run(self)
 
     def _after_run_callbacks(self):
-        for callback in self.callbacks:
+        for name, callback in self.callbacks.items():
             callback.after_run(self)
 
     def _run_callbacks(self):
-        for callback in self.callbacks:
+        for name, callback in self.callbacks.items():
             freq = callback.frequency
             if freq != 0 and self.state.step % freq == 0:
                 callback(self)

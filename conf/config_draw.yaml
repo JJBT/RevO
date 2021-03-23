@@ -4,8 +4,8 @@ defaults:
 description: 'Drawing'
 
 #path: outputs/2021-03-12/23-48-26/
-path: checkpoints/sec/
-ckpt: sec_checkpoint-10000.pt
+path: checkpoints/first/
+ckpt: first_checkpoint-10000.pt
 dataloader: validation
 
 data:
@@ -21,9 +21,9 @@ data:
   validation:
     query:
       root: /home/vladimir/Diploma/coco/val2017
-      annotation: /home/vladimir/Diploma/data/gs_coco_object_presence_anns.json
+      annotation: /home/vladimir/Diploma/data/q_transferring_test_anns.json
 
     support:
       root: /home/vladimir/Diploma/coco/val2017
-      annotation: /home/vladimir/Diploma/data/gs_coco_object_presence_anns.json
+      annotation: /home/vladimir/Diploma/data/s_transferring_test_anns.json
 

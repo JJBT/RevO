@@ -2,11 +2,10 @@ import hydra
 from omegaconf import DictConfig, OmegaConf
 import os
 import logging
-import sys
 from settings import BASE_DIR
 from callbacks import LoadCheckpointCallback
 from metrics import Recall, Precision
-from pred_transforms import prediction_transforms_dict
+from utils.pred_transforms import prediction_transforms_dict
 
 logger = logging.getLogger(__name__)
 

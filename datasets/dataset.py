@@ -62,8 +62,8 @@ class ObjectPresenceDataset(Dataset):
         """
 
         Returns:
-             sample (dict): data preprocessing sample
-                sample['input'] (dict): input data preprocessing
+             sample (dict): data sample
+                sample['input'] (dict): input data
                     sample['input']['q_img'] (np.ndarray or torch.Tensor): query image
                     sample['input']['s_imgs'] (List[np.ndarray] or List[torch.Tensor]): K_SHOT support images
                     sample['input']['s_bboxes'] (List[List[float]]): bbox coordinates for support images
@@ -97,7 +97,7 @@ class ObjectPresenceDataset(Dataset):
             s_bboxes.append(s_bbox)
             s_bboxes_cats.append(s_bbox_cats)
 
-            s_path = q_coco.loadImgs(s_img_id)[0]['file_name']
+            s_path = s_coco.loadImgs(s_img_id)[0]['file_name']
             s_img = self._imread(os.path.join(self.s_root, s_path), cv2.COLOR_BGR2RGB)
             s_imgs.append(s_img)
 
