@@ -1,17 +1,17 @@
 import torch
 from torch import nn
-from .backbone import resnet_backbone
-from .transformer import SimpleTransformer
+from models.backbone import resnet_backbone
+from models.transformer import SimpleTransformer
 
 
 class PrikolNet(nn.Module):
-    def __init__(self, backbone_name, backbone_pratrained,
+    def __init__(self, backbone_name, backbone_pretrained,
                  backbone_trainable_layers, backbone_returned_layers,
                  pool_shape, embd_dim, n_head, attn_pdrop, resid_pdrop,
-                 embd_pdrop, n_layer, out_dim, device):
+                 embd_pdrop, n_layer, out_dim, device, **kwargs):
         super(PrikolNet, self).__init__()
         self.backbone_name = backbone_name
-        self.backbone_pretrained = backbone_pratrained
+        self.backbone_pretrained = backbone_pretrained
         self.backbone_trainable_layers = backbone_trainable_layers
         self.backbone_returned_layers = backbone_returned_layers
         self.embd_dim = embd_dim

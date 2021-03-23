@@ -1,0 +1,7 @@
+# @package _global_
+data:
+  coco_train_root: /home/vladimir/Diploma/coco/val2017
+  coco_val_root: /home/vladimir/Diploma/coco/val2017
+  coco_annotation_root: /home/vladimir/Diploma/coco/annotations
+
+  custom_annotation_root: /home/vladimir/Diploma/data/annotations
