@@ -29,10 +29,9 @@ class TensorBoardCallback(Callback):
         self.writer.add_image(f'gs_{trainer.state.step}', img, trainer.state.step, dataformats='HWC')
 
     def add_validation_metrics(self, trainer):
-        for metric in trainer.metrics:
-            metric_name = metric.__class__.__name__.lower()
-            metric_computed = trainer.state.get(f'last_validation_{metric_name}')
-            self.writer.add_scalar(f'vld/{metric_name}', metric_computed, trainer.state.step)
+        metrics = trainer.state.validation_metrics
+        for name, metric in metrics.items():
+            self.writer.add_scalar(name, metric, trainer.state.step)
 
     def __call__(self, trainer):
         self.writer.add_scalar('trn/loss', trainer.state.last_train_loss, trainer.state.step)

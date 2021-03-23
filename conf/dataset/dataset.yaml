@@ -1,6 +1,7 @@
 # @package _global_
 
 coco_train:
+  name: coco_train
   bs: ${bs}
   k_shot: ${k_shot}
   bbox_format: ${data.bbox_format}
@@ -17,6 +18,7 @@ coco_train:
   draw: false
 
 coco_val:
+  name: coco_val
   bs: ${bs}
   k_shot: ${k_shot}
   bbox_format: ${data.bbox_format}
@@ -33,6 +35,7 @@ coco_val:
   draw: false
 
 transferring:
+  name: transferring
   bs: ${bs}
   k_shot: ${k_shot}
   bbox_format: ${data.bbox_format}
@@ -49,6 +52,7 @@ transferring:
   draw: true
 
 gold_stand:
+  name: gold_stand
   bs: ${bs}
   k_shot: ${k_shot}
   bbox_format: ${data.bbox_format}

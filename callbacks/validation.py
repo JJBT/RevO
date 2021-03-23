@@ -2,22 +2,20 @@ from callbacks.callback import Callback
 
 
 class ValidationCallback(Callback):
-    def __init__(self, metrics, frequency, dataloader=None):
-        self._metrics = {f'last_validation_{metric.name}': metric.default_value for metric in metrics}
-        super().__init__(frequency=frequency, before=False, after=True, attributes=self._metrics)
-
-        self.dataloader = dataloader
-        self.metrics = metrics
+    def __init__(self, frequency):
+        super().__init__(frequency=frequency, before=False, after=True)
 
     def __call__(self, trainer):
-        self.computed_metrics = trainer.evaluate(dataloader=self.dataloader, metrics=self.metrics)
-        for metric_name, metric_value in self.computed_metrics.items():
-            setattr(trainer.state, f'last_validation_{metric_name}', metric_value)
-            trainer.state.add_validation_metric(name=metric_name, value=metric_value)
+        val_dataloader = trainer.val_dataloader
+        for name in val_dataloader:
+            dataloader = val_dataloader[name]['dataloader']
+            self.computed_metrics = trainer.evaluate(dataloader=dataloader, metrics=trainer.metrics)
+            for metric_name, metric_value in self.computed_metrics.items():
+                trainer.state.add_validation_metric(name=f'{name}/{metric_name}', value=metric_value)
 
         trainer.state.log_validation()
 
         if 'TensorBoardCallback' in trainer.callbacks:
             tb_callback = trainer.callbacks['TensorBoardCallback']
             tb_callback.add_validation_metrics(trainer)
-            tb_callback.draw_prediction(trainer)
+            # tb_callback.draw_prediction(trainer)

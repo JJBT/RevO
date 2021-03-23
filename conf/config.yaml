@@ -5,25 +5,24 @@ defaults:
 
 description: ''
 
-n_steps: 20
+n_steps: 70
 bs: 2
 k_shot: 3
 device: cpu
 
 metrics:
-  - type: metrics.Accuracy
   - type: metrics.Recall
   - type: metrics.Precision
 
 hooks:
-#  - type: callbacks.ValidationCallback
-#    frequency: 50000
+  - type: callbacks.ValidationCallback
+    frequency: 40
 
   - type: callbacks.LogCallback
     frequency: 20
 
-#  - type: callbacks.TensorBoardCallback
-#    frequency: 20
+  - type: callbacks.TensorBoardCallback
+    frequency: 20
 
   - type: callbacks.SaveCheckpointCallback
     frequency: 50000
@@ -80,6 +79,6 @@ data:
     - ${coco_train}
 
   validation_dataset:
-    - ${coco_val}
-    - ${gold_stand}
+#    - ${coco_val}
+#    - ${gold_stand}
     - ${transferring}
