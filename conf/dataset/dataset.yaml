@@ -24,11 +24,27 @@ fsod_train:
   transforms: ${data.train_transforms}
   backbone_stride: ${model.backbone_stride}
   query:
-    root: ${data.coco_train_root}
-    annotation: ${data.coco_annotation_root}/train.json
+    root: ${data.fsod_root}
+    annotation: ${data.fsod_annotation_root}/fsod_train.json
   support:
-    root: ${data.coco_train_root}
-    annotation: ${data.coco_annotation_root}/train.json
+    root: ${data.fsod_root}
+    annotation: ${data.fsod_annotation_root}/fsod_train.json
+  shuffle: true
+  draw: false
+
+fsod_val:
+  bs: ${bs}
+  k_shot: ${k_shot}
+  bbox_format: ${data.bbox_format}
+  input_size: ${data.input_size}
+  transforms: ${data.train_transforms}
+  backbone_stride: ${model.backbone_stride}
+  query:
+    root: ${data.fsod_root}
+    annotation: ${data.fsod_annotation_root}/fsod_test.json
+  support:
+    root: ${data.fsod_root}
+    annotation: ${data.fsod_annotation_root}/fsod_test.json
   shuffle: true
   draw: false
 

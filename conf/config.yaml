@@ -1,14 +1,14 @@
 defaults:
   - hydra: custom
-  - data_path: local
+  - data_path: theta
   - dataset: dataset
 
 description: ''
 
-n_steps: 20
+n_steps: 250
 bs: 2
 k_shot: 3
-device: cpu
+device: cuda:0
 
 metrics:
   - type: metrics.Accuracy
@@ -16,8 +16,8 @@ metrics:
   - type: metrics.Precision
 
 hooks:
-#  - type: callbacks.ValidationCallback
-#    frequency: 50000
+  - type: callbacks.ValidationCallback
+    frequency: 150
 
   - type: callbacks.LogCallback
     frequency: 20
@@ -77,9 +77,8 @@ data:
     - type: albumentations.pytorch.transforms.ToTensorV2
 
   train_dataset:
-    - ${coco_train}
+    - ${fsod_train}
 
   validation_dataset:
-    - ${coco_val}
-    - ${gold_stand}
-    - ${transferring}
+    - ${fsod_val}
+      #    - ${transferring}
