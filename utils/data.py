@@ -1,5 +1,5 @@
 from pycocotools.coco import COCO
-
+import json
 
 def get_coco_img_ids(coco):
     """
@@ -34,3 +34,8 @@ def load_coco_samples(coco):
         samples.append(sample)
 
     return samples
+
+
+def save_coco_anns(anns, filename_to_save):
+    with open(filename_to_save, 'w') as file:
+        json.dump(anns, file)

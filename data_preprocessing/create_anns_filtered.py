@@ -3,7 +3,7 @@ import pandas as pd
 import os
 import json
 
-from .utils import get_anns_info_df, save_anns
+from .utils import get_anns_info_df, save_coco_anns
 import sys
 sys.path.append('..')
 import settings
@@ -67,10 +67,10 @@ if __name__ == '__main__':
 
     os.makedirs(os.path.join(settings.BASE_DIR, 'data_preprocessing/annotations'), exist_ok=True)
     q_fname_to_save = os.path.join(settings.BASE_DIR, 'data_preprocessing/annotations/q_person_keypoints_train2017.json')
-    save_anns(q_filtered_ans, q_fname_to_save)
+    save_coco_anns(q_filtered_ans, q_fname_to_save)
 
     s_filtered_anns = filter_coco_csv(anns_df=anns_df, coco=COCO, path_to_anns=path_to_anns,
                                       thr_y_scale=0.1)
 
     s_fname_to_save = os.path.join(settings.BASE_DIR, 'data_preprocessing/annotations/s_person_keypoints_train2017.json')
-    save_anns(s_filtered_anns, s_fname_to_save)
+    save_coco_anns(s_filtered_anns, s_fname_to_save)
