@@ -16,22 +16,6 @@ coco_train:
   shuffle: true
   draw: false
 
-fsod_train:
-  bs: ${bs}
-  k_shot: ${k_shot}
-  bbox_format: ${data.bbox_format}
-  input_size: ${data.input_size}
-  transforms: ${data.train_transforms}
-  backbone_stride: ${model.backbone_stride}
-  query:
-    root: ${data.coco_train_root}
-    annotation: ${data.coco_annotation_root}/train.json
-  support:
-    root: ${data.coco_train_root}
-    annotation: ${data.coco_annotation_root}/train.json
-  shuffle: true
-  draw: false
-
 coco_val:
   bs: ${bs}
   k_shot: ${k_shot}

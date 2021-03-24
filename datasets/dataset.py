@@ -1,43 +1,18 @@
 import os
-from collections import defaultdict
-from operator import itemgetter
 import numpy as np
-import pandas as pd
 from PIL import Image
 import cv2
 import torch
 from torch.utils.data import Dataset, DataLoader
 from torch.utils.data._utils.collate import default_collate
 
-from utils.data import load_coco_samples
 
+def get_coco_img_ids(coco):
+    img_ids = set()
+    for ann in coco.loadAnns(coco.getAnnIds()):
+        img_ids.add(ann['image_id'])
 
-def get_category_based_anns(coco):
-    coco_samples = load_coco_samples(coco)
-
-    category_based_anns = []
-
-    for sample in coco_samples:
-        file_name = sample['file_name']
-        anns = sample['anns']
-
-        category_dict = defaultdict(list)
-        for ann in anns:
-            ann.pop("segmentation", None)
-            ann.pop("keypoints", None)
-
-            category_id = ann['category_id']
-            category_dict[category_id].append(ann)
-
-        for key, item in category_dict.items():
-            instance_ann = {
-                'image_id': sample['image_id'],
-                'file_name': file_name,
-                'anns': item
-                }
-            category_based_anns.append(instance_ann)
-
-    return category_based_anns
+    return list(img_ids)
 
 
 def get_object_presence_map(bboxes, shape, stride):
@@ -59,8 +34,8 @@ class ObjectPresenceDataset(Dataset):
             self,
             q_root,
             s_root,
-            q_ann_filename,
-            s_ann_filename,
+            annFileQuery,
+            annFileSupport,
             k_shot,
             q_img_size,
             backbone_stride,
@@ -77,14 +52,11 @@ class ObjectPresenceDataset(Dataset):
         self.s_transform = s_transform
 
         from pycocotools.coco import COCO
-        self.q_coco = COCO(q_ann_filename)
-        self.s_coco = COCO(s_ann_filename)
-        self.q_anns = get_category_based_anns(self.q_coco)
-        self.s_anns = get_category_based_anns(self.s_coco)
-
-        self.s_anns_categories = defaultdict(set)
-        for i, item in enumerate(self.s_anns):
-            self.s_anns_categories[item['anns'][0]['category_id']].add(i)
+        self.q_coco = COCO(annFileQuery)
+        # self.s_coco = self.q_coco
+        self.s_coco = COCO(annFileSupport)
+        self.q_ids = sorted(get_coco_img_ids(self.q_coco))
+        self.s_ids = sorted(get_coco_img_ids(self.s_coco))
 
     def __getitem__(self, idx: int):
         """
@@ -97,38 +69,47 @@ class ObjectPresenceDataset(Dataset):
                     sample['input']['s_bboxes'] (List[List[float]]): bbox coordinates for support images
                 sample['target'] (List[float]): target object presence map (vector actually)
         """
-        q_ann = self.q_anns[idx]
-        q_bbox = list(map(lambda ann: ann['bbox'], q_ann['anns']))
-        q_bbox_cat = list(map(lambda ann: ann['category_id'], q_ann['anns']))
+        q_coco = self.q_coco
+        q_img_id = self.q_ids[idx]
+        q_ann_ids = q_coco.getAnnIds(imgIds=q_img_id)
+        q_anns = q_coco.loadAnns(q_ann_ids)
+        q_bbox = list(map(lambda ann: ann['bbox'], q_anns))
+        q_bbox_cats = list(map(lambda ann: ann['category_id'], q_anns))
 
-        q_file_name = q_ann['file_name']
-        q_img = self._imread(os.path.join(self.q_root, q_file_name), cv2.COLOR_BGR2RGB)
+        q_path = q_coco.loadImgs(q_img_id)[0]['file_name']
+        q_img = self._imread(os.path.join(self.q_root, q_path), cv2.COLOR_BGR2RGB)
 
-        s_anns_idxs = np.random.choice(list(self.s_anns_categories[q_bbox_cat[0]] - {idx}), self.k_shot)
-        s_anns = itemgetter(*s_anns_idxs)(self.s_anns)
+        s_coco = self.s_coco
+        s_img_ids = [self.s_ids[idx]
+                     for idx in np.random.randint(len(self.s_ids), size=(self.k_shot,))]
+        s_anns = []
         s_bboxes = []
-        s_bbox_cats = []
+        s_bboxes_cats = []
         s_imgs = []
-        for s_ann in s_anns:
-            s_bbox = list(map(lambda ann: ann['bbox'], s_ann['anns']))
-            s_bbox_cat = list(map(lambda ann: ann['category_id'], s_ann['anns']))
+        for s_img_id in s_img_ids:
+            s_ann_id = s_coco.getAnnIds(imgIds=s_img_id)
+            s_ann = s_coco.loadAnns(s_ann_id)
 
-            s_file_name = s_ann['file_name']
-            s_img = self._imread(os.path.join(self.s_root, s_file_name), cv2.COLOR_BGR2RGB)
+            s_bbox = list(map(lambda ann: ann['bbox'], s_ann))
+            s_bbox_cats = list(map(lambda ann: ann['category_id'], s_ann))
 
-            s_bbox_cats.append(s_bbox_cat)
+            s_anns.append(s_ann)
             s_bboxes.append(s_bbox)
+            s_bboxes_cats.append(s_bbox_cats)
+
+            s_path = s_coco.loadImgs(s_img_id)[0]['file_name']
+            s_img = self._imread(os.path.join(self.s_root, s_path), cv2.COLOR_BGR2RGB)
             s_imgs.append(s_img)
 
         if self.q_transform:
-            q_transformed = self.q_transform(image=q_img, bboxes=q_bbox, bboxes_cats=q_bbox_cat)
+            q_transformed = self.q_transform(image=q_img, bboxes=q_bbox, bboxes_cats=q_bbox_cats)
             q_img = q_transformed['image']
             q_bbox = list(map(list, q_transformed['bboxes']))
 
         if self.s_transform:
             s_transformed = [
-                self.s_transform(image=s_img, bboxes=s_bbox, bboxes_cats=s_bbox_cat)
-                for s_img, s_bbox, s_bbox_cat in zip(s_imgs, s_bboxes, s_bbox_cats)
+                self.s_transform(image=s_img, bboxes=s_target, bboxes_cats=s_target_cats)
+                for s_img, s_target, s_target_cats in zip(s_imgs, s_bboxes, s_bboxes_cats)
             ]
             s_imgs = [transformed['image'] for transformed in s_transformed]
             s_bboxes = [list(map(list, transformed['bboxes'])) for transformed in s_transformed]
@@ -142,7 +123,7 @@ class ObjectPresenceDataset(Dataset):
         return sample
 
     def __len__(self) -> int:
-        return len(self.q_anns)
+        return len(self.q_ids)
 
     @staticmethod
     def _imread(filename, flags=None):
@@ -174,3 +155,7 @@ def object_presence_collate_fn(batch):
     sample_batched['target'] = target_batched
 
     return sample_batched
+
+
+
+
