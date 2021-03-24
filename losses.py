@@ -4,10 +4,10 @@ from torch.nn import functional as F
 
 
 class BinaryFocalLoss(nn.Module):
-    def __init__(self, alpha=.5, gamma=2):
+    def __init__(self, gamma=2, alpha=None):
         super(BinaryFocalLoss, self).__init__()
-        self.alpha = alpha
         self.gamma = gamma
+        self.alpha = alpha
 
     def forward(self, input, target):
         """
@@ -17,20 +17,9 @@ class BinaryFocalLoss(nn.Module):
         """
         bce = F.binary_cross_entropy_with_logits(input, target, reduction='none')
         pt = torch.exp(-bce)
-        pt, target = pt.view(-1), target.view(-1)
-        print(pt)
+        bce, pt, target = bce.view(-1), pt.view(-1), target.view(-1)
 
-        fl = self.alpha * (1 - pt) ** self.gamma * pt
-        print(fl)
-        fl = torch.where(target.bool(), self.alpha * fl, (1 - self.alpha) * fl)
-        print(fl)
+        fl = (1 - pt) ** self.gamma * bce
+        if self.alpha is not None:
+            fl = torch.where(target.bool(), self.alpha * fl, (1 - self.alpha) * fl)
         return fl.mean()
-
-
-input = torch.rand((4, 10), requires_grad=True, dtype=torch.float)
-target = torch.randint(low=0, high=2, size=(4, 10), dtype=torch.float)
-
-criterion = BinaryFocalLoss(alpha=.5, gamma=2)
-loss = criterion(input, target)
-loss.backward()
-print(loss)
