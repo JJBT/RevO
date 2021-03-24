@@ -30,15 +30,15 @@ def create_loss(cfg):
 
 
 def create_train_dataloader(cfg):
-    return create_dataloader(cfg.data.train_dataset[0])
+    dataloader = create_dataloader(cfg.data.train_dataset[0])
+    return dataloader['dataloader']
 
 
 def create_val_dataloader(cfg):
-    val_dataloaders = []
+    val_dataloaders = dict()
     for dataset_cfg in cfg.data.validation_dataset:
-        dataloader = create_dataloader(dataset_cfg)
-        val_dataloaders.append(dataloader)
-
+        dataloader_dict = create_dataloader(dataset_cfg)
+        val_dataloaders[dataloader_dict['name']] = dataloader_dict
     return val_dataloaders
 
 
@@ -59,7 +59,13 @@ def create_dataloader(cfg):
 
     dataset = ObjectPresenceDataset(**params)
     dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=cfg.shuffle, collate_fn=object_presence_collate_fn)
-    return dataloader
+    dataloader_dict = {
+        'name': cfg.name,
+        'dataloader': dataloader,
+        'draw': cfg.draw,
+    }
+
+    return dataloader_dict
 
 
 def create_metrics(cfg):

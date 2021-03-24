@@ -33,10 +33,7 @@ class State:
             setattr(self, name, value)
 
     def add_validation_metric(self, name, value):
-        if name not in self.validation_metrics:
-            self.validation_metrics[name] = []
-
-        self.validation_metrics[name].append(value)
+        self.validation_metrics[name] = value
 
     def reset(self):
         self.step = 0
@@ -52,9 +49,8 @@ class State:
 
     def log_validation(self):
         msg = f'Validation  '
-        for attr in self.__dict__:
-            if attr.startswith('last_') and attr != 'last_train_loss':
-                msg += f'{attr} - {getattr(self, attr):.4f} '
+        for name in self.validation_metrics:
+            msg += f'{name} - {self.validation_metrics[name]:.4f} '
 
         logger.info(msg)
 
@@ -65,7 +61,7 @@ class Trainer:
 
         self.train_dataloader = create_train_dataloader(cfg)
         self.train_iter = iter(self.train_dataloader)
-        self.val_dataloader = create_val_dataloader(cfg)
+        self.val_dataloader = create_val_dataloader(cfg)  # dict
         self.state = State()
         self.loss = create_loss(cfg)
         self.model = create_model(cfg)
@@ -74,8 +70,8 @@ class Trainer:
         self.n_steps = cfg.n_steps
         self.stop_condition = StopAtStep(last_step=self.n_steps)
         self.callbacks = OrderedDict()
-        create_callbacks(cfg, self)
         self.metrics = create_metrics(cfg)
+        create_callbacks(cfg, self)
         self.cfg = cfg
         self.device = create_device(cfg)
         self.stop_validation = False

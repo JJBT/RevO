@@ -39,7 +39,12 @@ class Recall(Metric):
         self._total_positives += total_positives
 
     def compute(self):
-        result = self._true_positives / self._total_positives
+        numerator = self._true_positives
+        denominator = self._total_positives
+        if denominator == 0:
+            result = 0.
+        else:
+            result = numerator / denominator
 
         return result
 
@@ -68,7 +73,12 @@ class Precision(Metric):
         self._false_postitives += false_positives
 
     def compute(self):
-        result = self._true_positives / (self._true_positives + self._false_postitives)
+        numerator = self._true_positives
+        denominator = self._true_positives + self._false_postitives
+        if denominator == 0:
+            result = 0.
+        else:
+            result = numerator / denominator
 
         return result
 
