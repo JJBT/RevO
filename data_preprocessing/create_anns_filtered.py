@@ -9,7 +9,7 @@ sys.path.append('..')
 import settings
 
 
-def filter_coco_csv(anns_df, coco, path_to_anns, thr_kps=-1, thr_x_scale=0., thr_y_scale=0.):
+def filter_coco_csv(anns_df, coco, path_to_anns, thr_x_scale=0., thr_y_scale=0.):
     # Drop invalid coco person keypoints instances
     # and filter instances by num_keypoints, bbox_x_scale and bbox_y_scale
 
@@ -20,14 +20,12 @@ def filter_coco_csv(anns_df, coco, path_to_anns, thr_kps=-1, thr_x_scale=0., thr
     anns_df = anns_df[anns_df['is_crowd'] < 1]
     anns_df = anns_df[(anns_df['bbox_x'] >= 0) & (anns_df['bbox_y'] >= 0)]
     anns_df = anns_df[(anns_df['bbox_width'] > 0) & (anns_df['bbox_height'] > 0)]
-    anns_df = anns_df[anns_df['num_keypoints'] >= 0]
     print(f'{num_anns - len(anns_df)} invalid annotation instances dropped.')
     num_anns = len(anns_df)
 
-    anns_df = anns_df[(anns_df['num_keypoints'] >= thr_kps)]
     anns_df = anns_df[(anns_df['bbox_x_scale'] > thr_x_scale) & (anns_df['bbox_y_scale'] > thr_y_scale)]
     print(f'{num_anns - len(anns_df)} annotation instances filtered:')
-    print(f'\tnum_keypoints > {thr_kps}\n\tbbox_x_scale > {thr_x_scale}\n\tbbox_y_scale > {thr_y_scale}')
+    print(f'bbox_x_scale > {thr_x_scale}\n\tbbox_y_scale > {thr_y_scale}')
     num_anns = len(anns_df)
     print(f'{num_anns} annotation instances remained.')
 

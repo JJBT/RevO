@@ -89,8 +89,6 @@ def vis_bboxes(img, bboxes):
         rect = patches.Rectangle((x, y), w, h, linewidth=1, edgecolor='r', facecolor='none')
         ax.add_patch(rect)
 
-    plt.show()
-
 
 def draw(img, output, target):
     pred = torch.nonzero(output > 0, as_tuple=False).tolist()

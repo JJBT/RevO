@@ -47,8 +47,8 @@ def create_dataloader(cfg):
     params = dict()
     params['q_root'] = cfg.query.root
     params['s_root'] = cfg.support.root
-    params['annFileQuery'] = cfg.query.annotation
-    params['annFileSupport'] = cfg.support.annotation
+    params['q_ann_filename'] = cfg.query.annotation
+    params['s_ann_filename'] = cfg.support.annotation
     params['k_shot'] = cfg.k_shot
     params['q_img_size'] = cfg.input_size
     params['backbone_stride'] = cfg.backbone_stride
