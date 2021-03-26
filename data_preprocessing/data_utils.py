@@ -5,8 +5,6 @@ import pandas as pd
 from collections import defaultdict
 from tqdm import tqdm
 import sys
-sys.path.append('..')
-import settings
 
 
 def save_anns(anns, filename_to_save):
@@ -105,7 +103,7 @@ def get_anns_info_df(coco, save=None):
     anns_info = pd.DataFrame(anns_info)
 
     if save:
-        anns_info.to_csv(os.path.join(settings.BASE_DIR, f'data/{save}.csv'))
+        anns_info.to_csv(os.path.join(BASE_DIR, f'data/{save}.csv'))
 
     return anns_info
 

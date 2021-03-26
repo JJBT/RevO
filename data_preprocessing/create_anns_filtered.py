@@ -3,7 +3,7 @@ import pandas as pd
 import os
 import json
 
-from .utils import get_anns_info_df, save_anns
+from .data_utils import get_anns_info_df, save_anns
 import sys
 sys.path.append('..')
 import settings
