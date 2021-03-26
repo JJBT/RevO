@@ -49,7 +49,7 @@ class MegapixelMNIST:
 
         def create_target(self):
             for p, y in zip(self._positions, self._targets):
-                bbox = int(p[0]), int(p[1]), int(p[0] + 28), int(p[1] + 28)
+                bbox = int(p[0]), int(p[1]), 28, 28
                 self._coco_targets.append(
                     {
                         'bbox': bbox,
