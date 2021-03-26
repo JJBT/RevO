@@ -2,9 +2,14 @@
 data:
   coco_train_root: /data/mscoco/train2017
   coco_val_root: /data/mscoco/val2017
-  coco_annotation_root: /data/mscoco/annotations
+  coco_annotations_root: /data/mscoco/annotations
 
-  custom_annotation_root: /home/objdet/FSKD/data/annotations
 
   fsod_root: /data/fsod/images
-  fsod_annotation_root: /data/fsod/annotations
+  fsod_annotations_root: /data/fsod/annotations
+
+  megapixel_mnist_train_root: /data/megapixel_mnist/train
+  megapixel_mnist_val_root: /data/megapixel_mnist/tets
+  megapixel_mnist_annotations_root: /data/megapixel_mnist/annotations
+
+  custom_annotations_root: /home/objdet/FSKD/data/annotations

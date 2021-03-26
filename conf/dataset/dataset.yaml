@@ -9,42 +9,10 @@ coco_train:
   backbone_stride: ${model.backbone_stride}
   query:
     root: ${data.coco_train_root}
-    annotation: ${data.coco_annotation_root}/person_keypoints_val2017.json
+    annotations: ${data.coco_annotations_root}/person_keypoints_val2017.json
   support:
     root: ${data.coco_train_root}
-    annotation: ${data.coco_annotation_root}/person_keypoints_val2017.json
-  shuffle: true
-  draw: false
-
-fsod_train:
-  bs: ${bs}
-  k_shot: ${k_shot}
-  bbox_format: ${data.bbox_format}
-  input_size: ${data.input_size}
-  transforms: ${data.train_transforms}
-  backbone_stride: ${model.backbone_stride}
-  query:
-    root: ${data.fsod_root}
-    annotation: ${data.fsod_annotation_root}/fsod_train.json
-  support:
-    root: ${data.fsod_root}
-    annotation: ${data.fsod_annotation_root}/fsod_train.json
-  shuffle: true
-  draw: false
-
-fsod_val:
-  bs: ${bs}
-  k_shot: ${k_shot}
-  bbox_format: ${data.bbox_format}
-  input_size: ${data.input_size}
-  transforms: ${data.train_transforms}
-  backbone_stride: ${model.backbone_stride}
-  query:
-    root: ${data.fsod_root}
-    annotation: ${data.fsod_annotation_root}/fsod_test.json
-  support:
-    root: ${data.fsod_root}
-    annotation: ${data.fsod_annotation_root}/fsod_test.json
+    annotations: ${data.coco_annotations_root}/person_keypoints_val2017.json
   shuffle: true
   draw: false
 
@@ -57,11 +25,75 @@ coco_val:
   backbone_stride: ${model.backbone_stride}
   query:
     root: ${data.coco_val_root}
-    annotation: ${data.coco_annotation_root}/person_keypoints_val2017.json
+    annotations: ${data.coco_annotations_root}/person_keypoints_val2017.json
   support:
     root: ${data.coco_val_root}
-    annotation: ${data.coco_annotation_root}/person_keypoints_val2017.json
+    annotations: ${data.coco_annotations_root}/person_keypoints_val2017.json
   shuffle: false
+  draw: false
+
+fsod_train:
+  bs: ${bs}
+  k_shot: ${k_shot}
+  bbox_format: ${data.bbox_format}
+  input_size: ${data.input_size}
+  transforms: ${data.train_transforms}
+  backbone_stride: ${model.backbone_stride}
+  query:
+    root: ${data.fsod_root}
+    annotations: ${data.fsod_annotations_root}/fsod_train.json
+  support:
+    root: ${data.fsod_root}
+    annotations: ${data.fsod_annotations_root}/fsod_train.json
+  shuffle: true
+  draw: false
+
+fsod_val:
+  bs: ${bs}
+  k_shot: ${k_shot}
+  bbox_format: ${data.bbox_format}
+  input_size: ${data.input_size}
+  transforms: ${data.train_transforms}
+  backbone_stride: ${model.backbone_stride}
+  query:
+    root: ${data.fsod_root}
+    annotations: ${data.fsod_annotations_root}/fsod_test.json
+  support:
+    root: ${data.fsod_root}
+    annotations: ${data.fsod_annotations_root}/fsod_test.json
+  shuffle: true
+  draw: false
+
+megapixel_mnist_train:
+  bs: ${bs}
+  k_shot: ${k_shot}
+  bbox_format: ${data.bbox_format}
+  input_size: ${data.input_size}
+  transforms: ${data.train_transforms}
+  backbone_stride: ${model.backbone_stride}
+  query:
+    root: ${data.megapixel_mnist_train_root}
+    annotations: ${data.megapixel_mnist_annotations_root}/train.json
+  support:
+    root: ${data.megapixel_mnist_train_root}
+    annotations: ${data.megapixel_mnist_annotations_root}/train.json
+  shuffle: true
+  draw: false
+
+megapixel_mnist_val:
+  bs: ${bs}
+  k_shot: ${k_shot}
+  bbox_format: ${data.bbox_format}
+  input_size: ${data.input_size}
+  transforms: ${data.train_transforms}
+  backbone_stride: ${model.backbone_stride}
+  query:
+    root: ${data.megapixel_mnist_val_root}
+    annotations: ${data.megapixel_mnist_annotations_root}/test.json
+  support:
+    root: ${data.megapixel_mnist_val_root}
+    annotations: ${data.megapixel_mnist_annotations_root}/test.json
+  shuffle: true
   draw: false
 
 transferring:
@@ -73,10 +105,10 @@ transferring:
   backbone_stride: ${model.backbone_stride}
   query:
     root: ${data.coco_val_root}
-    annotation: ${data.custom_annotation_root}/gs_coco_object_presence_anns.json
+    annotations: ${data.custom_annotations_root}/gs_coco_object_presence_anns.json
   support:
     root: ${data.coco_val_root}
-    annotation: ${data.custom_annotation_root}/gs_coco_object_presence_anns.json
+    annotations: ${data.custom_annotations_root}/gs_coco_object_presence_anns.json
   shuffle: false
   draw: true
 
@@ -89,9 +121,9 @@ gold_stand:
   backbone_stride: ${model.backbone_stride}
   query:
     root: ${data.coco_val_root}
-    annotation: ${data.custom_annotation_root}/q_transferring_test_anns.json
+    annotations: ${data.custom_annotations_root}/q_transferring_test_anns.json
   support:
     root: ${data.coco_val_root}
-    annotation: ${data.custom_annotation_root}/s_transferring_test_anns.json
+    annotations: ${data.custom_annotations_root}/s_transferring_test_anns.json
   shuffle: false
   draw: true
