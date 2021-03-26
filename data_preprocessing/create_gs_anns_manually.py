@@ -3,10 +3,8 @@ import os
 import json
 import cv2
 import matplotlib.pyplot as plt
-from utils import check_bbox_validity, get_anns_info_df, save_anns
-import sys
+from data_utils import check_bbox_validity, get_anns_info_df, save_anns
 
-sys.path.append('..')
 import settings
 
 

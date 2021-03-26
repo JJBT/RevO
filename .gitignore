@@ -3,6 +3,7 @@ outputs/
 
 # Datasets
 coco/
+mnist/
 
 # Configs
 
