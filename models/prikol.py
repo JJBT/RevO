@@ -80,7 +80,7 @@ class PrikolNet(nn.Module):
         """
         Collates batch from a sequences of feature vectors with varying length and creates mask for transformer
         Args:
-            q_vectors (torch.Tensor): sequence of query feature vectors (embd_dim x H_fm * W_fm)
+            q_vectors (torch.Tensor): sequence of query feature vectors (H_fm * W_fm x embd_dim)
             s_vectors_listed (List[List[List[float]]]): list of support feature vectors
 
         """
@@ -95,6 +95,7 @@ class PrikolNet(nn.Module):
             mask[i, -q_seq_len:, :s_seq_len] = 1
 
         batch[:, -q_seq_len:] = q_vectors
+        mask[:, -q_seq_len:, -q_seq_len:] = torch.diag(torch.ones(q_seq_len))
 
         return batch, mask
 
