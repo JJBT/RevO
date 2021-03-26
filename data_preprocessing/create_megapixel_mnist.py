@@ -2,10 +2,10 @@
 
 import argparse
 import json
+import os
 from os import path
-from torchvision.datasets import MNIST
 import numpy as np
-from skimage.transform import rescale
+from torchvision.datasets import MNIST
 import cv2
 from data_utils import save_anns
 
@@ -58,14 +58,18 @@ class MegapixelMNIST:
                 )
             return self._coco_targets
 
-    def __init__(self, N=5000, W=1500, H=1500, train=True, seed=42):
+    def __init__(self, root, N=5000, W=1500, H=1500, train=True, cat_ids=[], seed=42):
         # Load the images
-        mnist = MNIST(root='mnist', train=train, download=False)
+        download = not os.path.exists(root)
+        os.makedirs(root, exist_ok=True)
+        mnist = MNIST(root=root, train=train, download=download)
+
         x = mnist.data
         y = mnist.targets
         x = x.numpy()
         y = y.numpy()
         x = x.astype(np.float32) / 255.
+        self.cat_ids = cat_ids
 
         # Save the needed variables to generate high and low res samples
         self._W, self._H = W, H
@@ -77,10 +81,11 @@ class MegapixelMNIST:
         self._pos = self._get_positions(N, W, H, self._n_patches)
 
     def _get_numbers(self, N, y):
-        n_patches = np.random.randint(low=1, high=7, size=N)
+        n_patches = np.random.randint(low=1, high=5, size=N)
         nums = []
         targets = []
-        all_idxs = np.arange(len(y))
+        all_idxs = np.arange(len(y))[np.logical_or.reduce([y == cat_id for cat_id in self.cat_ids])]
+        #y = y[np.logical_or.reduce([y == cat_id for cat_id in self.cat_ids])]
         for i in range(N):
             idxs = np.random.choice(all_idxs, size=n_patches[i])
             nums.append(idxs)
@@ -131,18 +136,17 @@ class MegapixelMNIST:
 def transform_to_coco_format(dataset, root):
     images = []
     annotations = []
-    cats = [
-        {'id': 0, 'name': 'zero'},
-        {'id': 1, 'name': 'one'},
-        {'id': 2, 'name': 'two'},
-        {'id': 3, 'name': 'three'},
-        {'id': 4, 'name': 'four'},
-        {'id': 5, 'name': 'five'},
-        {'id': 6, 'name': 'six'},
-        {'id': 7, 'name': 'seven'},
-        {'id': 8, 'name': 'eight'},
-        {'id': 9, 'name': 'nine'}
-    ]
+    cats = [[{'id': 0, 'name': 'zero'},
+             {'id': 1, 'name': 'one'},
+             {'id': 2, 'name': 'two'},
+             {'id': 3, 'name': 'three'},
+             {'id': 4, 'name': 'four'},
+             {'id': 5, 'name': 'five'},
+             {'id': 6, 'name': 'six'},
+             {'id': 7, 'name': 'seven'},
+             {'id': 8, 'name': 'eight'},
+             {'id': 9, 'name': 'nine'}][cat_id] for cat_id in dataset.cat_ids]
+
     anns_counter = 0
     for i, (img, anns) in enumerate(dataset):
         filename = f'{i:05d}.png'
@@ -186,26 +190,34 @@ def save_image(img, filename_to_save):
 def main():
     n_train = 5000
     n_test = 1000
-    width = 320
-    height = 320
+    width = 112
+    height = 112
 
     training = MegapixelMNIST(
+        root='/data/mnist',
         N=n_train,
         train=True,
+        cat_ids=[0, 2, 4, 5, 7, 8, 9],
         W=width,
         H=height
     )
 
     # Write the test set
     test = MegapixelMNIST(
+        root='/data/mnist',
         N=n_test,
         train=False,
+        cat_ids=[1, 3, 6],
         W=width,
         H=height
     )
-    # train_annotation = transform_to_coco_format(training, )
-    test_annotations = transform_to_coco_format(test, 'mnist/megapixel_mnist/test')
-    save_anns(test_annotations, 'mnist/megapixel_mnist/annotations/test.json')
+    os.makedirs('/data/megapixel_mnist/train', exist_ok=True)
+    os.makedirs('/data/megapixel_mnist/test', exist_ok=True)
+    os.makedirs('/data/megapixel_mnist/annotations', exist_ok=True)
+    train_annotations = transform_to_coco_format(training, '/data/megapixel_mnist/train')
+    test_annotations = transform_to_coco_format(test, '/data/megapixel_mnist/test')
+    save_anns(train_annotations, '/data/megapixel_mnist/annotations/train.json')
+    save_anns(test_annotations, '/data/megapixel_mnist/annotations/test.json')
 
 
 if __name__ == "__main__":
