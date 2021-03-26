@@ -95,6 +95,7 @@ class PrikolNet(nn.Module):
             mask[i, -q_seq_len:, :s_seq_len] = 1
 
         batch[:, -q_seq_len:] = q_vectors
+        mask[:, -q_seq_len:, -q_seq_len:] = torch.diag(torch.ones(q_seq_len))
 
         return batch, mask
 
