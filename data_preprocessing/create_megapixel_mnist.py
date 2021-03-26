@@ -175,7 +175,7 @@ def transform_to_coco_format(dataset, root):
 
     annotaion = {
         'images': images,
-        'annotaions': annotations,
+        'annotations': annotations,
         'categories': cats
     }
     return annotaion
