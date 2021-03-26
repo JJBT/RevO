@@ -131,18 +131,18 @@ class MegapixelMNIST:
 def transform_to_coco_format(dataset, root):
     images = []
     annotations = []
-    cats = {
-        0: {'id': 0, 'name': 'zero'},
-        1: {'id': 1, 'name': 'one'},
-        2: {'id': 2, 'name': 'two'},
-        3: {'id': 3, 'name': 'three'},
-        4: {'id': 4, 'name': 'four'},
-        5: {'id': 5, 'name': 'five'},
-        6: {'id': 6, 'name': 'six'},
-        7: {'id': 7, 'name': 'seven'},
-        8: {'id': 8, 'name': 'eight'},
-        9: {'id': 9, 'name': 'nine'}
-    }
+    cats = [
+        {'id': 0, 'name': 'zero'},
+        {'id': 1, 'name': 'one'},
+        {'id': 2, 'name': 'two'},
+        {'id': 3, 'name': 'three'},
+        {'id': 4, 'name': 'four'},
+        {'id': 5, 'name': 'five'},
+        {'id': 6, 'name': 'six'},
+        {'id': 7, 'name': 'seven'},
+        {'id': 8, 'name': 'eight'},
+        {'id': 9, 'name': 'nine'}
+    ]
     anns_counter = 0
     for i, (img, anns) in enumerate(dataset):
         filename = f'{i:05d}.png'
