@@ -2,7 +2,6 @@ import hydra
 from omegaconf import DictConfig, OmegaConf
 import os
 import logging
-from callbacks import TensorBoardCallback, ValidationCallback
 
 logger = logging.getLogger(__name__)
 

@@ -6,10 +6,8 @@ from settings import BASE_DIR
 import logging
 
 
-cwd = os.getcwd()
-savedir = os.path.join(cwd, 'checkpoints')
-ckpt_filename = 'checkpoint-{}.pt'
-best_ckpt_filename = 'best-checkpoint-{}.pt'
+
+
 
 logger = logging.getLogger(__name__)
 
@@ -25,13 +23,15 @@ class SaveCheckpointCallback(Callback):
             raise ValueError('If num specified n_steps should be specified too')
 
         super().__init__(frequency=frequency, before=False, after=True)
-        os.makedirs(savedir, exist_ok=True)
+        cwd = os.getcwd()
+        self.savedir = os.path.join(cwd, 'checkpoints')
+        os.makedirs(self.savedir, exist_ok=True)
+        self.ckpt_filename = 'checkpoint-{}.pt'
 
     def __call__(self, trainer):
-        self._save_checkpoint(trainer, ckpt_filename.format(trainer.state.step))
+        self._save_checkpoint(trainer, self.ckpt_filename.format(trainer.state.step))
 
-    @staticmethod
-    def _save_checkpoint(trainer, filename):
+    def _save_checkpoint(self, trainer, filename):
         torch.save({
             'model_state_dict': get_state_dict(trainer.model),
             'optimizer_state_dict': get_state_dict(trainer.optimizer),
@@ -40,7 +40,7 @@ class SaveCheckpointCallback(Callback):
             'model_class': str(trainer.model.__class__),
             'optimizer_class': str(trainer.optimizer.__class__),
             'scheduler_class': str(trainer.scheduler.__class__)
-        }, os.path.join(savedir, filename))
+        }, os.path.join(self.savedir, filename))
 
 
 class LoadCheckpointCallback(Callback):
@@ -91,11 +91,12 @@ class SaveBestCheckpointCallback(SaveCheckpointCallback):
         self.state_metric_name = state_metric_name  # last_(train/validation)_{metric}
         self.comparison_function = comparison_function
         self.current_best = None
+        self.best_ckpt_filename = 'best-checkpoint-{}.pt'
 
     def __call__(self, trainer):
         self.state_last_metric = trainer.state.get(self.state_metric_name)
         if self.current_best is None or self.comparison_function(self.state_last_metric, self.current_best):
             self.current_best = self.state_last_metric
 
-            self._save_checkpoint(trainer, best_ckpt_filename.format(trainer.state.step))
+            self._save_checkpoint(trainer, self.best_ckpt_filename.format(trainer.state.step))
 
