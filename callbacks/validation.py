@@ -18,4 +18,4 @@ class ValidationCallback(Callback):
         if 'TensorBoardCallback' in trainer.callbacks:
             tb_callback = trainer.callbacks['TensorBoardCallback']
             tb_callback.add_validation_metrics(trainer)
-            # tb_callback.draw_prediction(trainer)
+            tb_callback.draw_prediction(trainer)

@@ -1,7 +1,15 @@
 # @package _global_
 data:
-  coco_train_root: /home/vladimir/Diploma/coco/val2017
-  coco_val_root: /home/vladimir/Diploma/coco/val2017
-  coco_annotation_root: /home/vladimir/Diploma/coco/annotations
+  coco_train_root: /home/vladimir/data/coco/val2017
+  coco_val_root: /home/vladimir/data/coco/val2017
+  coco_annotations_root: /home/vladimir/data/coco/annotations
 
-  custom_annotation_root: /home/vladimir/Diploma/data/annotations
+  fsod_root: /home/data/fsod/images
+  fsod_annotations_root: /home/vladimir/data/fsod/annotations
+
+  megapixel_mnist_train_root: /home/vladimir/data/megapixel_mnist/train
+  megapixel_mnist_val_root: /home/vladimir/data/megapixel_mnist/tets
+  megapixel_mnist_annotations_root: /home/vladimir/data/megapixel_mnist/annotations
+
+
+  custom_annotations_root: /home/vladimir/Diploma/data/annotations

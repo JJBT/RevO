@@ -2,6 +2,7 @@ import os
 from callbacks.callback import Callback
 import torch
 from torch.utils.tensorboard import SummaryWriter
+from utils.vis_utils import draw_batch
 
 
 class TensorBoardCallback(Callback):
@@ -22,11 +23,23 @@ class TensorBoardCallback(Callback):
         self.writer.close()
 
     def draw_prediction(self, trainer):
-        from PIL import Image
-        img = Image.open('/home/vladimir/Diploma/img/checkpoint-10000/img0.png')
-        import numpy as np
-        img = np.array(img)
-        self.writer.add_image(f'gs_{trainer.state.step}', img, trainer.state.step, dataformats='HWC')
+        num_batches = 3
+        for name, dataloader_dict in trainer.val_dataloader.items():
+            if not dataloader_dict['draw']:
+                continue
+            dataloader = dataloader_dict['dataloader']
+            for i, batch in enumerate(dataloader):
+                input = batch['input']
+                target = batch['target']
+                target = target.to(trainer.device)
+                output = trainer.model(input)
+                images = draw_batch(input['q_img'], output, target)
+
+                self.writer.add_images(f'{name}_{trainer.state.step}',
+                                       images, trainer.state.step, dataformats='NHWC')
+
+                if i > num_batches:
+                    break
 
     def add_validation_metrics(self, trainer):
         metrics = trainer.state.validation_metrics

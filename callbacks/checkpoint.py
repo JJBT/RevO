@@ -6,9 +6,6 @@ from settings import BASE_DIR
 import logging
 
 
-
-
-
 logger = logging.getLogger(__name__)
 
 

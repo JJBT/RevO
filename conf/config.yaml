@@ -5,7 +5,7 @@ defaults:
 
 description: ''
 
-n_steps: 70
+n_steps: 250
 bs: 2
 k_shot: 3
 device: cpu
@@ -16,7 +16,7 @@ metrics:
 
 hooks:
   - type: callbacks.ValidationCallback
-    frequency: 40
+    frequency: 30
 
   - type: callbacks.LogCallback
     frequency: 20
@@ -80,5 +80,4 @@ data:
 
   validation_dataset:
 #    - ${coco_val}
-#    - ${gold_stand}
     - ${transferring}

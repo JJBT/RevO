@@ -92,6 +92,17 @@ def vis_bboxes(img, bboxes):
     plt.show()
 
 
+def draw_batch(img, output, target):
+    n = img.shape[0]
+    images = []
+    for i in range(n):
+        image = draw(img[i], output[i], target[i])
+        image = np.array(image)
+        images.append(image)
+
+    return np.stack(images)
+
+
 def draw(img, output, target):
     pred = torch.nonzero(output > 0, as_tuple=False).tolist()
     gt = torch.nonzero(target > 0, as_tuple=False).tolist()

@@ -7,11 +7,6 @@ from tqdm import tqdm
 import sys
 
 
-def save_anns(anns, filename_to_save):
-    with open(filename_to_save, 'w') as file:
-        json.dump(anns, file)
-
-
 def check_bbox_validity(bbox, format='coco'):
     if format == 'coco':
         is_valid = True

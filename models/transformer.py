@@ -20,7 +20,6 @@ class NarrowSelfAttention(nn.Module):
         assert embd_dim % n_head == 0
 
         self.n_head = n_head
-        self.register_buffer('zero_tensor', torch.tensor(0.), persistent=False)
 
         self.key = nn.Linear(embd_dim, embd_dim)
         self.query = nn.Linear(embd_dim, embd_dim)
@@ -44,7 +43,7 @@ class NarrowSelfAttention(nn.Module):
         mask = mask.unsqueeze(1)  # (B, T, T) -> (B, 1, T, T)
         att = att.masked_fill(mask == 0, -1*INF).clone()
         att = F.softmax(att, dim=-1)
-        att = torch.where(torch.isnan(att), self.zero_tensor, att)
+
         att = self.attn_drop(att)
         y = att @ v  # (B, nh, T, T) x (B, nh, T, hs) -> (B, nh, T, hs)
         y = y.transpose(1, 2).contiguous().view(B, T, C)
@@ -76,7 +75,7 @@ class Block(nn.Module):
         x_ = self.ln1(x)
         x = x + self.attn({'x': x_, 'mask': mask})
         x = x + self.mlp(self.ln2(x))
-        return x
+        return {'x': x, 'mask': mask}
 
 
 class SimpleTransformer(nn.Module):
@@ -99,7 +98,7 @@ class SimpleTransformer(nn.Module):
     def forward(self, input):
         x, mask = input['x'], input['mask']
         x = self.drop(x)
-        x = self.blocks({'x': x, 'mask': mask})
+        x = self.blocks({'x': x, 'mask': mask})['x']
         x = self.ln_f(x)
         x = self.head(x)
 
