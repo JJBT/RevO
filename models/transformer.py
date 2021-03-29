@@ -3,19 +3,12 @@ import torch
 from torch import nn
 from torch.nn import functional as F
 
-EMBD_DIM = 2048
-N_HEAD = 4
-attn_pdrop = 0.
-resid_pdrop = 0.
-EMBD_PDROP = 0.
-N_LAYER = 1
-OUT_DIM = 1
 
 INF = 1e6
 
 
 class NarrowSelfAttention(nn.Module):
-    def __init__(self, embd_dim, n_head):
+    def __init__(self, embd_dim, n_head, attn_pdrop, resid_pdrop):
         super().__init__()
         assert embd_dim % n_head == 0
 
@@ -54,15 +47,16 @@ class NarrowSelfAttention(nn.Module):
 
 
 class Block(nn.Module):
-    def __init__(self, embd_dim, n_head, resid_pdrop):
+    def __init__(self, embd_dim, n_head, attn_pdrop, resid_pdrop):
         self.embd_dim = embd_dim
         self.n_head = n_head
+        self.attn_pdrop = attn_pdrop
         self.resid_pdrop = resid_pdrop
 
         super().__init__()
         self.ln1 = nn.LayerNorm(self.embd_dim)
         self.ln2 = nn.LayerNorm(self.embd_dim)
-        self.attn = NarrowSelfAttention(self.embd_dim, self.n_head)
+        self.attn = NarrowSelfAttention(self.embd_dim, self.n_head, self.attn_pdrop, self.resid_pdrop)
         self.mlp = nn.Sequential(
             nn.Linear(self.embd_dim, 4 * self.embd_dim),
             nn.GELU(),
@@ -72,8 +66,7 @@ class Block(nn.Module):
 
     def forward(self, input):
         x, mask = input['x'], input['mask']
-        x_ = self.ln1(x)
-        x = x + self.attn({'x': x_, 'mask': mask})
+        x = self.attn({'x': self.ln1(x), 'mask': mask}) # NO RES CONNECTION
         x = x + self.mlp(self.ln2(x))
         return {'x': x, 'mask': mask}
 
@@ -90,7 +83,7 @@ class SimpleTransformer(nn.Module):
         self.out_dim = out_dim
 
         self.drop = nn.Dropout(self.embd_pdrop)
-        self.blocks = nn.Sequential(*[Block(self.embd_dim, self.n_head, self.resid_pdrop) for _ in range(self.n_layer)])
+        self.blocks = nn.Sequential(*[Block(self.embd_dim, self.n_head, self.attn_pdrop, self.resid_pdrop) for _ in range(self.n_layer)])
 
         self.ln_f = nn.LayerNorm(self.embd_dim)
         self.head = nn.Linear(self.embd_dim, self.out_dim, bias=False)
