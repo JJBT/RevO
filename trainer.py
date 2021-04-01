@@ -2,10 +2,10 @@ import signal
 import torch
 from factory import create_scheduler, create_callbacks, create_model, create_loss, create_optimizer, \
     create_train_dataloader, create_val_dataloader, create_device, create_metrics
-import os
 from callbacks import Callback, StopAtStep
 import logging
 from collections import OrderedDict
+from itertools import chain
 
 
 logger = logging.getLogger(__name__)
@@ -59,9 +59,8 @@ class Trainer:
     def __init__(self, cfg):
         signal.signal(signal.SIGINT, self._soft_exit)
 
-        self.train_dataloader = create_train_dataloader(cfg)
-        self.train_iter = iter(self.train_dataloader)
-        self.val_dataloader = create_val_dataloader(cfg)  # dict
+        self.train_dataloader_dict = create_train_dataloader(cfg)
+        self.val_dataloader_dict = create_val_dataloader(cfg)
         self.state = State()
         self.loss = create_loss(cfg)
         self.model = create_model(cfg)
@@ -77,11 +76,17 @@ class Trainer:
         self.stop_validation = False
 
     def get_train_batch(self):
+        if not getattr(self, 'train_data_iter', False):
+            self.train_data_iter = chain.from_iterable(
+                iter(train_dataloader['dataloader']) for _, train_dataloader in self.train_dataloader_dict.items()
+            )
         try:
-            batch = next(self.train_iter)
+            batch = next(self.train_data_iter)
         except StopIteration:
-            self.train_iter = iter(self.train_dataloader)
-            batch = next(self.train_iter)
+            self.train_data_iter = chain.from_iterable(
+                iter(train_dataloader['dataloader']) for _, train_dataloader in self.train_dataloader_dict.items()
+            )
+            batch = next(self.train_data_iter)
 
         return batch
 
@@ -124,7 +129,9 @@ class Trainer:
 
     def evaluate(self, dataloader=None, metrics=None):
         if dataloader is None:
-            dataloader = self.val_dataloader
+            dataloader = chain(
+                iter(dataloader['dataloader']) for _, dataloader in self.val_dataloader_dict.items()
+            )
         if metrics is None:
             metrics = self.metrics
 

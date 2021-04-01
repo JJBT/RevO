@@ -6,7 +6,7 @@ class ValidationCallback(Callback):
         super().__init__(frequency=frequency, before=False, after=True)
 
     def __call__(self, trainer):
-        val_dataloader = trainer.val_dataloader
+        val_dataloader = trainer.val_dataloader_dict
         for name in val_dataloader:
             dataloader = val_dataloader[name]['dataloader']
             self.computed_metrics = trainer.evaluate(dataloader=dataloader, metrics=trainer.metrics)

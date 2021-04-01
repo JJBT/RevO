@@ -19,7 +19,8 @@ def run_prediction(cfg):
         filename=cfg.ckpt
     ))
     trainer._before_run_callbacks()
-    dataloader = trainer.train_dataloader if cfg.dataloader == 'train' else trainer.val_dataloader
+    dataloader_dict = trainer.train_dataloader_dict if cfg.dataloader == 'train' else trainer.val_dataloader_dict
+    dataloader = dataloader_dict['']['dataloader']
     os.makedirs(os.path.join(os.getcwd(), 'output', os.path.splitext(cfg.ckpt)[0]), exist_ok=True)
     for i, batch in enumerate(dataloader):
 

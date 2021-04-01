@@ -30,8 +30,11 @@ def create_loss(cfg):
 
 
 def create_train_dataloader(cfg):
-    dataloader = create_dataloader(cfg.data.train_dataset[0])
-    return dataloader['dataloader']
+    train_dataloaders = dict()
+    for dataset_cfg in cfg.data.train_dataset:
+        dataloader_dict = create_dataloader(dataset_cfg)
+        train_dataloaders[dataloader_dict['name']] = dataloader_dict
+    return train_dataloaders
 
 
 def create_val_dataloader(cfg):
