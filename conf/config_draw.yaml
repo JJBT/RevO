@@ -1,29 +1,30 @@
 defaults:
   - hydra: custom
-  
+
+device: cpu
+bs: 1
 description: 'Drawing'
 
-#path: outputs/2021-03-12/23-48-26/
-path: checkpoints/first/
-ckpt: first_checkpoint-10000.pt
+path: outputs/2021-04-01/12-52-58/
+ckpt: checkpoint-250.pt
 dataloader: validation
 
 data:
   train:
     query:
-      root: /home/vladimir/Diploma/coco/val2017
-      annotation: /home/vladimir/Diploma/coco/annotations/person_keypoints_val2017.json
+      root: /data/megapixel_mnist/train
+      annotations: /data/megapixel_mnist/annotations/train.json
 
     support:
-      root: /home/vladimir/Diploma/coco/val2017
-      annotation: /home/vladimir/Diploma/coco/annotations/person_keypoints_val2017.json
+      root: /data/megapixel_mnist/train
+      annotations: /data/megapixel_mnits/annotations/train.json
       
   validation:
     query:
-      root: /home/vladimir/Diploma/coco/val2017
-      annotation: /home/vladimir/Diploma/data/q_transferring_test_anns.json
+      root: /data/megapixel_mnist/train_val
+      annotations: /data/megapixel_mnist/annotations/train_val.json
 
     support:
-      root: /home/vladimir/Diploma/coco/val2017
-      annotation: /home/vladimir/Diploma/data/s_transferring_test_anns.json
+      root: /data/megapixel_mnist/train_val
+      annotations: /data/megapixel_mnist/annotations/train_val.json
 
