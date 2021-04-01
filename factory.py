@@ -84,12 +84,9 @@ def create_device(cfg):
 
 
 def create_callbacks(cfg, trainer):
-    metrics = []
     for hook in cfg.hooks:
         hook_obj = object_from_dict(hook)
         trainer.register_callback(hook_obj)
-
-    return metrics
 
 
 def create_augmentations(cfg):

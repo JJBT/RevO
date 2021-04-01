@@ -15,11 +15,11 @@ metrics:
   - type: metrics.Precision
 
 hooks:
-  - type: callbacks.ValidationCallback
-    frequency: 40
-
   - type: callbacks.LogCallback
     frequency: 20
+
+  - type: callbacks.ValidationCallback
+    frequency: 40
 
   - type: callbacks.TensorBoardCallback
     frequency: 20
