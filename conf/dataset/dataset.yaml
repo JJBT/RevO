@@ -69,7 +69,7 @@ fsod_val:
   draw: false
 
 megapixel_mnist_train:
-  name: mnist_train
+  name: megapixel_mnist_train
   bs: ${bs}
   k_shot: ${k_shot}
   bbox_format: ${data.bbox_format}
@@ -86,7 +86,7 @@ megapixel_mnist_train:
   draw: false
 
 megapixel_mnist_val:
-  name: mnist_val
+  name: megapixel_mnist_val
   bs: ${bs}
   k_shot: ${k_shot}
   bbox_format: ${data.bbox_format}
@@ -95,10 +95,27 @@ megapixel_mnist_val:
   backbone_stride: ${model.backbone_stride}
   query:
     root: ${data.megapixel_mnist_val_root}
-    annotations: ${data.megapixel_mnist_annotations_root}/test.json
+    annotations: ${data.megapixel_mnist_annotations_root}/val.json
   support:
     root: ${data.megapixel_mnist_val_root}
-    annotations: ${data.megapixel_mnist_annotations_root}/test.json
+    annotations: ${data.megapixel_mnist_annotations_root}/val.json
+  shuffle: true
+  draw: false
+
+megapixel_mnist_train_val:
+  name: megapixel_mnist_train_val
+  bs: ${bs}
+  k_shot: ${k_shot}
+  bbox_format: ${data.bbox_format}
+  input_size: ${data.input_size}
+  transforms: ${data.train_transforms}
+  backbone_stride: ${model.backbone_stride}
+  query:
+    root: ${data.megapixel_mnist_train_val_root}
+    annotations: ${data.megapixel_mnist_annotations_root}/train_val.json
+  support:
+    root: ${data.megapixel_mnist_train_val_root}
+    annotations: ${data.megapixel_mnist_annotations_root}/train_val.json
   shuffle: true
   draw: false
 

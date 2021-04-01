@@ -9,7 +9,8 @@ data:
   fsod_annotations_root: /data/fsod/annotations
 
   megapixel_mnist_train_root: /data/megapixel_mnist/train
-  megapixel_mnist_val_root: /data/megapixel_mnist/tets
+  megapixel_mnist_val_root: /data/megapixel_mnist/val
+  megapixel_mnist_train_val_root: /data/megapixel_mnist/train_val
   megapixel_mnist_annotations_root: /data/megapixel_mnist/annotations
 
   custom_annotations_root: /home/objdet/FSKD/data/annotations

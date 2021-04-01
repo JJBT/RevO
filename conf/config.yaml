@@ -1,14 +1,14 @@
 defaults:
   - hydra: custom
-  - data_path: local
+  - data_path: theta
   - dataset: dataset
 
 description: ''
 
 n_steps: 250
-bs: 2
+bs: 32
 k_shot: 3
-device: cpu
+device: cuda:0
 
 metrics:
   - type: metrics.Recall
@@ -16,10 +16,10 @@ metrics:
 
 hooks:
   - type: callbacks.ValidationCallback
-    frequency: 30
+    frequency: 40
 
   - type: callbacks.LogCallback
-    frequency: 1
+    frequency: 20
 
   - type: callbacks.TensorBoardCallback
     frequency: 20
@@ -48,6 +48,9 @@ optimizer:
   type: torch.optim.Adam
   lr: 0.0003
 loss:
+  # type: losses.BinaryFocalLoss
+  # gamma: 2
+  # alpha: 0.99
   type: torch.nn.BCEWithLogitsLoss
   pos_weight:
     type: torch.tensor
@@ -56,7 +59,7 @@ loss:
 scheduler:
   type: torch.optim.lr_scheduler.StepLR
   step_size: 1000
-  gamma: 0.9
+  gamma: 1.
 
 data:
   bbox_format: coco
@@ -80,4 +83,5 @@ data:
 
   validation_dataset:
     - ${megapixel_mnist_val}
+    - ${megapixel_mnist_train_val}
 
