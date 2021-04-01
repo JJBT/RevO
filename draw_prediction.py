@@ -19,8 +19,8 @@ def run_prediction(cfg):
         filename=cfg.ckpt
     ))
     trainer._before_run_callbacks()
-    dataloader_dict = trainer.train_dataloader_dict if cfg.dataloader == 'train' else trainer.val_dataloader_dict
-    dataloader = dataloader_dict['']['dataloader']
+    dataloader = trainer.train_dataloader if cfg.dataloader == 'train' else trainer.val_dataloader
+    dataloader = dataloader['megapixel_mnist_train_val']['dataloader']
     os.makedirs(os.path.join(os.getcwd(), 'output', os.path.splitext(cfg.ckpt)[0]), exist_ok=True)
     for i, batch in enumerate(dataloader):
 
@@ -29,10 +29,12 @@ def run_prediction(cfg):
         target_tensor = target_tensor.to(trainer.device)
         outputs = trainer.model(input_tensor)
         res_img = draw(input_tensor['q_img'][0], outputs[0], target_tensor[0])
+        print(os.getcwd())
         res_img.save(os.path.join(os.getcwd(), 'output', os.path.splitext(cfg.ckpt)[0], f'img{i}.png'))
         logger.info(i)
-
-    render_report(os.path.join(os.getcwd(), 'output', os.path.splitext(cfg.ckpt)[0]))
+        if i == 14:
+            break
+    #render_report(os.path.join(os.getcwd(), 'output', os.path.splitext(cfg.ckpt)[0]))
 
 
 @hydra.main(config_path='conf', config_name='config_draw')
