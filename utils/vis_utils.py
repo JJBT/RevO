@@ -9,7 +9,7 @@ from PIL import ImageDraw, Image
 import numpy as np
 from jinja2 import Template
 from settings import BASE_DIR
-import pdfkit
+# import pdfkit
 
 
 mean = [0.485, 0.456, 0.406]

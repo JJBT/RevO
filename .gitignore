@@ -1,13 +1,3 @@
-# Output dir
-outputs/
-
-# Datasets
-coco/
-mnist/
-
-# Configs
-conf/data_path/local.yaml
-
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
@@ -137,6 +127,16 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+# Output dir
+outputs/
+
+# Datasets
+coco/
+mnist/
+
+# Configs
+conf/data_path/local.yaml
 
 # Custom
 .idea/

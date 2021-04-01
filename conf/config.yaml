@@ -19,7 +19,7 @@ hooks:
     frequency: 30
 
   - type: callbacks.LogCallback
-    frequency: 20
+    frequency: 1
 
   - type: callbacks.TensorBoardCallback
     frequency: 20
@@ -38,9 +38,9 @@ model:
   # transformer
   embd_dim: 2048
   n_head: 4
-  attn_pdrop: 0
-  resid_pdrop: 0
-  embd_pdrop: 0
+  attn_pdrop: 0.1
+  resid_pdrop: 0.1
+  embd_pdrop: 0.1
   n_layer: 1
   out_dim: 1
 
@@ -51,7 +51,7 @@ loss:
   type: torch.nn.BCEWithLogitsLoss
   pos_weight:
     type: torch.tensor
-    data: 1
+    data: 5
 
 scheduler:
   type: torch.optim.lr_scheduler.StepLR
@@ -76,8 +76,8 @@ data:
     - type: albumentations.pytorch.transforms.ToTensorV2
 
   train_dataset:
-    - ${coco_train}
+    - ${megapixel_mnist_train}
 
   validation_dataset:
-#    - ${coco_val}
-    - ${transferring}
+    - ${megapixel_mnist_val}
+

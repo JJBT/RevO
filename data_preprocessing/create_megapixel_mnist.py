@@ -7,7 +7,7 @@ from os import path
 import numpy as np
 from torchvision.datasets import MNIST
 import cv2
-from data_utils import save_anns
+from utils.data import save_coco_anns
 
 
 class MegapixelMNIST:
@@ -58,7 +58,9 @@ class MegapixelMNIST:
                 )
             return self._coco_targets
 
-    def __init__(self, root, N=5000, W=1500, H=1500, train=True, cat_ids=[], seed=42):
+    def __init__(self, root, N=5000, W=1500, H=1500, train=True, cat_ids=None, seed=42):
+        if cat_ids is None:
+            cat_ids = []
         # Load the images
         download = not os.path.exists(root)
         os.makedirs(root, exist_ok=True)
@@ -194,7 +196,7 @@ def main():
     height = 112
 
     training = MegapixelMNIST(
-        root='/data/mnist',
+        root='D:/datasets/mnist',
         N=n_train,
         train=True,
         cat_ids=[0, 2, 4, 5, 7, 8, 9],
@@ -204,20 +206,20 @@ def main():
 
     # Write the test set
     test = MegapixelMNIST(
-        root='/data/mnist',
+        root='D:/datasets/mnist',
         N=n_test,
         train=False,
         cat_ids=[1, 3, 6],
         W=width,
         H=height
     )
-    os.makedirs('/data/megapixel_mnist/train', exist_ok=True)
-    os.makedirs('/data/megapixel_mnist/test', exist_ok=True)
-    os.makedirs('/data/megapixel_mnist/annotations', exist_ok=True)
-    train_annotations = transform_to_coco_format(training, '/data/megapixel_mnist/train')
-    test_annotations = transform_to_coco_format(test, '/data/megapixel_mnist/test')
-    save_anns(train_annotations, '/data/megapixel_mnist/annotations/train.json')
-    save_anns(test_annotations, '/data/megapixel_mnist/annotations/test.json')
+    os.makedirs('D:/datasets/megapixel_mnist/train', exist_ok=True)
+    os.makedirs('D:/datasets/megapixel_mnist/test', exist_ok=True)
+    os.makedirs('D:/datasets/megapixel_mnist/annotations', exist_ok=True)
+    train_annotations = transform_to_coco_format(training, 'D:/datasets/megapixel_mnist/train')
+    test_annotations = transform_to_coco_format(test, 'D:/datasets/megapixel_mnist/test')
+    save_coco_anns(train_annotations, 'D:/datasets/megapixel_mnist/annotations/train.json')
+    save_coco_anns(test_annotations, 'D:/datasets/megapixel_mnist/annotations/test.json')
 
 
 if __name__ == "__main__":
