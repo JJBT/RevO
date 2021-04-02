@@ -1,0 +1,15 @@
+Jinja2==2.10
+omegaconf==2.0.6
+pycocotools_windows==2.0.0.2
+tqdm==4.47.0
+pytorchtrainer==0.2.1
+opencv_python==4.5.1.48
+matplotlib==3.0.1
+albumentations==0.4.6
+pandas==1.2.1
+scipy==1.3.2
+numpy==1.17.0
+torch==1.6.0+cu101
+torchvision==0.7.0+cu101
+Pillow==8.2.0
+pycocotools==2.0.2
