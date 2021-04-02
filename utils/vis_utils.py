@@ -2,6 +2,7 @@ import cv2
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 import os
+import math
 import settings
 import torch
 from torchvision.transforms import Normalize
@@ -117,8 +118,8 @@ def draw(img, output, target):
 
     points_true = []
     points_pred = []
-    r_gt = 5
-    r_pr = 2
+    r_gt = 8
+    r_pr = 5
 
     for idx in pred:
         y, x = divmod(idx[0], 10)
@@ -145,9 +146,22 @@ def draw(img, output, target):
     img_pil = Image.fromarray(img)
     img_d = ImageDraw.Draw(img_pil)
     for p in points_true:
-        img_d.ellipse(p, outline=(255, 0, 0), width=3)
+        img_d.ellipse(p, outline=(255, 0, 0), width=4)
     for p in points_pred:
-        img_d.ellipse(p, outline=(0, 255, 0), width=3)
+        img_d.ellipse(p, fill=(0, 255, 0), outline=(0, 255, 0), width=3)
 
     return img_pil
 
+
+def image_grid(images):
+    num_images = images.shape[0]
+    grid_size = math.ceil(math.sqrt(num_images))
+    figure = plt.figure(figsize=(12, 12))
+    for i in range(num_images):
+        plt.subplot(grid_size, grid_size, i + 1)
+        plt.xticks([])
+        plt.yticks([])
+        plt.grid(False)
+        plt.imshow(images[i])
+
+    return figure

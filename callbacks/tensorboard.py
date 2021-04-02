@@ -1,8 +1,9 @@
 import os
+import numpy as np
 from itertools import chain
 from callbacks.callback import Callback
 from torch.utils.tensorboard import SummaryWriter
-from utils.vis_utils import draw_batch
+from utils.vis_utils import draw_batch, image_grid
 
 
 class TensorBoardCallback(Callback):
@@ -23,8 +24,8 @@ class TensorBoardCallback(Callback):
         self.writer.close()
 
     def draw_prediction(self, trainer):
-        num_images = 5
-        num_batches, num_remained_images = divmod(num_images, trainer.cfg.bs)
+        num_images = 8
+        num_full_batches, num_remained_images = divmod(num_images, trainer.cfg.bs)
 
         is_training = trainer.model.training
         trainer.model.eval()
@@ -32,8 +33,10 @@ class TensorBoardCallback(Callback):
                 iter(dataloader['dataloader'])
                 for _, dataloader in trainer.val_dataloader_dict.items() if dataloader['draw']
             )
+
+        all_images = []
         i = 0
-        while True:
+        while i <= num_full_batches:
             try:
                 batch = next(data_iter)
             except StopIteration:
@@ -43,18 +46,16 @@ class TensorBoardCallback(Callback):
             target = target.to(trainer.device)
             output = trainer.model(input)
             images = draw_batch(input['q_img'], output, target)
-            if i < num_batches:
-                print(images.shape)
-                self.writer.add_images(f'val_prediction_visualization',
-                                       images, i, dataformats='NHWC')
-            else:
-                if num_remained_images:
-                    print('lol')
-                    images = images[:num_remained_images]
-                    self.writer.add_images('val_prediction_visualization',
-                                           images, i, dataformats='NHWC')
-                break
+
+            if i == num_full_batches and num_remained_images:
+                images = images[:num_remained_images]
+
+            all_images.append(images)
             i += 1
+        all_images = np.concatenate(all_images)
+        figure = image_grid(all_images)
+        self.writer.add_figure('val_prediction_visualization',
+                               figure, trainer.state.step, close=True)
 
         trainer.model.train(is_training)
 
@@ -64,6 +65,7 @@ class TensorBoardCallback(Callback):
             self.writer.add_scalar(name, metric, trainer.state.step)
 
     def __call__(self, trainer):
+        print('call')
         self.writer.add_scalar('trn/loss', trainer.state.last_train_loss, trainer.state.step)
         self.writer.add_scalar('lr', trainer.optimizer.param_groups[0]['lr'], trainer.state.step)
         self.draw_prediction(trainer)
