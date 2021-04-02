@@ -24,7 +24,7 @@ class TensorBoardCallback(Callback):
         self.writer.close()
 
     def draw_prediction(self, trainer):
-        num_images = 8
+        num_images = 12
         num_full_batches, num_remained_images = divmod(num_images, trainer.cfg.bs)
         dataloder_names = [name for name, dataloader in trainer.val_dataloader_dict.items() if dataloader['draw']]
 
@@ -35,7 +35,7 @@ class TensorBoardCallback(Callback):
         all_images = []
         for name in dataloder_names:
             data_iter = iter(trainer.val_dataloader_dict[name]['dataloader'])
-            for i in range(num_full_batches):
+            for i in range(num_full_batches + 1):
                 try:
                     batch = next(data_iter)
                 except StopIteration:
@@ -54,8 +54,7 @@ class TensorBoardCallback(Callback):
 
         all_images = np.concatenate(all_images)
         all_titles = reduce(lambda x, y: x + [y] * num_images, [name for name in dataloder_names], [])
-        print(all_titles)
-        print(len(all_images))
+
         figure = image_grid(all_images, all_titles)
         self.writer.add_figure('val_prediction_visualization',
                                figure, trainer.state.step, close=True)
@@ -70,7 +69,7 @@ class TensorBoardCallback(Callback):
     def __call__(self, trainer):
         self.writer.add_scalar('trn/loss', trainer.state.last_train_loss, trainer.state.step)
         self.writer.add_scalar('lr', trainer.optimizer.param_groups[0]['lr'], trainer.state.step)
-        self.draw_prediction(trainer)
+
         if self.add_weights_and_grads:
             for name, param in trainer.model.named_parameters():
                 if 'bn' not in name:
