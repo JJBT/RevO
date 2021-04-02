@@ -1,6 +1,6 @@
 import os
 import numpy as np
-from itertools import chain
+from functools import reduce
 from callbacks.callback import Callback
 from torch.utils.tensorboard import SummaryWriter
 from utils.vis_utils import draw_batch, image_grid
@@ -26,35 +26,37 @@ class TensorBoardCallback(Callback):
     def draw_prediction(self, trainer):
         num_images = 8
         num_full_batches, num_remained_images = divmod(num_images, trainer.cfg.bs)
+        dataloder_names = [name for name, dataloader in trainer.val_dataloader_dict.items() if dataloader['draw']]
+
 
         is_training = trainer.model.training
         trainer.model.eval()
-        data_iter = chain.from_iterable(
-                iter(dataloader['dataloader'])
-                for _, dataloader in trainer.val_dataloader_dict.items() if dataloader['draw']
-            )
 
         all_images = []
-        i = 0
-        while i <= num_full_batches:
-            try:
-                batch = next(data_iter)
-            except StopIteration:
-                break
-            input = batch['input']
-            target = batch['target']
-            target = target.to(trainer.device)
-            output = trainer.model(input)
-            images = draw_batch(input['q_img'], output, target)
+        for name in dataloder_names:
+            data_iter = iter(trainer.val_dataloader_dict[name]['dataloader'])
+            for i in range(num_full_batches):
+                try:
+                    batch = next(data_iter)
+                except StopIteration:
+                    break
 
-            if i == num_full_batches and num_remained_images:
-                images = images[:num_remained_images]
+                input = batch['input']
+                target = batch['target']
+                target = target.to(trainer.device)
+                output = trainer.model(input)
+                images = draw_batch(input['q_img'], output, target)
 
-            all_images.append(images)
-            i += 1
-            
+                if i == num_full_batches and num_remained_images:
+                    images = images[:num_remained_images]
+
+                all_images.append(images)
+
         all_images = np.concatenate(all_images)
-        figure = image_grid(all_images)
+        all_titles = reduce(lambda x, y: x + [y] * num_images, [name for name in dataloder_names], [])
+        print(all_titles)
+        print(len(all_images))
+        figure = image_grid(all_images, all_titles)
         self.writer.add_figure('val_prediction_visualization',
                                figure, trainer.state.step, close=True)
 

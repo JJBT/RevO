@@ -173,4 +173,3 @@ def object_presence_collate_fn(batch):
     sample_batched['target'] = target_batched
 
     return sample_batched
-

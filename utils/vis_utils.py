@@ -153,12 +153,12 @@ def draw(img, output, target):
     return img_pil
 
 
-def image_grid(images):
+def image_grid(images, titles):
     num_images = images.shape[0]
     grid_size = math.ceil(math.sqrt(num_images))
     figure = plt.figure(figsize=(12, 12))
     for i in range(num_images):
-        plt.subplot(grid_size, grid_size, i + 1)
+        plt.subplot(grid_size, grid_size, i + 1, title=titles[i])
         plt.xticks([])
         plt.yticks([])
         plt.grid(False)

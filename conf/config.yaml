@@ -1,14 +1,14 @@
 defaults:
   - hydra: custom
-  - data_path: theta
+  - data_path: local
   - dataset: dataset
 
 description: ''
 
 n_steps: 250
-bs: 32
+bs: 2
 k_shot: 3
-device: cuda:0
+device: cpu
 
 metrics:
   - type: metrics.Recall
@@ -16,13 +16,13 @@ metrics:
 
 hooks:
   - type: callbacks.LogCallback
-    frequency: 20
+    frequency: 2
 
   - type: callbacks.ValidationCallback
     frequency: 40
 
   - type: callbacks.TensorBoardCallback
-    frequency: 20
+    frequency: 2
 
   - type: callbacks.SaveCheckpointCallback
     frequency: 50000
@@ -83,5 +83,5 @@ data:
 
   validation_dataset:
     - ${megapixel_mnist_val}
-    - ${megapixel_mnist_train_val}
+#    - ${megapixel_mnist_train_val}
 

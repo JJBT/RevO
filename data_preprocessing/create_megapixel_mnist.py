@@ -197,7 +197,7 @@ def main():
     height = 112
     
     train = MegapixelMNIST(
-        root='/data/mnist',
+        root='D:/datasets/mnist',
         N=n_train,
         train=True,
         cat_ids=[0, 2, 4, 5, 7, 8, 9],
@@ -205,7 +205,7 @@ def main():
         H=height
     )
     train_val = MegapixelMNIST(
-        root='/data/mnist',
+        root='D:/datasets/mnist',
         N=n_train_val,
         train=True,
         cat_ids=[0, 2, 4, 5, 7, 8, 9],
@@ -215,23 +215,23 @@ def main():
 
     # Write the test set
     val = MegapixelMNIST(
-        root='/data/mnist',
+        root='D:/datasets/mnist',
         N=n_val,
         train=False,
         cat_ids=[1, 3, 6],
         W=width,
         H=height
     )
-    os.makedirs('/data/megapixel_mnist/train', exist_ok=True)
-    os.makedirs('/data/megapixel_mnist/val', exist_ok=True)
-    os.makedirs('/data/megapixel_mnist/train_val', exist_ok=True)
-    os.makedirs('/data/megapixel_mnist/annotations', exist_ok=True)
-    train_annotations = transform_to_coco_format(train, '/data/megapixel_mnist/train', phase='train')
-    val_annotations = transform_to_coco_format(val, '/data/megapixel_mnist/val', phase='val')
-    train_val_annotations = transform_to_coco_format(train_val, '/data/megapixel_mnist/train_val', phase='train_val')
-    save_coco_anns(train_annotations, '/data/megapixel_mnist/annotations/train.json')
-    save_coco_anns(val_annotations, '/data/megapixel_mnist/annotations/val.json')
-    save_coco_anns(train_val_annotations, '/data/megapixel_mnist/annotations/train_val.json')
+    os.makedirs('D:/datasets/megapixel_mnist/train', exist_ok=True)
+    os.makedirs('D:/datasets/megapixel_mnist/val', exist_ok=True)
+    os.makedirs('D:/datasets/megapixel_mnist/train_val', exist_ok=True)
+    os.makedirs('D:/datasets/megapixel_mnist/annotations', exist_ok=True)
+    train_annotations = transform_to_coco_format(train, 'D:/datasets/megapixel_mnist/train', phase='train')
+    val_annotations = transform_to_coco_format(val, 'D:/datasets/megapixel_mnist/val', phase='val')
+    train_val_annotations = transform_to_coco_format(train_val, 'D:/datasets/megapixel_mnist/train_val', phase='train_val')
+    save_coco_anns(train_annotations, 'D:/datasets/megapixel_mnist/annotations/train.json')
+    save_coco_anns(val_annotations, 'D:/datasets/megapixel_mnist/annotations/val.json')
+    save_coco_anns(train_val_annotations, 'D:/datasets/megapixel_mnist/annotations/train_val.json')
 
 
 if __name__ == "__main__":

@@ -100,7 +100,7 @@ megapixel_mnist_val:
     root: ${data.megapixel_mnist_val_root}
     annotations: ${data.megapixel_mnist_annotations_root}/val.json
   shuffle: true
-  draw: false
+  draw: true
 
 megapixel_mnist_train_val:
   name: megapixel_mnist_train_val
