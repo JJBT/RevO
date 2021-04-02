@@ -52,6 +52,7 @@ class TensorBoardCallback(Callback):
 
             all_images.append(images)
             i += 1
+            
         all_images = np.concatenate(all_images)
         figure = image_grid(all_images)
         self.writer.add_figure('val_prediction_visualization',
@@ -65,7 +66,6 @@ class TensorBoardCallback(Callback):
             self.writer.add_scalar(name, metric, trainer.state.step)
 
     def __call__(self, trainer):
-        print('call')
         self.writer.add_scalar('trn/loss', trainer.state.last_train_loss, trainer.state.step)
         self.writer.add_scalar('lr', trainer.optimizer.param_groups[0]['lr'], trainer.state.step)
         self.draw_prediction(trainer)
