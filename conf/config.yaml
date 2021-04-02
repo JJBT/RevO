@@ -5,10 +5,10 @@ defaults:
 
 description: ''
 
-n_steps: 250
-bs: 2
+n_steps: 1000
+bs: 32
 k_shot: 3
-device: cpu
+device: cuda:0
 
 metrics:
   - type: metrics.Recall
@@ -16,16 +16,16 @@ metrics:
 
 hooks:
   - type: callbacks.LogCallback
-    frequency: 2
+    frequency: 20
 
   - type: callbacks.ValidationCallback
-    frequency: 40
+    frequency: 300
 
   - type: callbacks.TensorBoardCallback
-    frequency: 2
+    frequency: 20
 
   - type: callbacks.SaveCheckpointCallback
-    frequency: 50000
+    frequency: 600
 
 model:
   type: models.prikol.PrikolNet
@@ -83,5 +83,4 @@ data:
 
   validation_dataset:
     - ${megapixel_mnist_val}
-#    - ${megapixel_mnist_train_val}
-
+    - ${megapixel_mnist_train_val}
