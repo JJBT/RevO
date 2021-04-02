@@ -27,7 +27,8 @@ class TensorBoardCallback(Callback):
         num_images = 12
         num_full_batches, num_remained_images = divmod(num_images, trainer.cfg.bs)
         dataloder_names = [name for name, dataloader in trainer.val_dataloader_dict.items() if dataloader['draw']]
-
+        if not dataloder_names:
+            return
 
         is_training = trainer.model.training
         trainer.model.eval()
