@@ -19,7 +19,8 @@ def run_validation(cfg):
         filename=cfg.ckpt
     ))
     trainer._before_run_callbacks()
-    metrics = trainer.evaluate(metrics=[Recall(prediction_transform=prediction_transforms_dict['recall']),
+    dataloader = trainer.val_dataloader_dict['megapixel_mnist_train_val']['dataloader']
+    metrics = trainer.evaluate(dataloader=dataloader, metrics=[Recall(prediction_transform=prediction_transforms_dict['recall']),
                                         Precision(prediction_transform=prediction_transforms_dict['precision'])])
     logger.info(f'Validation {os.path.join(ckpt_dir, cfg.ckpt)}')
     metrics_report = ''
