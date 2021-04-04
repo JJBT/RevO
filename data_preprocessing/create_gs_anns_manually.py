@@ -3,7 +3,7 @@ import os
 import json
 import cv2
 import matplotlib.pyplot as plt
-from data_utils import check_bbox_validity, get_anns_info_df, save_anns
+from utils.data import check_bbox_validity, get_anns_info_df, save_coco_anns
 
 import settings
 
@@ -83,5 +83,5 @@ if __name__ == '__main__':
     PATH_TO_SAVE = os.path.join(settings.BASE_DIR, 'data', 'gs_coco_object_presence_anns.json')
     coco = COCO(PATH_TO_COCO)
     gs_coco = main(coco, PATH_TO_ANNS, PATH_TO_IMAGES)
-    save_anns(gs_coco, PATH_TO_SAVE)
+    save_coco_anns(gs_coco, PATH_TO_SAVE)
     print_dataset_info(PATH_TO_SAVE)

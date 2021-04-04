@@ -1,9 +1,8 @@
 from pycocotools.coco import COCO
-import pandas as pd
 import os
 import json
 
-from .utils import get_anns_info_df, save_coco_anns
+from utils.data import get_anns_info_df, save_coco_anns
 import sys
 sys.path.append('..')
 import settings

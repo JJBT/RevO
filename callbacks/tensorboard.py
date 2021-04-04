@@ -52,6 +52,7 @@ class TensorBoardCallback(Callback):
                     images = images[:num_remained_images]
 
                 all_images.append(images)
+                del batch, input, target, output
 
             all_images = np.concatenate(all_images)
             all_titles = reduce(lambda x, y: x + [y] * num_images, [name for name in dataloder_names], [])

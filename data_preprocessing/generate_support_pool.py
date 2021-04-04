@@ -1,14 +1,10 @@
 from pycocotools.coco import COCO
 import numpy as np
 import pandas as pd
-from os.path import join, isdir
-from os import mkdir, makedirs
-import sys
 import os
 import json
 import cv2
 from copy import copy
-from matplotlib import pyplot as plt
 from settings import COCO_TRAIN_PATH, COCO_KPS_TRAIN_PATH
 
 
