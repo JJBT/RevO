@@ -24,17 +24,17 @@ class TensorBoardCallback(Callback):
         self.writer.close()
 
     def draw_prediction(self, trainer):
-        num_images = 12
+        num_images = 4
         num_full_batches, num_remained_images = divmod(num_images, trainer.cfg.bs)
         dataloder_names = [name for name, dataloader in trainer.val_dataloader_dict.items() if dataloader['draw']]
         if not dataloder_names:
             return
 
-        is_training = trainer.model.training
+        previous_training_flag = trainer.model.training
         trainer.model.eval()
 
-        all_images = []
         for name in dataloder_names:
+            all_images = []
             data_iter = iter(trainer.val_dataloader_dict[name]['dataloader'])
             for i in range(num_full_batches + 1):
                 try:
@@ -53,14 +53,14 @@ class TensorBoardCallback(Callback):
 
                 all_images.append(images)
 
-        all_images = np.concatenate(all_images)
-        all_titles = reduce(lambda x, y: x + [y] * num_images, [name for name in dataloder_names], [])
+            all_images = np.concatenate(all_images)
+            all_titles = reduce(lambda x, y: x + [y] * num_images, [name for name in dataloder_names], [])
 
-        figure = image_grid(all_images, all_titles)
-        self.writer.add_figure('val_prediction_visualization',
-                               figure, trainer.state.step, close=True)
+            figure = image_grid(all_images, all_titles)
+            self.writer.add_figure(f'{name} visulization',
+                                   figure, trainer.state.step, close=True)
 
-        trainer.model.train(is_training)
+        trainer.model.train(previous_training_flag)
 
     def add_validation_metrics(self, trainer):
         metrics = trainer.state.validation_metrics

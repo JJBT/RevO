@@ -85,8 +85,8 @@ megapixel_mnist_train:
   shuffle: true
   draw: false
 
-megapixel_mnist_val:
-  name: megapixel_mnist_val
+megapixel_mnist_val_novel_cats:
+  name: megapixel_mnist_val_novel_cats
   bs: ${bs}
   k_shot: ${k_shot}
   bbox_format: ${data.bbox_format}
@@ -94,16 +94,16 @@ megapixel_mnist_val:
   transforms: ${data.train_transforms}
   backbone_stride: ${model.backbone_stride}
   query:
-    root: ${data.megapixel_mnist_val_root}
-    annotations: ${data.megapixel_mnist_annotations_root}/val.json
+    root: ${data.megapixel_mnist_val_novel_cats_root}
+    annotations: ${data.megapixel_mnist_annotations_root}/val_novel_cats.json
   support:
-    root: ${data.megapixel_mnist_val_root}
-    annotations: ${data.megapixel_mnist_annotations_root}/val.json
+    root: ${data.megapixel_mnist_val_novel_cats_root}
+    annotations: ${data.megapixel_mnist_annotations_root}/val_novel_cats.json
   shuffle: true
-  draw: false
+  draw: true
 
-megapixel_mnist_train_val:
-  name: megapixel_mnist_train_val
+megapixel_mnist_val_train_cats:
+  name: megapixel_mnist_val_train_cats
   bs: ${bs}
   k_shot: ${k_shot}
   bbox_format: ${data.bbox_format}
@@ -111,13 +111,13 @@ megapixel_mnist_train_val:
   transforms: ${data.train_transforms}
   backbone_stride: ${model.backbone_stride}
   query:
-    root: ${data.megapixel_mnist_train_val_root}
-    annotations: ${data.megapixel_mnist_annotations_root}/train_val.json
+    root: ${data.megapixel_mnist_val_train_cats_root}
+    annotations: ${data.megapixel_mnist_annotations_root}/val_train_cats.json
   support:
-    root: ${data.megapixel_mnist_train_val_root}
-    annotations: ${data.megapixel_mnist_annotations_root}/train_val.json
+    root: ${data.megapixel_mnist_val_train_cats_root}
+    annotations: ${data.megapixel_mnist_annotations_root}/val_train_cats.json
   shuffle: true
-  draw: false
+  draw: true
 
 transferring:
   name: transferring

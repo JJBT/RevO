@@ -82,5 +82,5 @@ data:
     - ${megapixel_mnist_train}
 
   validation_dataset:
-    - ${megapixel_mnist_val}
-    - ${megapixel_mnist_train_val}
+    - ${megapixel_mnist_val_novel_cats}
+    - ${megapixel_mnist_val_train_cats}

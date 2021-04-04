@@ -4,6 +4,7 @@ import argparse
 import json
 import os
 from os import path
+import shutil
 import numpy as np
 from torchvision.datasets import MNIST
 import cv2
@@ -192,6 +193,8 @@ def main(mnist_path, megapixel_mnist_path):
     n_train = 5000
     n_val = 150
     n_train_val = 150
+    train_cat_ids = [0, 2, 4, 5, 7, 8, 9]
+    novel_cat_ids = [1, 3, 6]
     width = 112
     height = 112
     
@@ -199,37 +202,40 @@ def main(mnist_path, megapixel_mnist_path):
         root=mnist_path,
         N=n_train,
         train=True,
-        cat_ids=[0, 2, 4, 5, 7, 8, 9],
+        cat_ids=train_cat_ids,
         W=width,
         H=height
     )
-    train_val = MegapixelMNIST(
+    val_train_cats = MegapixelMNIST(
         root=mnist_path,
         N=n_train_val,
         train=True,
-        cat_ids=[0, 2, 4, 5, 7, 8, 9],
+        cat_ids=train_cat_ids,
         W=width,
         H=height
     )
 
-    val = MegapixelMNIST(
+    val_novel_cats = MegapixelMNIST(
         root=mnist_path,
         N=n_val,
         train=False,
-        cat_ids=[1, 3, 6],
+        cat_ids=novel_cat_ids,
         W=width,
         H=height
     )
+
+    if os.path.exists(megapixel_mnist_path):
+        shutil.rmtree(megapixel_mnist_path)
     os.makedirs(os.path.join(megapixel_mnist_path, 'train'), exist_ok=True)
-    os.makedirs(os.path.join(megapixel_mnist_path, 'val'), exist_ok=True)
-    os.makedirs(os.path.join(megapixel_mnist_path, 'train_val'), exist_ok=True)
+    os.makedirs(os.path.join(megapixel_mnist_path, 'val_novel_cats'), exist_ok=True)
+    os.makedirs(os.path.join(megapixel_mnist_path, 'val_train_cats'), exist_ok=True)
     os.makedirs(os.path.join(megapixel_mnist_path, 'annotations'), exist_ok=True)
     train_annotations = transform_to_coco_format(train, os.path.join(megapixel_mnist_path, 'train'), phase='train')
-    val_annotations = transform_to_coco_format(val, os.path.join(megapixel_mnist_path, 'val'), phase='val')
-    train_val_annotations = transform_to_coco_format(train_val, os.path.join(megapixel_mnist_path, 'train_val'), phase='train_val')
+    val_annotations = transform_to_coco_format(val_novel_cats, os.path.join(megapixel_mnist_path, 'val_novel_cats'), phase='val_novel_cats')
+    train_val_annotations = transform_to_coco_format(val_train_cats, os.path.join(megapixel_mnist_path, 'val_train_cats'), phase='val_train_cats')
     save_coco_anns(train_annotations, os.path.join(megapixel_mnist_path, 'annotations/train.json'))
-    save_coco_anns(val_annotations, os.path.join(megapixel_mnist_path, 'annotations/val.json'))
-    save_coco_anns(train_val_annotations, os.path.join(megapixel_mnist_path, 'annotations/train_val.json'))
+    save_coco_anns(val_annotations, os.path.join(megapixel_mnist_path, 'annotations/val_novel_cats.json'))
+    save_coco_anns(train_val_annotations, os.path.join(megapixel_mnist_path, 'annotations/val_train_cats.json'))
 
 
 if __name__ == "__main__":

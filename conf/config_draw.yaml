@@ -22,9 +22,9 @@ data:
   validation:
     query:
       root: /data/megapixel_mnist/train_val
-      annotations: /data/megapixel_mnist/annotations/train_val.json
+      annotations: /data/megapixel_mnist/annotations/val_train_cats.json
 
     support:
       root: /data/megapixel_mnist/train_val
-      annotations: /data/megapixel_mnist/annotations/train_val.json
+      annotations: /data/megapixel_mnist/annotations/val_train_cats.json
 
