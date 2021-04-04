@@ -8,6 +8,8 @@ import shutil
 import numpy as np
 from torchvision.datasets import MNIST
 import cv2
+import sys
+sys.path.append('.')
 from utils.data import save_coco_anns
 
 
