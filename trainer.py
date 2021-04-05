@@ -129,7 +129,7 @@ class Trainer:
 
     def evaluate(self, dataloader=None, metrics=None):
         if dataloader is None:
-            dataloader = chain(
+            dataloader = chain.from_iterable(
                 iter(dataloader['dataloader']) for _, dataloader in self.val_dataloader_dict.items()
             )
         if metrics is None:

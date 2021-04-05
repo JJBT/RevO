@@ -1,0 +1,21 @@
+defaults:
+  - hydra: custom
+  - data_path: local
+  - dataset: dataset
+
+strategy: validation_loss
+start_lr: 1e-7
+end_lr: 100
+num_iter: auto
+
+step_mode: exp
+
+optimizer:
+  lr: ${start_lr}
+
+plot:
+  skip_start: 0
+  skip_end: 0
+  log_lr: True
+  show_lr: null
+  suggest_lr: True
