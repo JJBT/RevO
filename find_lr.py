@@ -9,6 +9,15 @@ from settings import BASE_DIR
 logger = logging.getLogger(__name__)
 
 
+def log_lr_range_test_history(num_iter, history):
+    lr_history, loss_history = history['lr'], history['loss']
+    msg = '\n'.join(
+        f'Step {i + 1}/{num_iter}\nlr: {lr}, loss: {loss:.5}'
+        for i, lr, loss in enumerate(zip(lr_history, loss_history))
+    )
+    logger.info(msg)
+
+
 class CustomTrainIter(TrainDataLoaderIter):
     def inputs_labels_from_batch(self, batch_data):
         return batch_data['input'], batch_data['target']
@@ -66,7 +75,7 @@ def find_lr(cfg):
         suggested_lr = 'unspecified'
     ax_2 = fig.add_subplot(1, 2, 2)
     ax_2.set_axis_off()
-    msg = f'Learning rate range test done.\nApproach based on {" ".join(cfg.strategy.split("_"))} used.\n' \
+    text = f'Learning rate range test done.\nApproach based on {" ".join(cfg.strategy.split("_"))} used.\n' \
           f'Experiment params:\n' \
           f'  start_lr: {cfg.start_lr}\n' \
           f'  end_lr: {cfg.end_lr}\n' \
@@ -74,8 +83,9 @@ def find_lr(cfg):
           f'  step_mode: {cfg.step_mode}\n' \
           f'Experiment result:\n' \
           f'  suggested_lr: {suggested_lr}'
-    ax_2.text(0.01, 0.99, msg, verticalalignment='top', horizontalalignment='left', fontsize=14)
+    ax_2.text(0.01, 0.99, text, verticalalignment='top', horizontalalignment='left', fontsize=14)
     plt.savefig('lr_range_test.jpg')
+    log_lr_range_test_history(num_iter, lr_finder.history)
 
 
 @hydra.main(config_path='conf', config_name='config_find_lr')
