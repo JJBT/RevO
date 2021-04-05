@@ -13,7 +13,7 @@ def log_lr_range_test_history(num_iter, history):
     lr_history, loss_history = history['lr'], history['loss']
     msg = '\n'.join(
         f'Step {i + 1}/{num_iter}\nlr: {lr}, loss: {loss:.5}'
-        for i, lr, loss in enumerate(zip(lr_history, loss_history))
+        for i, (lr, loss) in enumerate(zip(lr_history, loss_history))
     )
     logger.info(msg)
 
