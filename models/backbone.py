@@ -1,6 +1,7 @@
 from torchvision.models import resnet
 from torchvision.ops.misc import FrozenBatchNorm2d
 from torchvision.models._utils import IntermediateLayerGetter
+import torch
 
 
 def resnet_backbone(
@@ -17,7 +18,16 @@ def resnet_backbone(
             Valid values are between 0 and 5, with 5 meaning all backbone layers are trainable.
     :param returned_layer: layer of the network to return.
     """
-    backbone = resnet.__dict__[backbone_name](pretrained=pretrained, norm_layer=FrozenBatchNorm2d)
+    if isinstance(pretrained, str):
+        backbone = resnet.__dict__[backbone_name](pretrained=False)
+        state_dict = torch.load(pretrained)
+        # I WANNA KILL MY FAMILY AND MYSELF
+        state_dict.pop('fc.weight')
+        state_dict.pop('fc.bias')
+        backbone.load_state_dict(state_dict, strict=False)
+    else:
+        backbone = resnet.__dict__[backbone_name](pretrained=pretrained, norm_layer=FrozenBatchNorm2d)
+
     assert 0 <= trainable_layers <= 5
     layers_to_train = ['layer4', 'layer3', 'layer2', 'layer1', 'conv1'][:trainable_layers]
 
