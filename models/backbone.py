@@ -19,7 +19,7 @@ def resnet_backbone(
     :param returned_layer: layer of the network to return.
     """
     if isinstance(pretrained, str):
-        backbone = resnet.__dict__[backbone_name](pretrained=False)
+        backbone = resnet.__dict__[backbone_name](pretrained=False, norm_layer=FrozenBatchNorm2d)
         state_dict = torch.load(pretrained)
         # I WANNA KILL MY FAMILY AND MYSELF
         state_dict.pop('fc.weight')
