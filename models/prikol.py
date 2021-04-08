@@ -5,15 +5,9 @@ from models.transformer import SimpleTransformer
 
 
 class PrikolNet(nn.Module):
-    def __init__(self, backbone_name, backbone_pretrained,
-                 backbone_trainable_layers, backbone_returned_layers,
-                 pool_shape, embd_dim, n_head, attn_pdrop, resid_pdrop,
+    def __init__(self, backbone, pool_shape, embd_dim, n_head, attn_pdrop, resid_pdrop,
                  embd_pdrop, n_layer, out_dim, device, **kwargs):
         super(PrikolNet, self).__init__()
-        self.backbone_name = backbone_name
-        self.backbone_pretrained = backbone_pretrained
-        self.backbone_trainable_layers = backbone_trainable_layers
-        self.backbone_returned_layers = backbone_returned_layers
         self.embd_dim = embd_dim
         self.n_head = n_head
         self.attn_pdrop = attn_pdrop
@@ -23,10 +17,7 @@ class PrikolNet(nn.Module):
         self.out_dim = out_dim
         self.device = device
 
-        self.backbone = resnet_backbone(self.backbone_name,
-                                        self.backbone_pretrained,
-                                        self.backbone_trainable_layers,
-                                        self.backbone_returned_layers)
+        self.backbone = backbone
 
         self.center_pool = CenterPool(original_size=pool_shape)
         self.transformer = SimpleTransformer(self.embd_dim, self.n_head, self.attn_pdrop, self.resid_pdrop,
