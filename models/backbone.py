@@ -42,7 +42,7 @@ def resnet_backbone(
             parameter.requires_grad_(False)
 
     assert 0 < returned_layer < 5
-    return_layer = {f'layer{returned_layer}': f'layer{returned_layer}'}
+    return_layer = {f'layer{returned_layer}': 'output'}
 
     return IntermediateLayerGetter(model=backbone, return_layers=return_layer)
 

@@ -45,7 +45,7 @@ class PrikolNet(nn.Module):
 
         # Getting feature maps of query and support images
         # B x C_ x W_ x H_ -> B x C_fm x W_fm x H_fm
-        layer = 'layer' + str(self.backbone_returned_layers)
+        layer = 'output'
         q_feature_map = self.backbone(q_img)[layer]
         s_feature_maps = self.backbone(s_imgs)[layer]
 
