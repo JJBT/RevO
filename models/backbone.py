@@ -23,6 +23,8 @@ def resnet_backbone(
     """
     if norm_layer is None:
         norm_layer = nn.BatchNorm2d
+    elif norm_layer == 'frozen_bn':
+        norm_layer = FrozenBatchNorm2d
 
     if isinstance(pretrained, str):
         backbone = resnet.__dict__[name](pretrained=False, norm_layer=norm_layer)
