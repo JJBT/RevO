@@ -10,6 +10,7 @@ def resnet_backbone(
         pretrained=False,
         trainable_layers=3,
         returned_layer=4,
+        norm_layer=None,
         **kwargs
 ):
     """
@@ -20,15 +21,18 @@ def resnet_backbone(
             Valid values are between 0 and 5, with 5 meaning all backbone layers are trainable.
     :param returned_layer: layer of the network to return.
     """
+    if norm_layer is None:
+        norm_layer = nn.BatchNorm2d
+
     if isinstance(pretrained, str):
-        backbone = resnet.__dict__[name](pretrained=False, norm_layer=FrozenBatchNorm2d)
+        backbone = resnet.__dict__[name](pretrained=False, norm_layer=norm_layer)
         state_dict = torch.load(pretrained)
         # I WANNA KILL MY FAMILY AND MYSELF
         state_dict.pop('fc.weight')
         state_dict.pop('fc.bias')
         backbone.load_state_dict(state_dict, strict=False)
     else:
-        backbone = resnet.__dict__[name](pretrained=pretrained, norm_layer=FrozenBatchNorm2d)
+        backbone = resnet.__dict__[name](pretrained=pretrained, norm_layer=norm_layer)
 
     assert 0 <= trainable_layers <= 5
     layers_to_train = ['layer4', 'layer3', 'layer2', 'layer1', 'conv1'][:trainable_layers]
@@ -51,16 +55,20 @@ def resnet_backbone_zero_init(name='resnet50',
                               pretrained=False,
                               trainable_layers=3,
                               returned_layer=4,
+                              norm_layer=None,
                               **kwargs):
+    if norm_layer is None:
+        norm_layer = nn.BatchNorm2d
+
     if isinstance(pretrained, str):
-        backbone = resnet.__dict__[name](pretrained=False, norm_layer=FrozenBatchNorm2d)
+        backbone = resnet.__dict__[name](pretrained=False, norm_layer=norm_layer)
         state_dict = torch.load(pretrained)
         # I WANNA KILL MY FAMILY AND MYSELF
         state_dict.pop('fc.weight')
         state_dict.pop('fc.bias')
         backbone.load_state_dict(state_dict, strict=False)
     else:
-        backbone = resnet.__dict__[name](pretrained=pretrained, norm_layer=FrozenBatchNorm2d)
+        backbone = resnet.__dict__[name](pretrained=pretrained, norm_layer=norm_layer)
 
     assert 0 <= trainable_layers <= 5
     layers_to_train = ['layer4', 'layer3', 'layer2', 'layer1', 'conv1'][:trainable_layers]
