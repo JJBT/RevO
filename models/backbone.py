@@ -84,12 +84,13 @@ def resnet_backbone_zero_init(name='resnet50',
             nn.init.constant_(m.weight, 1)
             nn.init.constant_(m.bias, 0)
 
+    backbone.bn1.track_running_stats = False
     # freeze layers
     for name, parameter in backbone.named_parameters():
         if all([not name.startswith(layer) for layer in layers_to_train]):
             parameter.requires_grad_(False)
 
     assert 0 < returned_layer < 5
-    return_layer = {f'layer{returned_layer}': f'layer{returned_layer}'}
+    return_layer = {f'layer{returned_layer}': 'output'}
 
     return IntermediateLayerGetter(model=backbone, return_layers=return_layer)
