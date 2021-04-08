@@ -2,16 +2,18 @@ from torchvision.models import resnet
 from torchvision.ops.misc import FrozenBatchNorm2d
 from torchvision.models._utils import IntermediateLayerGetter
 import torch
+from torch import nn
 
 
 def resnet_backbone(
-        backbone_name='resnet50',
+        name='resnet50',
         pretrained=False,
         trainable_layers=3,
-        returned_layer=4
+        returned_layer=4,
+        **kwargs
 ):
     """
-    :param backbone_name: resnet architecture. Possible values are 'ResNet', 'resnet18', 'resnet34', 'resnet50',
+    :param name: resnet architecture. Possible values are 'ResNet', 'resnet18', 'resnet34', 'resnet50',
              'resnet101', 'resnet152', 'resnext50_32x4d', 'resnext101_32x8d', 'wide_resnet50_2', 'wide_resnet101_2'
     :param pretrained: If True, returns a model with backbone pre-trained on Imagenet
     :param trainable_layers: number of trainable (not frozen) resnet layers starting from final block.
@@ -19,14 +21,14 @@ def resnet_backbone(
     :param returned_layer: layer of the network to return.
     """
     if isinstance(pretrained, str):
-        backbone = resnet.__dict__[backbone_name](pretrained=False, norm_layer=FrozenBatchNorm2d)
+        backbone = resnet.__dict__[name](pretrained=False, norm_layer=FrozenBatchNorm2d)
         state_dict = torch.load(pretrained)
         # I WANNA KILL MY FAMILY AND MYSELF
         state_dict.pop('fc.weight')
         state_dict.pop('fc.bias')
         backbone.load_state_dict(state_dict, strict=False)
     else:
-        backbone = resnet.__dict__[backbone_name](pretrained=pretrained, norm_layer=FrozenBatchNorm2d)
+        backbone = resnet.__dict__[name](pretrained=pretrained, norm_layer=FrozenBatchNorm2d)
 
     assert 0 <= trainable_layers <= 5
     layers_to_train = ['layer4', 'layer3', 'layer2', 'layer1', 'conv1'][:trainable_layers]

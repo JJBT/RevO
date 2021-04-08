@@ -7,10 +7,16 @@ from datasets.dataset import ObjectPresenceDataset, object_presence_collate_fn
 from utils.pred_transforms import prediction_transforms_dict
 
 
+def create_backbone(cfg):
+    backbone = object_from_dict(cfg)
+    return backbone
+
+
 def create_model(cfg):
     device = create_device(cfg)
     input_size = cfg.data.input_size
-    model = object_from_dict(cfg.model, pool_shape=input_size, device=device)
+    backbone = create_backbone(cfg.model.backbone)
+    model = object_from_dict(cfg.model, backbone=backbone, pool_shape=input_size, device=device)
     return model.to(device)
 
 

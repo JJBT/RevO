@@ -6,9 +6,9 @@ defaults:
 description: ''
 
 n_steps: 1000
-bs: 32
+bs: 2
 k_shot: 3
-device: cuda:0
+device: cpu
 
 metrics:
   - type: metrics.Recall
@@ -29,12 +29,6 @@ hooks:
 
 model:
   type: models.prikol.PrikolNet
-  # backbone
-  backbone_name: resnet50
-  backbone_pretrained: true
-  backbone_trainable_layers: 3
-  backbone_returned_layers: 4
-  backbone_stride: 32
   # transformer
   embd_dim: 2048
   n_head: 4
@@ -43,6 +37,14 @@ model:
   embd_pdrop: 0.1
   n_layer: 1
   out_dim: 1
+  backbone:
+    type: models.backbone.resnet_backbone
+    name: resnet50
+    #  pretrained: true
+    pretrained: /home/vladimir/Diploma/checkpoints/resnet50_mpmnist.pt
+    trainable_layers: 3
+    returned_layer: 4
+    stride: 32
 
 optimizer:
   type: torch.optim.Adam

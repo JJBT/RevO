@@ -7,7 +7,7 @@ coco_train:
   bbox_format: ${data.bbox_format}
   input_size: ${data.input_size}
   transforms: ${data.train_transforms}
-  backbone_stride: ${model.backbone_stride}
+  backbone_stride: ${model.backbone.stride}
   query:
     root: ${data.coco_train_root}
     annotations: ${data.coco_annotations_root}/person_keypoints_val2017.json
@@ -24,7 +24,7 @@ coco_val:
   bbox_format: ${data.bbox_format}
   input_size: ${data.input_size}
   transforms: ${data.val_transforms}
-  backbone_stride: ${model.backbone_stride}
+  backbone_stride: ${model.backbone.stride}
   query:
     root: ${data.coco_val_root}
     annotations: ${data.coco_annotations_root}/person_keypoints_val2017.json
@@ -41,7 +41,7 @@ fsod_train:
   bbox_format: ${data.bbox_format}
   input_size: ${data.input_size}
   transforms: ${data.train_transforms}
-  backbone_stride: ${model.backbone_stride}
+  backbone_stride: ${model.backbone.stride}
   query:
     root: ${data.fsod_root}
     annotations: ${data.fsod_annotations_root}/fsod_train.json
@@ -58,7 +58,7 @@ fsod_val:
   bbox_format: ${data.bbox_format}
   input_size: ${data.input_size}
   transforms: ${data.train_transforms}
-  backbone_stride: ${model.backbone_stride}
+  backbone_stride: ${model.backbone.stride}
   query:
     root: ${data.fsod_root}
     annotations: ${data.fsod_annotations_root}/fsod_test.json
@@ -75,7 +75,7 @@ megapixel_mnist_train:
   bbox_format: ${data.bbox_format}
   input_size: ${data.input_size}
   transforms: ${data.train_transforms}
-  backbone_stride: ${model.backbone_stride}
+  backbone_stride: ${model.backbone.stride}
   query:
     root: ${data.megapixel_mnist_train_root}
     annotations: ${data.megapixel_mnist_annotations_root}/train.json
@@ -92,7 +92,7 @@ megapixel_mnist_val_novel_cats:
   bbox_format: ${data.bbox_format}
   input_size: ${data.input_size}
   transforms: ${data.train_transforms}
-  backbone_stride: ${model.backbone_stride}
+  backbone_stride: ${model.backbone.stride}
   query:
     root: ${data.megapixel_mnist_val_novel_cats_root}
     annotations: ${data.megapixel_mnist_annotations_root}/val_novel_cats.json
@@ -109,7 +109,7 @@ megapixel_mnist_val_train_cats:
   bbox_format: ${data.bbox_format}
   input_size: ${data.input_size}
   transforms: ${data.train_transforms}
-  backbone_stride: ${model.backbone_stride}
+  backbone_stride: ${model.backbone.stride}
   query:
     root: ${data.megapixel_mnist_val_train_cats_root}
     annotations: ${data.megapixel_mnist_annotations_root}/val_train_cats.json
@@ -126,7 +126,7 @@ transferring:
   bbox_format: ${data.bbox_format}
   input_size: ${data.input_size}
   transforms: ${data.val_transforms}
-  backbone_stride: ${model.backbone_stride}
+  backbone_stride: ${model.backbone.stride}
   query:
     root: ${data.coco_val_root}
     annotations: ${data.custom_annotations_root}/gs_coco_object_presence_anns.json
@@ -143,7 +143,7 @@ gold_stand:
   bbox_format: ${data.bbox_format}
   input_size: ${data.input_size}
   transforms: ${data.val_transforms}
-  backbone_stride: ${model.backbone_stride}
+  backbone_stride: ${model.backbone.stride}
   query:
     root: ${data.coco_val_root}
     annotations: ${data.custom_annotations_root}/q_transferring_test_anns.json
