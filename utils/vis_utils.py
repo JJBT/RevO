@@ -105,8 +105,8 @@ def draw_batch(img, output, target):
 
 
 def draw(img, output, target):
-    pred = torch.nonzero(output > 0, as_tuple=False).tolist()
-    gt = torch.nonzero(target > 0, as_tuple=False).tolist()
+    pred_idxs = torch.nonzero(output > 0, as_tuple=False).tolist()
+    gt_idxs = torch.nonzero(target > 0, as_tuple=False).tolist()
     inv_normalize = Normalize(
         mean=[-m / s for m, s in zip(mean, std)],
         std=[1 / s for s in std]
@@ -116,28 +116,32 @@ def draw(img, output, target):
     img = img.permute(1, 2, 0).numpy()
     img = (img * 255 / np.max(img)).astype('uint8')
 
+    img_size = img.shape[-2]
+    grid_size = int(math.sqrt(len(target)))
+    cell_size = img_size // grid_size
+
     points_true = []
     points_pred = []
     r_gt = 8
     r_pr = 5
 
-    for idx in pred:
-        y, x = divmod(idx[0], 10)
-        y *= 32
-        x *= 32
-        y += 16
-        x += 16
+    for idx in pred_idxs:
+        y, x = divmod(idx[0], grid_size)
+        y *= cell_size
+        x *= cell_size
+        y += cell_size // 2
+        x += cell_size // 2
         p = list()
         p.append((x-r_pr, y-r_pr))
         p.append((x+r_pr, y+r_pr))
         points_pred.append(p)
 
-    for idx in gt:
-        y, x = divmod(idx[0], 10)
-        y *= 32
-        x *= 32
-        y += 16
-        x += 16
+    for idx in gt_idxs:
+        y, x = divmod(idx[0], grid_size)
+        y *= cell_size
+        x *= cell_size
+        y += cell_size // 2
+        x += cell_size // 2
         p = list()
         p.append((x - r_gt, y - r_gt))
         p.append((x + r_gt, y + r_gt))
