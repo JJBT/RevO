@@ -3,6 +3,7 @@ import numpy as np
 from functools import reduce
 from callbacks.callback import Callback
 from torch.utils.tensorboard import SummaryWriter
+from torch import nn
 from utils.vis_utils import draw_batch, image_grid
 
 
@@ -55,9 +56,7 @@ class TensorBoardCallback(Callback):
                 del batch, input, target, output
 
             all_images = np.concatenate(all_images)
-            all_titles = reduce(lambda x, y: x + [y] * num_images, [name for name in dataloder_names], [])
-
-            figure = image_grid(all_images, all_titles)
+            figure = image_grid(all_images)
             self.writer.add_figure(f'{name} visulization',
                                    figure, trainer.state.step, close=True)
 

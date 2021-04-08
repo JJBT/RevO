@@ -153,8 +153,11 @@ def draw(img, output, target):
     return img_pil
 
 
-def image_grid(images, titles):
+def image_grid(images, titles=None):
     num_images = images.shape[0]
+    if titles is None:
+        titles = [''] * num_images
+
     grid_size = math.ceil(math.sqrt(num_images))
     figure = plt.figure(figsize=(14, 14))
     for i in range(num_images):
