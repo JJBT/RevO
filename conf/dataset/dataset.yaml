@@ -119,36 +119,53 @@ megapixel_mnist_val_train_cats:
   shuffle: true
   draw: true
 
-transferring:
-  name: transferring
+megapixel_mnist_grided_train:
+  name: megapixel_mnist_grided_train
   bs: ${bs}
   k_shot: ${k_shot}
   bbox_format: ${data.bbox_format}
   input_size: ${data.input_size}
-  transforms: ${data.val_transforms}
+  transforms: ${data.train_transforms}
   backbone_stride: ${model.backbone.stride}
   query:
-    root: ${data.coco_val_root}
-    annotations: ${data.custom_annotations_root}/gs_coco_object_presence_anns.json
+    root: ${data.megapixel_mnist_grided_train_root}
+    annotations: ${data.megapixel_mnist_grided_annotations_root}/train.json
   support:
-    root: ${data.coco_val_root}
-    annotations: ${data.custom_annotations_root}/gs_coco_object_presence_anns.json
-  shuffle: false
+    root: ${data.megapixel_mnist_grided_train_root}
+    annotations: ${data.megapixel_mnist_grided_annotations_root}/train.json
+  shuffle: true
+  draw: false
+
+megapixel_mnist_grided_val_novel_cats:
+  name: megapixel_mnist_grided_val_novel_cats
+  bs: ${bs}
+  k_shot: ${k_shot}
+  bbox_format: ${data.bbox_format}
+  input_size: ${data.input_size}
+  transforms: ${data.train_transforms}
+  backbone_stride: ${model.backbone.stride}
+  query:
+    root: ${data.megapixel_mnist_grided_val_novel_cats_root}
+    annotations: ${data.megapixel_mnist_grided_annotations_root}/val_novel_cats.json
+  support:
+    root: ${data.megapixel_mnist_grided_val_novel_cats_root}
+    annotations: ${data.megapixel_mnist_grided_annotations_root}/val_novel_cats.json
+  shuffle: true
   draw: true
 
-gold_stand:
-  name: gold_stand
+megapixel_mnist_grided_val_train_cats:
+  name: megapixel_mnist_grided_val_train_cats
   bs: ${bs}
   k_shot: ${k_shot}
   bbox_format: ${data.bbox_format}
   input_size: ${data.input_size}
-  transforms: ${data.val_transforms}
+  transforms: ${data.train_transforms}
   backbone_stride: ${model.backbone.stride}
   query:
-    root: ${data.coco_val_root}
-    annotations: ${data.custom_annotations_root}/q_transferring_test_anns.json
+    root: ${data.megapixel_mnist_grided_val_train_cats_root}
+    annotations: ${data.megapixel_mnist_grided_annotations_root}/val_train_cats.json
   support:
-    root: ${data.coco_val_root}
-    annotations: ${data.custom_annotations_root}/s_transferring_test_anns.json
-  shuffle: false
+    root: ${data.megapixel_mnist_grided_val_train_grided_cats_root}
+    annotations: ${data.megapixel_mnist_grided_annotations_root}/val_train_cats.json
+  shuffle: true
   draw: true
