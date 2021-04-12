@@ -45,12 +45,12 @@ class State:
             self.last_train_loss = loss.item()
 
     def log_train(self):
-        logger.info(f'Step - {self.step} loss - {self.last_train_loss:.3f}')
+        logger.info(f'Step - {self.step} loss - {self.last_train_loss:.7f}')
 
     def log_validation(self):
         msg = f'Validation  '
         for name in self.validation_metrics:
-            msg += f'{name} - {self.validation_metrics[name]:.4f} '
+            msg += f'{name} - {self.validation_metrics[name]:.7f} '
 
         logger.info(msg)
 
