@@ -134,7 +134,7 @@ class MegapixelMNIST:
                     target.append(
                         {
                             'bbox': bbox,
-                            'category_id': bbox_cat
+                            'category_id': bbox_cat[0]
                         }
                     )
                 return target
@@ -252,7 +252,7 @@ def transform_to_coco_format(dataset, root, phase=''):
             }
             anns_counter += 1
             annotations.append(ann_dict)
-        plt.show()
+
     annotaion = {
         'images': images,
         'annotations': annotations,
