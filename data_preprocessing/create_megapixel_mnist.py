@@ -5,136 +5,211 @@ import json
 import os
 from os import path
 import shutil
+
+import matplotlib.pyplot as plt
 import numpy as np
 from torchvision.datasets import MNIST
 import cv2
 import sys
+import albumentations as albu
+from albumentations.core.transforms_interface import DualTransform
+from albumentations.augmentations import functional as F
 sys.path.append('.')
 from utils.data import save_coco_anns
 
+class RandomResize(DualTransform):
+    def __init__(self, h_resize_limit=1., w_resize_limit=1., interpolation=cv2.INTER_LINEAR, always_apply=False, p=1):
+        super(RandomResize, self).__init__(always_apply, p)
+        if isinstance(h_resize_limit, float):
+            assert 0. <= abs(h_resize_limit) <= 1.
+            self.h_resize_limit = 1 - abs(h_resize_limit), 1 + abs(h_resize_limit)
+
+        elif isinstance(h_resize_limit, tuple) or isinstance(h_resize_limit, list):
+            assert all(list(map(lambda x: isinstance(x, float), h_resize_limit)))
+            assert all(list(map(lambda x: 0. <= abs(x) <= 1., h_resize_limit)))
+            assert h_resize_limit[0] < h_resize_limit[1]
+            self.h_resize_limit = h_resize_limit
+        else:
+            raise ValueError
+
+        if isinstance(w_resize_limit, float):
+            assert 0. <= abs(w_resize_limit) <= 1.
+            self.w_resize_limit = 1 - abs(w_resize_limit), 1 + abs(w_resize_limit)
+
+        elif isinstance(w_resize_limit, tuple) or isinstance(w_resize_limit, list):
+            assert all(list(map(lambda x: isinstance(x, float), w_resize_limit)))
+            assert all(list(map(lambda x: 0. <= abs(x) <= 1., w_resize_limit)))
+            assert w_resize_limit[0] < w_resize_limit[1]
+            self.w_resize_limit = w_resize_limit
+        else:
+            raise ValueError
+
+        self.interpolation = interpolation
+
+    def get_params(self):
+        return {
+            'h_scale': np.random.uniform(self.h_resize_limit[0], self.h_resize_limit[1]),
+            'w_scale': np.random.uniform(self.w_resize_limit[0], self.w_resize_limit[1])
+        }
+
+    def apply(self, img, interpolation=cv2.INTER_LINEAR, **params):
+        h, w = int(params['h_scale'] * img.shape[0]), int(params['w_scale'] * img.shape[1])
+        return F.resize(img, height=h, width=w, interpolation=interpolation)
+
+    def apply_to_bbox(self, bbox, **params):
+        return bbox
+
+    def get_transform_init_args_names(self):
+        return ("h_resize_limit", "w_resize_limit", "interpolation")
+
 
 class MegapixelMNIST:
-    """Randomly position several numbers in an image either downsampled or full
-    scale and compare the performance of attention sampling.
-    Put 5 MNIST images in one large image. Three of them are of the target
-    class and the rest are random.
-    """
-
     class Sample:
-        def __init__(self, dataset, idxs, positions, targets):
-            self._dataset = dataset
-            self._idxs = idxs
-            self._positions = positions
-            self._targets = targets
-            self._coco_targets = []
+        def __init__(self, dataset, idxs):
+            self.dataset = dataset
+            self.idxs = idxs
 
-            self._high = None
+            self.size = self.dataset.H, self.dataset.W
+            self.n_channels = 3 if self.dataset.is_colourful else 1
 
-        def _get_slice(self, pos, s=28, scale=1, offset=(0, 0)):
-            pos = (int(pos[0] * scale - offset[0]), int(pos[1] * scale - offset[1]))
-            s = int(s)
+        def _get_slice(self, x_l, y_t, w, h):
             return (
-                slice(max(0, pos[0]), max(0, pos[0] + s)),
-                slice(max(0, pos[1]), max(0, pos[1] + s)),
-                0
+                slice(max(0, y_t), max(0, y_t + h)),
+                slice(max(0, x_l), max(0, x_l + w)),
+                slice(None)
             )
 
-        def high(self):
-            if self._high is None:
-                size = self._dataset._H, self._dataset._W
-                high = np.zeros(size + (1,), dtype=np.uint8)
-                for p, i in zip(self._positions, self._idxs):
-                    high[self._get_slice(p)] = \
-                        255 * self._dataset._images[i]
+        def _locate_pathces(self, idxs):
+            def valid(bbox):
+                x, y, w, h = bbox
 
-                self._high = high
-            return self._high
+                if x < 0 or x + w > self.dataset.W:
+                    return False
+                if y < 0 or y + h > self.dataset.H:
+                    return False
+                return True
 
-        def create_target(self):
-            for p, y in zip(self._positions, self._targets):
-                bbox = int(p[1]), int(p[0]), 28, 28
-                self._coco_targets.append(
-                    {
-                        'bbox': bbox,
-                        'category_id': int(y)
-                    }
-                )
-            return self._coco_targets
+            def overlap(bboxes, bbox):
+                # bboxes in coco format [x_l, y_t, w, h]
+                if len(bboxes) == 0:
+                    return False
 
-    def __init__(self, root, N=5000, W=1500, H=1500, train=True, cat_ids=None, seed=42):
-        if cat_ids is None:
-            cat_ids = []
-        # Load the images
+                coords = np.asarray(bboxes)[:, :2]
+                coord = np.asarray(bbox)[np.newaxis, :2]
+                distances = (coords - coord)
+
+                sizes = np.asarray(bboxes)[:, 2:]
+                size = np.asarray(bbox)[np.newaxis, 2:]
+                limits = np.where(distances < 0, sizes, size)
+
+                axis_overlap = abs(distances) < limits
+                return np.logical_and(axis_overlap[:, 0], axis_overlap[:, 1]).any()
+
+            patches = []
+            bboxes = []
+            bbox_cats = []
+
+            for idx in idxs:
+                patch = self.dataset.x[idx]
+                bbox = [0, 0, 28, 28]
+                bbox_cat = [int(self.dataset.y[idx])]
+                transformed = self.dataset.transform(image=patch, bboxes=[bbox], bbox_cats=[bbox_cat])
+                patch, bbox = transformed['image'], transformed['bboxes'][0]
+
+                while True:
+                    x_l, y_t = np.round(np.random.rand(2) * [self.dataset.W - bbox[1], self.dataset.H - bbox[2]])
+                    bbox = tuple(map(int, (x_l, y_t, bbox[2], bbox[3])))
+                    if valid(bbox) and not overlap(bboxes, bbox):
+                        break
+                patches.append(patch)
+                bboxes.append(bbox)
+                bbox_cats.append(bbox_cat)
+
+            return patches, bboxes, bbox_cats
+
+        def get_sample(self):
+            def coco_target(bboxes, bbox_cats):
+                target = []
+                for bbox, bbox_cat in zip(bboxes, bbox_cats):
+                    target.append(
+                        {
+                            'bbox': bbox,
+                            'category_id': bbox_cat
+                        }
+                    )
+                return target
+
+            image = np.zeros(self.size + (self.n_channels,), dtype=np.uint8)
+            patches, bboxes, bbox_cats = self._locate_pathces(idxs=self.idxs)
+            for patch, bbox in zip(patches, bboxes):
+                if self.dataset.is_colourful:
+                    colour = np.random.randint(1, 256, size=(3,))
+                else:
+                    colour = 255
+
+                image[self._get_slice(*bbox)] = \
+                    colour * np.stack((patch,) * self.n_channels, axis=2)
+
+            target = coco_target(bboxes, bbox_cats)
+            return image, target
+
+    def __init__(self, root, N=5000, W=1500, H=1500, train=True, cat_ids=None, is_colourful=False, affine=False, seed=42):
         download = not os.path.exists(root)
         os.makedirs(root, exist_ok=True)
         mnist = MNIST(root=root, train=train, download=download)
 
-        x = mnist.data
-        y = mnist.targets
-        x = x.numpy()
-        y = y.numpy()
-        x = x.astype(np.float32) / 255.
+        if cat_ids is None:
+            cat_ids = []
+
         self.cat_ids = cat_ids
 
-        # Save the needed variables to generate high and low res samples
-        self._W, self._H = W, H
-        self._images = x
+        x = mnist.data.numpy()
+        y = mnist.targets.numpy()
+        x = x.astype(np.float32) / 255.
+        self.x = x
+        self.y = y
+        self.cat_ids = cat_ids
+        self.all_idxs = np.arange(len(self.y))[np.logical_or.reduce([self.y == cat_id for cat_id in self.cat_ids])]
 
-        # Generate the dataset
-        np.random.seed(seed + int(train))
-        self._nums, self._targets, self._n_patches = self._get_numbers(N, y)
-        self._pos = self._get_positions(N, W, H, self._n_patches)
+        self.N = N
+        self._cur_n = 0
+        self.W, self.H = W, H
 
-    def _get_numbers(self, N, y):
-        n_patches = np.random.randint(low=1, high=5, size=N)
-        nums = []
-        targets = []
-        all_idxs = np.arange(len(y))[np.logical_or.reduce([y == cat_id for cat_id in self.cat_ids])]
-        for i in range(N):
-            idxs = np.random.choice(all_idxs, size=n_patches[i])
-            nums.append(idxs)
-            targets.append(y[idxs])
+        self.is_colourful = is_colourful
+        if affine:
+            self.transform = albu.Compose([
+                albu.Rotate(limit=20, border_mode=cv2.BORDER_CONSTANT, value=0, always_apply=True),
+                RandomResize(h_resize_limit=0.5, w_resize_limit=0., p=1.)
+            ], bbox_params=albu.BboxParams(format='coco', label_fields=['bbox_cats']))
+        else:
+            self.transform = albu.Compose([])
 
-        return np.array(nums), np.array(targets), n_patches
+        np.random.seed(seed + int(train) + len(cat_ids))
 
-    def _get_positions(self, N, W, H, n_patches):
-        def overlap(positions, pos):
-            if len(positions) == 0:
-                return False
-            distances = np.abs(
-                np.asarray(positions) - np.asarray(pos)[np.newaxis]
-            )
-            axis_overlap = distances < 28
-            return np.logical_and(axis_overlap[:, 0], axis_overlap[:, 1]).any()
+    def _get_sample(self):
+        n_patches = np.random.randint(low=1, high=5)
+        idxs = np.random.choice(self.all_idxs, size=n_patches)
+        sample = self.Sample(self, idxs).get_sample()
 
-        positions = []
-        for i in range(N):
-            position = []
-            for j in range(n_patches[i]):
-                while True:
-                    pos = np.round(np.random.rand(2) * [H - 28, W - 28]).astype(int)
-                    if not overlap(position, pos):
-                        break
-                position.append(pos)
-            positions.append(position)
-
-        return np.array(positions)
+        return sample
 
     def __len__(self):
-        return len(self._nums)
+        return self.N
 
-    def __getitem__(self, i):
-        if len(self) <= i:
-            raise IndexError()
-        sample = self.Sample(
-            self,
-            self._nums[i],
-            self._pos[i],
-            self._targets[i]
-        )
-        x = sample.high().astype(np.float32) / 255
-        y = sample.create_target()
-        return x, y
+    def __iter__(self):
+        return self
+
+    def __next__(self):
+        return self.next()
+
+    def next(self):
+        if self._cur_n < self.__len__():
+            self._cur_n += 1
+            sample = self._get_sample()
+            x, y = (sample[0] / 255.).astype(np.float32), sample[1]
+            return x, y
+
+        raise StopIteration()
 
 
 def transform_to_coco_format(dataset, root, phase=''):
@@ -168,6 +243,7 @@ def transform_to_coco_format(dataset, root, phase=''):
         save_image(img, path.join(root, filename))
 
         for ann in anns:
+            # print(type(ann['bbox'][0]))
             ann_dict = {
                 'id': anns_counter,
                 'bbox': ann['bbox'],
@@ -176,7 +252,7 @@ def transform_to_coco_format(dataset, root, phase=''):
             }
             anns_counter += 1
             annotations.append(ann_dict)
-
+        plt.show()
     annotaion = {
         'images': images,
         'annotations': annotations,
@@ -192,6 +268,8 @@ def save_image(img, filename_to_save):
 
 
 def main(mnist_path, megapixel_mnist_path):
+    is_colourful = True
+    affine = True
     n_train = 5000
     n_val = 150
     n_train_val = 150
@@ -206,7 +284,9 @@ def main(mnist_path, megapixel_mnist_path):
         train=True,
         cat_ids=train_cat_ids,
         W=width,
-        H=height
+        H=height,
+        is_colourful=is_colourful,
+        affine=affine
     )
     val_train_cats = MegapixelMNIST(
         root=mnist_path,
@@ -214,7 +294,9 @@ def main(mnist_path, megapixel_mnist_path):
         train=True,
         cat_ids=train_cat_ids,
         W=width,
-        H=height
+        H=height,
+        is_colourful=is_colourful,
+        affine=affine
     )
 
     val_novel_cats = MegapixelMNIST(
@@ -223,7 +305,9 @@ def main(mnist_path, megapixel_mnist_path):
         train=False,
         cat_ids=novel_cat_ids,
         W=width,
-        H=height
+        H=height,
+        is_colourful=is_colourful,
+        affine=affine
     )
 
     if os.path.exists(megapixel_mnist_path):
