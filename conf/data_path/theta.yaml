@@ -9,13 +9,13 @@ data:
   fsod_annotations_root: /data/fsod/annotations
 
   megapixel_mnist_train_root: /data/megapixel_mnist/train
-  megapixel_mnist_val_root: /data/megapixel_mnist/val_novel_cats
-  megapixel_mnist_train_val_root: /data/megapixel_mnist/val_train_cats
+  megapixel_mnist_val_novel_cats_root: /data/megapixel_mnist/val_novel_cats
+  megapixel_mnist_val_train_cats_root: /data/megapixel_mnist/val_train_cats
   megapixel_mnist_annotations_root: /data/megapixel_mnist/annotations
 
   megapixel_mnist_grided_train_root: /data/megapixel_mnist_grided/train
-  megapixel_mnist_grided_val_root: /data/megapixel_mnist_grided/val_novel_cats
-  megapixel_mnist_grided_train_val_root: /data/megapixel_mnist_grided/val_train_cats
+  megapixel_mnist_grided_val_novel_cats_root: /data/megapixel_mnist_grided/val_novel_cats
+  megapixel_mnist_grided_val_train_cats_root: /data/megapixel_mnist_grided/val_train_cats
   megapixel_mnist_grided_annotations_root: /data/megapixel_mnist_grided/annotations
 
   custom_annotations_root: /home/objdet/FSKD/data/annotations

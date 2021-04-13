@@ -165,7 +165,7 @@ megapixel_mnist_grided_val_train_cats:
     root: ${data.megapixel_mnist_grided_val_train_cats_root}
     annotations: ${data.megapixel_mnist_grided_annotations_root}/val_train_cats.json
   support:
-    root: ${data.megapixel_mnist_grided_val_train_grided_cats_root}
+    root: ${data.megapixel_mnist_grided_val_train_cats_root}
     annotations: ${data.megapixel_mnist_grided_annotations_root}/val_train_cats.json
   shuffle: true
   draw: true
