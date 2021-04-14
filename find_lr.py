@@ -54,7 +54,7 @@ def find_lr(cfg):
     else:
         num_iter = cfg.num_iter
 
-    lr_finder = LRFinder(trainer.model, optimizer, trainer.loss, device=trainer.device)
+    lr_finder = LRFinder(trainer.model, optimizer, trainer.criterion, device=trainer.device)
     lr_finder.reset()
     if cfg.strategy == 'training_loss':
         lr_finder.range_test(custom_train_iter, end_lr=cfg.end_lr, num_iter=num_iter, step_mode=cfg.step_mode)

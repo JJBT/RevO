@@ -62,7 +62,7 @@ class Trainer:
         self.train_dataloader_dict = create_train_dataloader(cfg)
         self.val_dataloader_dict = create_val_dataloader(cfg)
         self.state = State()
-        self.loss = create_loss(cfg)
+        self.criterion = create_loss(cfg)
         self.model = create_model(cfg)
         self.optimizer = create_optimizer(cfg, self.model)
         self.scheduler = create_scheduler(cfg, self.optimizer)
@@ -94,13 +94,13 @@ class Trainer:
         # accumulation gradient
         torch.autograd.set_detect_anomaly(True)
         self.optimizer.zero_grad()
-        input_tensor = batch['input']
-        target_tensor = batch['target']
-        target_tensor = target_tensor.to(self.device)
+        inputs = batch['input']
+        targets = batch['target']
+        targets = targets.to(self.device)
 
-        outputs = self.model(input_tensor)
+        outputs = self.model(inputs)
 
-        loss = self.loss(outputs, target_tensor)
+        loss = self.criterion(outputs, targets)
         loss.backward()
         self.optimizer.step()
         if self.scheduler is not None:
