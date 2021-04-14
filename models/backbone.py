@@ -1,3 +1,6 @@
+from collections import OrderedDict
+
+import matplotlib.pyplot as plt
 from torchvision.models import resnet
 from torchvision.ops.misc import FrozenBatchNorm2d
 from torchvision.models._utils import IntermediateLayerGetter
@@ -53,12 +56,22 @@ def resnet_backbone(
     return IntermediateLayerGetter(model=backbone, return_layers=return_layer)
 
 
-def resnet_backbone_zero_init(name='resnet50',
+def resnet_backbone_headed(name='resnet50',
                               pretrained=False,
                               trainable_layers=3,
                               returned_layer=4,
+                              head_out_dim=512,
                               norm_layer=None,
                               **kwargs):
+
+    def _extract_layers(model, returned_layer):
+        cutoff = 6 - returned_layer
+        layers = nn.Sequential(OrderedDict([
+            (name, child)
+            for name, child in list(model.named_children())[:-cutoff]
+        ]))
+        return layers
+
     if norm_layer is None:
         norm_layer = nn.BatchNorm2d
 
@@ -77,22 +90,24 @@ def resnet_backbone_zero_init(name='resnet50',
 
     if trainable_layers == 5:
         layers_to_train.append('bn1')
+    else:
+        backbone.bn1.track_running_stats = False
 
-    # layer4 zero-initialize
-    for m in backbone.layer4.modules():
-        if isinstance(m, nn.Conv2d):
-            nn.init.zeros_(m.weight)
-        elif isinstance(m, (nn.BatchNorm2d, nn.GroupNorm)):
-            nn.init.constant_(m.weight, 1)
-            nn.init.constant_(m.bias, 0)
-
-    backbone.bn1.track_running_stats = False
     # freeze layers
     for name, parameter in backbone.named_parameters():
         if all([not name.startswith(layer) for layer in layers_to_train]):
             parameter.requires_grad_(False)
 
     assert 0 < returned_layer < 5
-    return_layer = {f'layer{returned_layer}': 'output'}
 
+    feat_extr = _extract_layers(backbone, returned_layer)
+
+    head_in_dim = getattr(backbone, f'layer{returned_layer}')[-1].conv3.out_channels
+    head = nn.Conv2d(in_channels=head_in_dim, out_channels=head_out_dim, kernel_size=1)
+    nn.init.zeros_(head.weight)
+    backbone = nn.Sequential(OrderedDict([
+        ('feat_extr', feat_extr),
+        ('head', head)
+    ]))
+    return_layer = {f'head': 'output'}
     return IntermediateLayerGetter(model=backbone, return_layers=return_layer)
