@@ -5,7 +5,7 @@ import json
 import os
 from os import path
 import shutil
-
+from tqdm import tqdm
 import matplotlib.pyplot as plt
 import numpy as np
 from torchvision.datasets import MNIST
@@ -21,24 +21,24 @@ class RandomResize(DualTransform):
     def __init__(self, h_resize_limit=1., w_resize_limit=1., interpolation=cv2.INTER_LINEAR, always_apply=False, p=1):
         super(RandomResize, self).__init__(always_apply, p)
         if isinstance(h_resize_limit, float):
-            assert 0. <= abs(h_resize_limit) <= 1.
+            assert 0. <= h_resize_limit <= 1.
             self.h_resize_limit = 1 - abs(h_resize_limit), 1 + abs(h_resize_limit)
 
         elif isinstance(h_resize_limit, tuple) or isinstance(h_resize_limit, list):
             assert all(list(map(lambda x: isinstance(x, float), h_resize_limit)))
-            assert all(list(map(lambda x: 0. <= abs(x) <= 1., h_resize_limit)))
+            assert all(list(map(lambda x: 0. <= x, h_resize_limit)))
             assert h_resize_limit[0] < h_resize_limit[1]
             self.h_resize_limit = h_resize_limit
         else:
             raise ValueError
 
         if isinstance(w_resize_limit, float):
-            assert 0. <= abs(w_resize_limit) <= 1.
+            assert 0. <= w_resize_limit <= 1.
             self.w_resize_limit = 1 - abs(w_resize_limit), 1 + abs(w_resize_limit)
 
         elif isinstance(w_resize_limit, tuple) or isinstance(w_resize_limit, list):
             assert all(list(map(lambda x: isinstance(x, float), w_resize_limit)))
-            assert all(list(map(lambda x: 0. <= abs(x) <= 1., w_resize_limit)))
+            assert all(list(map(lambda x: 0. <= x, w_resize_limit)))
             assert w_resize_limit[0] < w_resize_limit[1]
             self.w_resize_limit = w_resize_limit
         else:
@@ -116,7 +116,9 @@ class MegapixelMNIST:
                 transformed = self.dataset.transform(image=patch, bboxes=[bbox], bbox_cats=[bbox_cat])
                 patch, bbox = transformed['image'], transformed['bboxes'][0]
 
-                while True:
+                i = 1
+                while i <= 5000:
+                    i += 1
                     x_l, y_t = np.round(np.random.rand(2) * [self.dataset.W - bbox[1], self.dataset.H - bbox[2]])
                     bbox = tuple(map(int, (x_l, y_t, bbox[2], bbox[3])))
                     if valid(bbox) and not overlap(bboxes, bbox):
@@ -124,6 +126,9 @@ class MegapixelMNIST:
                 patches.append(patch)
                 bboxes.append(bbox)
                 bbox_cats.append(bbox_cat)
+
+                if i == 5000:
+                    patches.pop(), bboxes.pop(), bbox_cats.pop()
 
             return patches, bboxes, bbox_cats
 
@@ -179,7 +184,7 @@ class MegapixelMNIST:
         if affine:
             self.transform = albu.Compose([
                 albu.Rotate(limit=20, border_mode=cv2.BORDER_CONSTANT, value=0, always_apply=True),
-                RandomResize(h_resize_limit=0.5, w_resize_limit=0., p=1.)
+                RandomResize(h_resize_limit=[0.7, 1.5], w_resize_limit=[0.7, 1.5], p=1.)
             ], bbox_params=albu.BboxParams(format='coco', label_fields=['bbox_cats']))
         else:
             self.transform = albu.Compose([])
@@ -227,7 +232,7 @@ def transform_to_coco_format(dataset, root, phase=''):
              {'id': 9, 'name': 'nine'}][cat_id] for cat_id in dataset.cat_ids]
 
     anns_counter = 0
-    for i, (img, anns) in enumerate(dataset):
+    for i, (img, anns) in tqdm(enumerate(dataset), total=len(dataset)):
         filename = phase + f'{i:05d}.png'
         width = int(img.shape[0])
         height = int(img.shape[1])
@@ -325,6 +330,6 @@ def main(mnist_path, megapixel_mnist_path):
 
 
 if __name__ == "__main__":
-    mnist_path = ''
-    megapixel_mnist_path = ''
+    mnist_path = 'D:/datasets/mnist/'
+    megapixel_mnist_path = 'D:/datasets/megapixel_mnist'
     main(mnist_path, megapixel_mnist_path)
