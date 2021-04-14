@@ -78,22 +78,17 @@ class Trainer:
         self.device = create_device(cfg)
         self.stop_validation = False
 
-    def get_train_batch(self, n=None):
+    def get_train_batch(self):
         if not getattr(self, 'train_data_iter', False):
             self.train_data_iter = chain.from_iterable(
                 iter(train_dataloader['dataloader']) for _, train_dataloader in self.train_dataloader_dict.items()
             )
-            if n is not None:
-                self.train_data_iter = islice(self.train_data_iter, None, n)
         try:
             batch = next(self.train_data_iter)
         except StopIteration:
             self.train_data_iter = chain.from_iterable(
                 iter(train_dataloader['dataloader']) for _, train_dataloader in self.train_dataloader_dict.items()
             )
-            if n is not None:
-                self.train_data_iter = islice(self.train_data_iter, None, n)
-
             batch = next(self.train_data_iter)
 
         return batch
@@ -131,7 +126,7 @@ class Trainer:
         self._before_run_callbacks()
 
         while not self.stop_condition(self.state):
-            batch = self.get_train_batch(n=1)
+            batch = self.get_train_batch()
             loss = self.run_step(batch)
             self.state.update(loss)
 
