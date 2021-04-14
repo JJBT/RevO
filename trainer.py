@@ -6,6 +6,7 @@ from callbacks import Callback, StopAtStep
 import logging
 from collections import OrderedDict
 from itertools import chain
+from utils.utils import set_determenistic
 
 
 logger = logging.getLogger(__name__)
@@ -58,6 +59,7 @@ class State:
 class Trainer:
     def __init__(self, cfg):
         signal.signal(signal.SIGINT, self._soft_exit)
+        set_determenistic()
 
         self.train_dataloader_dict = create_train_dataloader(cfg)
         self.val_dataloader_dict = create_val_dataloader(cfg)
@@ -67,6 +69,7 @@ class Trainer:
         self.optimizer = create_optimizer(cfg, self.model)
         self.scheduler = create_scheduler(cfg, self.optimizer)
         self.n_steps = cfg.n_steps
+        self.accumulation_steps = cfg.desired_bs // cfg.bs
         self.stop_condition = StopAtStep(last_step=self.n_steps)
         self.callbacks = OrderedDict()
         self.metrics = create_metrics(cfg)
@@ -91,9 +94,10 @@ class Trainer:
         return batch
 
     def run_step(self, batch):
-        # accumulation gradient
         torch.autograd.set_detect_anomaly(True)
-        self.optimizer.zero_grad()
+        if self.state.step % self.accumulation_steps == 0 and self.state.step != 0:
+            self.optimizer.zero_grad()
+
         inputs = batch['input']
         targets = batch['target']
         targets = targets.to(self.device)
@@ -101,8 +105,12 @@ class Trainer:
         outputs = self.model(inputs)
 
         loss = self.criterion(outputs, targets)
+        loss /= self.accumulation_steps
         loss.backward()
-        self.optimizer.step()
+
+        if self.state.step % self.accumulation_steps == 0 and self.state.step != 0:
+            self.optimizer.step()
+
         if self.scheduler is not None:
             self.scheduler.step()
 

@@ -3,6 +3,7 @@ import torch
 import numpy as np
 import os
 import matplotlib.pyplot as plt
+import random
 import pydoc
 from omegaconf.dictconfig import DictConfig
 
@@ -26,6 +27,15 @@ def object_from_dict(d, parent=None, **default_kwargs):
         return getattr(parent, object_type)(**kwargs)
     else:
         return pydoc.locate(object_type)(**kwargs)
+
+
+def set_determenistic(seed=42):
+    random.seed(seed)
+    np.random.seed(seed)
+    torch.backends.cudnn.benchmark = False
+    torch.backends.cudnn.deterministic = True
+    torch.cuda.manual_seed_all(seed)
+    torch.manual_seed(seed)
 
 
 def unwrap_model(model):
