@@ -5,7 +5,7 @@ from factory import create_scheduler, create_callbacks, create_model, create_los
 from callbacks import Callback, StopAtStep
 import logging
 from collections import OrderedDict
-from itertools import chain
+from itertools import chain, islice
 from utils.utils import set_determenistic
 
 
@@ -78,17 +78,22 @@ class Trainer:
         self.device = create_device(cfg)
         self.stop_validation = False
 
-    def get_train_batch(self):
+    def get_train_batch(self, n=None):
         if not getattr(self, 'train_data_iter', False):
             self.train_data_iter = chain.from_iterable(
                 iter(train_dataloader['dataloader']) for _, train_dataloader in self.train_dataloader_dict.items()
             )
+            if n is not None:
+                self.train_data_iter = islice(self.train_data_iter, None, n)
         try:
             batch = next(self.train_data_iter)
         except StopIteration:
             self.train_data_iter = chain.from_iterable(
                 iter(train_dataloader['dataloader']) for _, train_dataloader in self.train_dataloader_dict.items()
             )
+            if n is not None:
+                self.train_data_iter = islice(self.train_data_iter, None, n)
+
             batch = next(self.train_data_iter)
 
         return batch
@@ -126,11 +131,13 @@ class Trainer:
         self._before_run_callbacks()
 
         while not self.stop_condition(self.state):
-            batch = self.get_train_batch()
-            loss = self.run_step(batch)
-            self.state.update(loss)
+            # batch = self.get_train_batch()
+            batch = self.get_train_batch(n=1)
+            print(batch['input']['q_img'].sum())
+            # loss = self.run_step(batch)
+            # self.state.update(loss)
 
-            self._run_callbacks()
+            # self._run_callbacks()
 
         self._after_run_callbacks()
         logger.info('Done')
