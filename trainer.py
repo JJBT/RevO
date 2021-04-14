@@ -131,13 +131,11 @@ class Trainer:
         self._before_run_callbacks()
 
         while not self.stop_condition(self.state):
-            # batch = self.get_train_batch()
             batch = self.get_train_batch(n=1)
-            print(batch['input']['q_img'].sum())
-            # loss = self.run_step(batch)
-            # self.state.update(loss)
+            loss = self.run_step(batch)
+            self.state.update(loss)
 
-            # self._run_callbacks()
+            self._run_callbacks()
 
         self._after_run_callbacks()
         logger.info('Done')
