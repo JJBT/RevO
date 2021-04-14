@@ -117,7 +117,7 @@ class MegapixelMNIST:
                 patch, bbox = transformed['image'], transformed['bboxes'][0]
 
                 i = 1
-                while i <= 5000:
+                while i < 5000:
                     i += 1
                     x_l, y_t = np.round(np.random.rand(2) * [self.dataset.W - bbox[1], self.dataset.H - bbox[2]])
                     bbox = tuple(map(int, (x_l, y_t, bbox[2], bbox[3])))
