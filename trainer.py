@@ -5,7 +5,7 @@ from factory import create_scheduler, create_callbacks, create_model, create_los
 from callbacks import Callback, StopAtStep
 import logging
 from collections import OrderedDict
-from itertools import chain, islice
+from itertools import chain
 from utils.utils import set_determenistic
 
 
@@ -151,6 +151,9 @@ class Trainer:
 
         with torch.no_grad():
             for batch in dataloader:
+                if self.stop_validation:
+                    break
+
                 input_tensor = batch['input']
                 target_tensor = batch['target']
                 target_tensor = target_tensor.to(self.device)
@@ -158,9 +161,6 @@ class Trainer:
 
                 for metric in metrics:
                     metric.step(y=target_tensor, y_pred=outputs)
-
-                if self.stop_validation:
-                    break
 
         metrics_computed = {metric.name: metric.compute() for metric in metrics}
         self.model.train(previous_training_flag)
