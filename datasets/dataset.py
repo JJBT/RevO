@@ -105,6 +105,8 @@ class ObjectPresenceDataset(Dataset):
 
         s_anns_idxs = np.random.choice(list(self.s_anns_categories[q_bbox_cat[0]] - {idx}), self.k_shot)
         s_anns = itemgetter(*s_anns_idxs)(self.s_anns)
+        if len(s_anns_idxs) == 1:
+            s_anns = (s_anns, )
         s_bboxes = []
         s_bbox_cats = []
         s_imgs = []
