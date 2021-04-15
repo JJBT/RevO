@@ -105,6 +105,8 @@ def resnet_backbone_headed(name='resnet50',
     head_in_dim = getattr(backbone, f'layer{returned_layer}')[-1].conv3.out_channels
     head = nn.Conv2d(in_channels=head_in_dim, out_channels=head_out_dim, kernel_size=1)
     nn.init.zeros_(head.weight)
+    nn.init.zeros_(head.bias)
+
     backbone = nn.Sequential(OrderedDict([
         ('feat_extr', feat_extr),
         ('head', head)
