@@ -3,7 +3,7 @@ from callbacks.callback import Callback
 
 class ValidationCallback(Callback):
     def __init__(self, frequency):
-        super().__init__(frequency=frequency, before=False, after=True)
+        super().__init__(frequency=frequency, before=False, after=False)
 
     def __call__(self, trainer):
         val_dataloader = trainer.val_dataloader_dict
