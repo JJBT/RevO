@@ -94,10 +94,6 @@ class Trainer:
         return batch
 
     def run_step(self, batch):
-        torch.autograd.set_detect_anomaly(True)
-        if self.state.step % self.accumulation_steps == 0 and self.state.step != 0:
-            self.optimizer.zero_grad()
-
         inputs = batch['input']
         targets = batch['target']
         targets = targets.to(self.device)
@@ -108,11 +104,11 @@ class Trainer:
         loss /= self.accumulation_steps
         loss.backward()
 
-        if self.state.step % self.accumulation_steps == 0 and self.state.step != 0:
+        if (self.state.step + 1) % self.accumulation_steps == 0:
             self.optimizer.step()
-
-        if self.scheduler is not None:
-            self.scheduler.step()
+            self.optimizer.zero_grad()
+            if self.scheduler is not None:
+                self.scheduler.step()
 
         return loss.detach()
 
