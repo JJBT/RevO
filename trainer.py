@@ -7,6 +7,8 @@ import logging
 from collections import OrderedDict
 from itertools import chain
 from utils.utils import set_determenistic
+from torch.cuda.amp import GradScaler
+from torch.cuda.amp import autocast
 
 
 logger = logging.getLogger(__name__)
@@ -77,6 +79,8 @@ class Trainer:
         self.cfg = cfg
         self.device = create_device(cfg)
         self.stop_validation = False
+        self.amp = cfg.amp
+        self.scaler = GradScaler(enabled=self.amp)
 
     def get_train_batch(self):
         if not getattr(self, 'train_data_iter', False):
@@ -98,17 +102,20 @@ class Trainer:
         targets = batch['target']
         targets = targets.to(self.device)
 
-        outputs = self.model(inputs)
+        with autocast(enabled=self.amp):
+            outputs = self.model(inputs)
 
-        loss = self.criterion(outputs, targets)
-        loss /= self.accumulation_steps
-        loss.backward()
+            loss = self.criterion(outputs, targets)
+            loss /= self.accumulation_steps
+            self.scaler.scale(loss).backward()
 
-        if (self.state.step + 1) % self.accumulation_steps == 0:
-            self.optimizer.step()
-            self.optimizer.zero_grad()
-            if self.scheduler is not None:
-                self.scheduler.step()
+            if (self.state.step + 1) % self.accumulation_steps == 0:
+                self.scaler.step(self.optimizer)
+                self.scaler.update()
+                
+                self.optimizer.zero_grad()
+                if self.scheduler is not None:
+                    self.scheduler.step()
 
         return loss.detach()
 
