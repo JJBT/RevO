@@ -46,8 +46,9 @@ class PrikolNet(nn.Module):
         # Getting feature maps of query and support images
         # B x C_ x W_ x H_ -> B x C_fm x W_fm x H_fm
         layer = 'output'
-        q_feature_map = self.backbone(q_img)[layer]
-        s_feature_maps = self.backbone(s_imgs)[layer]
+        fm = self.backbone(torch.cat([q_img, s_imgs]))[layer]
+        q_feature_map = fm[:B]
+        s_feature_maps = fm[B:]
 
         # Getting sequences of query feature vectors images and support object instances feature vectors
         _, C_q_fm, W_q_fm, H_q_fm = q_feature_map.shape
