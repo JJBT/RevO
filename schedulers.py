@@ -4,10 +4,9 @@ import warnings
 
 
 class CosineAnnealingWithWarmUp(_LRScheduler):
-    def __init__(self, optimizer, T_max, W_steps, multiplier, eta_min=0, last_epoch=-1, verbose=False):
+    def __init__(self, optimizer, T_max, W_steps, eta_min=0, last_epoch=-1, verbose=False):
         self.T_max = T_max
         self.W_steps = W_steps
-        self.multiplier = multiplier
         self.eta_min = eta_min
         super(CosineAnnealingWithWarmUp, self).__init__(optimizer, last_epoch, verbose)
 
