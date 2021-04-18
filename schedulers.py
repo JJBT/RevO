@@ -17,7 +17,6 @@ class CosineAnnealingWithWarmUp(_LRScheduler):
         if self.last_epoch == 0:
             return self.base_lrs
         elif self.last_epoch <= self.W_steps:
-            print(self.last_epoch)
             return [base_lr * (self.last_epoch / self.W_steps) for base_lr in self.base_lrs]
         elif (self.last_epoch - 1 - self.T_max) % (2 * self.T_max) == 0:
             return [group['lr'] + (base_lr - self.eta_min) *
