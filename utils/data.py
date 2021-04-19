@@ -1,7 +1,10 @@
 import os
+import numpy as np
 import pandas as pd
 import json
 from collections import defaultdict
+
+import torch
 
 
 def get_coco_img_ids(coco):
@@ -72,6 +75,34 @@ def get_bbox_scale(coco, ann):
     return x_scale, y_scale
 
 
+def get_category_based_anns(coco):
+    coco_samples = load_coco_samples(coco)
+
+    category_based_anns = []
+
+    for sample in coco_samples:
+        file_name = sample['file_name']
+        anns = sample['anns']
+
+        category_dict = defaultdict(list)
+        for ann in anns:
+            ann.pop("segmentation", None)
+            ann.pop("keypoints", None)
+
+            category_id = ann['category_id']
+            category_dict[category_id].append(ann)
+
+        for key, item in category_dict.items():
+            instance_ann = {
+                'image_id': sample['image_id'],
+                'file_name': file_name,
+                'anns': item
+                }
+            category_based_anns.append(instance_ann)
+
+    return category_based_anns
+
+
 def get_kps_set2idx(anns, idx2kps):
     kps_sets = set()
     for ann in anns:
@@ -124,3 +155,55 @@ def get_anns_info_df(coco, save=None):
         anns_info.to_csv(os.path.join('.', f'data/{save}.csv'))
 
     return anns_info
+
+
+def to_yolo_target(bboxes, img_size, stride):
+    def get_relative_coords(bbox, img_size, cell_size):
+        bbox = xlytwh2xcycwh(bbox)
+        x, y = (bbox[0] % cell_size[0]) / cell_size[0], (bbox[1] % cell_size[1]) / cell_size[1]
+        w, h = bbox[2] / img_size[0], bbox[3] / img_size[1]
+        return [x, y, w, h]
+
+    w, h = img_size
+    grid_w, grid_h = w // stride, h // stride
+    cell_w, cell_h = w // grid_w, h // grid_h
+
+    target = np.zeros((grid_h, grid_w, 5), dtype=np.float)
+    for bbox in bboxes:
+        img_xc, img_yc = bbox[0] + bbox[2] // 2, bbox[1] + bbox[3] // 2
+        cell_x, cell_y = int(img_xc / cell_w), int(img_yc / cell_h)
+
+        cell_target = [1., *get_relative_coords(bbox, img_size, (cell_w, cell_h))]
+        target[cell_y, cell_x] = np.array(cell_target)
+
+    return target
+
+
+def from_yolo_target(target, img_size, grid_size):
+    if torch.is_tensor(target):
+        target = target.detach().cpu().numpy()
+
+    cell_size = img_size[0] // grid_size[0], img_size[1] // grid_size[1]
+    new_target = target.copy()
+
+    x_offset = np.expand_dims(np.arange(grid_size[1]), axis=0).repeat(grid_size[0], axis=0) * cell_size[0]
+    new_target[:, :, 1] = x_offset + new_target[:, :, 1] * cell_size[0]
+    y_offset = np.expand_dims(np.arange(grid_size[0]), axis=0).T.repeat(grid_size[1], axis=1) * cell_size[1]
+    new_target[:, :, 2] = y_offset + new_target[:, :, 2] * cell_size[1]
+
+    new_target[:, :, 3] = new_target[:, :, 3] * img_size[0]
+    new_target[:, :, 4] = new_target[:, :, 4] * img_size[1]
+
+    new_target[:, :, 1] -= new_target[:, :, 3] // 2
+    new_target[:, :, 2] -= new_target[:, :, 4] // 2
+
+    new_target = new_target[new_target[:, :, 0] > 0.5][:, 1:].tolist()
+
+    return new_target
+
+
+def xlytwh2xcycwh(bbox):
+    x = bbox[0] + bbox[2] // 2
+    y = bbox[1] + bbox[3] // 2
+    w, h = bbox[2], bbox[3]
+    return [x, y, w, h]

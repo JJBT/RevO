@@ -1,8 +1,6 @@
 import torch
 from torch import nn
-from models.backbone import resnet_backbone
 from models.transformer import SimpleTransformer
-
 
 class PrikolNet(nn.Module):
     def __init__(self, backbone, pool_shape, embd_dim, n_head, attn_pdrop, resid_pdrop,
@@ -19,7 +17,7 @@ class PrikolNet(nn.Module):
 
         self.backbone = backbone
 
-        self.center_pool = CenterPool(original_size=pool_shape)
+        self.center_pool = CenterPool(img_size=pool_shape)
         self.transformer = SimpleTransformer(self.embd_dim, self.n_head, self.attn_pdrop, self.resid_pdrop,
                                              self.embd_pdrop, self.n_layer, self.out_dim)
 
@@ -53,7 +51,11 @@ class PrikolNet(nn.Module):
         # Getting sequences of query feature vectors images and support object instances feature vectors
         _, C_q_fm, W_q_fm, H_q_fm = q_feature_map.shape
         q_feature_vectors = q_feature_map.permute(0, 2, 3, 1).contiguous().view(-1, W_q_fm * H_q_fm, C_q_fm)  # B x C_fm x H_fm x W_fm -> B x W_fm * H_fm x C_fm
+        q_feature_vectors = torch.cat([q_feature_vectors, torch.zeros(*q_feature_vectors.shape[:-1], 4)], dim=2)
+
         s_feature_vectors_listed = self.center_pool(s_feature_maps, s_bboxes)
+
+
 
         # Shaping batch from feature vector sequences
         # and creating mask for transformer
@@ -96,13 +98,13 @@ class CenterPool(nn.Module):
     """
     Pulls out feature vectors of object instances given feature map and bbox coordinates
     """
-    def __init__(self, original_size):
+    def __init__(self, img_size):
         """
         Args:
-            original_size: image original size
+            img_size: image original size
         """
         super(CenterPool, self).__init__()
-        self.original_size = original_size
+        self.img_size = img_size
 
     def forward(self, input, bboxes):
         """
@@ -113,9 +115,9 @@ class CenterPool(nn.Module):
         Returns:
             (List[List[torch.Tensor]]): list of support feature vectors
         """
-        orig_w, orig_h = self.original_size[-2:]
+        img_w, img_h = self.img_size[-2:]
         fm_w, fm_h = input.shape[-2:]
-        cell_w, cell_h = orig_w / fm_w, orig_h / fm_h
+        cell_w, cell_h = img_w / fm_w, img_h / fm_h
 
         batch_size = len(bboxes)
         k_shot = len(bboxes[0])
@@ -125,9 +127,16 @@ class CenterPool(nn.Module):
             feature_vectors = []
             for j in range(k_shot):
                 for bbox in bboxes[i][j]:
-                    img_x, img_y = bbox[0] + bbox[2] // 2, bbox[1] + bbox[3] // 2
-                    cell_x, cell_y = int(img_x / cell_w), int(img_y / cell_h)
+                    img_xc, img_yc = bbox[0] + bbox[2] // 2, bbox[1] + bbox[3] // 2
+                    cell_x, cell_y = int(img_xc / cell_w), int(img_yc / cell_h)
                     feature_vector = input[i * k_shot + j, :, cell_y, cell_x]
+                    label = [(img_xc - cell_x * cell_w) / cell_w,
+                             (img_yc - cell_y * cell_h) / cell_h,
+                             bbox[2] / img_w,
+                             bbox[3] / img_h]
+                    label = torch.logit(torch.as_tensor(label), eps=1e-12)
+
+                    feature_vector = torch.cat([feature_vector, label])
                     feature_vectors.append(feature_vector)
 
             feature_vectors_listed.append(feature_vectors)

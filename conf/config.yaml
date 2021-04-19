@@ -1,14 +1,15 @@
 defaults:
   - hydra: custom
-  - data_path: local
+  - data_path: theta
   - dataset: dataset
 
 description: ''
 
-n_steps: 1000
-bs: 2
+n_steps: 40000
+bs: 32
+desired_bs: 32
 k_shot: 3
-device: cpu
+device: cuda:0
 
 metrics:
   - type: metrics.Recall
@@ -16,47 +17,50 @@ metrics:
 
 hooks:
   - type: callbacks.LogCallback
-    frequency: 20
+    frequency: 2
 
   - type: callbacks.ValidationCallback
     frequency: 300
 
   - type: callbacks.TensorBoardCallback
-    frequency: 20
+    frequency: 2
 
   - type: callbacks.SaveCheckpointCallback
     frequency: 600
 
 model:
   type: models.prikol.PrikolNet
+  backbone:
+    type: models.backbone.resnet_backbone
+    name: resnet50
+    pretrained: true
+    trainable_layers: 3
+    returned_layer: 4
+    stride: 32
   # transformer
-  embd_dim: 2048
+  embd_dim: 2052
   n_head: 4
   attn_pdrop: 0.1
   resid_pdrop: 0.1
   embd_pdrop: 0.1
   n_layer: 1
-  out_dim: 1
-  backbone:
-    type: models.backbone.resnet_backbone
-    name: resnet50
-    #  pretrained: true
-    pretrained: /home/vladimir/Diploma/checkpoints/resnet50_mpmnist.pt
-    trainable_layers: 3
-    returned_layer: 4
-    stride: 32
+  out_dim: 5
 
 optimizer:
   type: torch.optim.Adam
-  lr: 0.0003
+  lr: 3e-7
+
 loss:
-  # type: losses.BinaryFocalLoss
-  # gamma: 2
-  # alpha: 0.99
-  type: torch.nn.BCEWithLogitsLoss
-  pos_weight:
-    type: torch.tensor
-    data: 5
+  type: loss.YOLOLoss
+  bbox_criterion:
+    type: torch.nn.MSELoss
+  conf_criterion:
+    type: torch.nn.BCEWithLogitsLoss
+    pos_weight:
+      type: torch.tensor
+      data: 90
+  img_size: ${data.input_size}
+  grid_size: [10, 10]
 
 scheduler:
   type: torch.optim.lr_scheduler.StepLR

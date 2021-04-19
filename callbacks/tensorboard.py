@@ -1,6 +1,9 @@
 import os
 import numpy as np
 from functools import reduce
+
+import torch
+
 from callbacks.callback import Callback
 from torch.utils.tensorboard import SummaryWriter
 from torch import nn
@@ -25,7 +28,7 @@ class TensorBoardCallback(Callback):
         self.writer.close()
 
     def draw_prediction(self, trainer):
-        num_images = 4
+        num_images = 3
         num_full_batches, num_remained_images = divmod(num_images, trainer.cfg.bs)
         dataloder_names = [name for name, dataloader in trainer.val_dataloader_dict.items() if dataloader['draw']]
         if not dataloder_names:
@@ -36,29 +39,38 @@ class TensorBoardCallback(Callback):
 
         for name in dataloder_names:
             all_images = []
+            all_outputs = []
+            all_targets = []
             data_iter = iter(trainer.val_dataloader_dict[name]['dataloader'])
-            for i in range(num_full_batches + 1):
-                try:
-                    batch = next(data_iter)
-                except StopIteration:
-                    break
+            with torch.no_grad():
+                for i in range(num_full_batches + 1):
+                    try:
+                        batch = next(data_iter)
+                    except StopIteration:
+                        break
 
-                input = batch['input']
-                target = batch['target']
-                target = target.to(trainer.device)
-                output = trainer.model(input)
-                images = draw_batch(input['q_img'], output, target)
+                    inputs = batch['input']
+                    targets = batch['target']
+                    targets = targets.to(trainer.device)
+                    outputs = trainer.model(inputs)
+                    images = inputs['q_img']
 
-                if i == num_full_batches and num_remained_images:
-                    images = images[:num_remained_images]
+                    if i == num_full_batches and num_remained_images:
+                        targets = targets[:num_remained_images]
+                        outputs = outputs[:num_remained_images]
+                        images = images[:num_remained_images]
 
-                all_images.append(images)
-                del batch, input, target, output
+                    all_outputs.append(outputs)
+                    all_targets.append(targets)
+                    all_images.append(images)
+                    del batch, inputs, targets, outputs
 
-            all_images = np.concatenate(all_images)
-            figure = image_grid(all_images)
+            all_outputs = torch.cat(all_outputs)
+            all_targets = torch.cat(all_targets)
+            all_images = torch.cat(all_images)
+            fig, _ = draw_batch(all_images, all_outputs, all_targets)
             self.writer.add_figure(f'{name} visulization',
-                                   figure, trainer.state.step, close=True)
+                                   fig, trainer.state.step, close=True)
 
         trainer.model.train(previous_training_flag)
 

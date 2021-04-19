@@ -3,7 +3,7 @@ from utils.utils import object_from_dict
 from torch.utils.data import DataLoader
 import albumentations as albu
 from models.prikol import PrikolNet
-from datasets.dataset import ObjectPresenceDataset, object_presence_collate_fn
+from datasets.dataset import ObjectDetectionDataset, object_detection_collate_fn
 from utils.pred_transforms import prediction_transforms_dict
 
 
@@ -66,8 +66,8 @@ def create_dataloader(cfg):
     params['q_transform'] = q_transform
     params['s_transform'] = s_transform
 
-    dataset = ObjectPresenceDataset(**params)
-    dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=cfg.shuffle, collate_fn=object_presence_collate_fn)
+    dataset = ObjectDetectionDataset(**params)
+    dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=cfg.shuffle, collate_fn=object_detection_collate_fn)
     dataloader_dict = {
         'name': cfg.name,
         'dataloader': dataloader,

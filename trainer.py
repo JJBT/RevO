@@ -8,7 +8,7 @@ from collections import OrderedDict
 from itertools import chain
 from utils.utils import set_determenistic
 
-
+from utils.vis_utils import draw_batch
 logger = logging.getLogger(__name__)
 
 
@@ -62,6 +62,7 @@ class Trainer:
         set_determenistic()
 
         self.train_dataloader_dict = create_train_dataloader(cfg)
+        self.first_batch = next(iter(self.train_dataloader_dict['megapixel_mnist_train']['dataloader']))
         self.val_dataloader_dict = create_val_dataloader(cfg)
         self.state = State()
         self.criterion = create_loss(cfg)
@@ -84,7 +85,8 @@ class Trainer:
                 iter(train_dataloader['dataloader']) for _, train_dataloader in self.train_dataloader_dict.items()
             )
         try:
-            batch = next(self.train_data_iter)
+            # batch = next(self.train_data_iter)
+            batch = self.first_batch
         except StopIteration:
             self.train_data_iter = chain.from_iterable(
                 iter(train_dataloader['dataloader']) for _, train_dataloader in self.train_dataloader_dict.items()
@@ -103,6 +105,11 @@ class Trainer:
         loss = self.criterion(outputs, targets)
         loss /= self.accumulation_steps
         loss.backward()
+
+        if self.state.step == 10:
+            print(10)
+        if self.state.step % 3 == 0:
+            draw_batch(inputs['q_img'].detach(), outputs.detach(), targets.detach(), show=True)
 
         if (self.state.step + 1) % self.accumulation_steps == 0:
             self.optimizer.step()

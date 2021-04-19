@@ -31,7 +31,7 @@ class Recall(Metric):
         # TODO
         y_pred = self.prediction_transform(y_pred)
         if y.size() != y_pred.size():
-            raise TypeError("y and y_pred should have the same shape")
+            raise TypeError("y and y_pred should have the same img_size")
         true_positives = (y * y_pred).sum().item()
         total_positives = y.sum().item()
 
@@ -65,7 +65,7 @@ class Precision(Metric):
         # TODO
         y_pred = self.prediction_transform(y_pred)
         if y.size() != y_pred.size():
-            raise TypeError("y and y_pred should have the same shape")
+            raise TypeError("y and y_pred should have the same img_size")
         true_positives = (y * y_pred).sum().item()
         false_positives = ((1 - y) * y_pred).sum().item()
 

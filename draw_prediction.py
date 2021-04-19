@@ -2,7 +2,7 @@ import hydra
 from omegaconf import DictConfig, OmegaConf
 import os
 import logging
-from utils.vis_utils import draw, render_report
+from utils.vis_utils import draw_sample, render_report
 from settings import BASE_DIR
 from callbacks import LoadCheckpointCallback
 
@@ -28,7 +28,7 @@ def run_prediction(cfg):
         target_tensor = batch['target']
         target_tensor = target_tensor.to(trainer.device)
         outputs = trainer.model(input_tensor)
-        res_img = draw(input_tensor['q_img'][0], outputs[0], target_tensor[0])
+        res_img = draw_sample(input_tensor['q_img'][0], outputs[0], target_tensor[0])
         res_img.save(os.path.join(os.getcwd(), 'output', os.path.splitext(cfg.ckpt)[0], f'img{i}.png'))
         del batch, input_tensor, input_tensor, outputs
         logger.info(i)

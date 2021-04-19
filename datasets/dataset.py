@@ -9,52 +9,10 @@ import torch
 from torch.utils.data import Dataset, DataLoader
 from torch.utils.data._utils.collate import default_collate
 
-from utils.data import load_coco_samples
+from utils.data import load_coco_samples, get_category_based_anns, to_yolo_target
 
 
-def get_category_based_anns(coco):
-    coco_samples = load_coco_samples(coco)
-
-    category_based_anns = []
-
-    for sample in coco_samples:
-        file_name = sample['file_name']
-        anns = sample['anns']
-
-        category_dict = defaultdict(list)
-        for ann in anns:
-            ann.pop("segmentation", None)
-            ann.pop("keypoints", None)
-
-            category_id = ann['category_id']
-            category_dict[category_id].append(ann)
-
-        for key, item in category_dict.items():
-            instance_ann = {
-                'image_id': sample['image_id'],
-                'file_name': file_name,
-                'anns': item
-                }
-            category_based_anns.append(instance_ann)
-
-    return category_based_anns
-
-
-def get_object_presence_map(bboxes, shape, stride):
-    w, h = shape
-    map_w, map_h = w // stride, h // stride
-    cell_w, cell_h = w // map_w, h // map_h
-
-    presence = [0] * (map_w * map_h)
-    for i, bbox in enumerate(bboxes):
-        img_x, img_y = bbox[0] + bbox[2] // 2, bbox[1] + bbox[3] // 2
-        cell_x, cell_y = int(img_x / cell_w), int(img_y / cell_h)
-        presence[map_w * cell_y + cell_x] = 1.
-
-    return presence
-
-
-class ObjectPresenceDataset(Dataset):
+class ObjectDetectionDataset(Dataset):
     def __init__(
             self,
             q_root,
@@ -134,7 +92,7 @@ class ObjectPresenceDataset(Dataset):
             s_imgs = [transformed['image'] for transformed in s_transformed]
             s_bboxes = [list(map(list, transformed['bboxes'])) for transformed in s_transformed]
 
-        target = get_object_presence_map(q_bbox, self.q_img_size, self.backbone_stride)
+        target = to_yolo_target(q_bbox, self.q_img_size, self.backbone_stride)
         sample = {'input': {}, 'target': []}
         sample['input']['q_img'] = q_img
         sample['input']['s_imgs'] = s_imgs
@@ -155,9 +113,9 @@ class ObjectPresenceDataset(Dataset):
         return img
 
 
-def object_presence_collate_fn(batch):
+def object_detection_collate_fn(batch):
     q_img_batched = default_collate([sample['input']['q_img'] for sample in batch])
-    target_batched = torch.as_tensor([sample['target'] for sample in batch])
+    target_batched = torch.as_tensor([sample['target'] for sample in batch], dtype=torch.float)
 
     if type(batch[0]['input']['s_imgs'][0]).__module__ == 'numpy':
         s_imgs_batched = default_collate(np.array([np.array(sample['input']['s_imgs']) for sample in batch]))
