@@ -6,7 +6,7 @@ from callbacks import Callback, StopAtStep
 import logging
 from collections import OrderedDict
 from itertools import chain
-from utils.utils import set_determenistic
+from utils.utils import set_determenistic, flatten_dict, loss_to_dict
 from torch.cuda.amp import GradScaler
 from torch.cuda.amp import autocast
 
@@ -42,18 +42,22 @@ class State:
         self.step = 0
         self.last_train_loss = None
 
-    def update(self, loss=None):
+    def update(self, loss_dict=None):
         self.step += 1
-        if loss is not None:
-            self.last_train_loss = loss.item()
+        if loss_dict is not None:
+            self.last_train_loss = flatten_dict(loss_dict)
 
     def log_train(self):
-        logger.info(f'Step - {self.step} loss - {self.last_train_loss:.7f}')
+        msg = f'Step - {self.step} '
+        for name, value in self.last_train_loss.items():
+            msg += f'{name} - {value:.7f} '
+
+        logger.info(msg)
 
     def log_validation(self):
-        msg = f'Validation  '
-        for name in self.validation_metrics:
-            msg += f'{name} - {self.validation_metrics[name]:.7f} '
+        msg = f'Validation '
+        for name, value in self.validation_metrics.items():
+            msg += f'{name} - {value:.7f} '
 
         logger.info(msg)
 
@@ -107,7 +111,10 @@ class Trainer:
         with autocast(enabled=self.amp):
             outputs = self.model(inputs)
 
-            loss = self.criterion(outputs, targets)
+            loss_dict = self.criterion(outputs, targets)
+
+            loss_dict = loss_to_dict(loss_dict)
+            loss = loss_dict['loss']
             loss /= self.accumulation_steps
             self.scaler.scale(loss).backward()
 
@@ -118,12 +125,14 @@ class Trainer:
                 self.optimizer.zero_grad()
                 if self.scheduler is not None:
                     self.scheduler.step()
-        if self.state.step == 10:
-            print(10)
-        if self.state.step % 3 == 0:
-            draw_batch(inputs['q_img'].detach(), outputs.detach(), targets.detach(), show=True)
+        # if self.state.step == 10:
+        #     print(10)
+        # if self.state.step % 3 == 0:
+        #     draw_batch(inputs['q_img'].detach(), outputs.detach(), targets.detach(), show=True)
 
-        return loss.detach()
+            loss_dict['loss'] = loss_dict['loss'].detach()
+
+        return loss_dict
 
     def run_train(self, n_steps=None):
         if n_steps is not None:
@@ -174,7 +183,7 @@ class Trainer:
         metrics_computed = {metric.name: metric.compute() for metric in metrics}
         self.model.train(previous_training_flag)
 
-        return metrics_computed
+        return flatten_dict(metrics_computed)
 
     def register_callback(self, callback: Callback):
         callback.set_trainer(self)

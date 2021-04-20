@@ -1,7 +1,7 @@
-from pytorchtrainer.metric import Metric, Accuracy
-from pytorchtrainer.metric import TorchLoss as PttTorchLoss
+from pytorchtrainer.metric import Metric
 import torch
-from typing import cast
+from utils.utils import flatten_dict, loss_to_dict
+from collections import defaultdict
 
 
 class AveragePrecision(Metric):
@@ -91,24 +91,30 @@ class TorchLoss(Metric):
     def __init__(self, loss_function: torch.nn.modules.loss, prediction_transform=lambda x: x):
         super().__init__('loss', default_value=float('inf'))
         self.loss_function = loss_function
-        self._loss_sum = 0.
+        self._loss_sum_dict = defaultdict(lambda: 0)
         self._total = 0
         self.prediction_transform = prediction_transform
 
     def step(self, y: torch.Tensor, y_pred: torch.Tensor):
         y_pred = self.prediction_transform(y_pred)
-        loss = self.loss_function(y_pred, y)
-        self._loss_sum += loss.item()
+        loss_dict = self.loss_function(y_pred, y)
+        loss_dict = loss_to_dict(loss_dict)
+
+        for loss_name, loss_value in loss_dict.items():
+            self._loss_sum_dict[loss_name] += loss_value.item()
+
         self._total += 1
 
     def compute(self):
         if self._total == 0:
-            result = 0.
+            result = dict.fromkeys(self._loss_sum_dict.keys(), 0)
         else:
-            result = self._loss_sum / self._total
+            result = dict()
+            for loss_name, loss_value in self._loss_sum_dict.items():
+                result[loss_name] = loss_value / self._total
 
         return result
 
     def reset(self):
-        self._loss_sum = 0.
+        self._loss_sum_dict = defaultdict(lambda: 0)
         self._total = 0

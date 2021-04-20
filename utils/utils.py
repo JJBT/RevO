@@ -1,8 +1,7 @@
 import time
 import torch
 import numpy as np
-import os
-import matplotlib.pyplot as plt
+from collections import MutableMapping
 import random
 import pydoc
 from omegaconf.dictconfig import DictConfig
@@ -27,6 +26,26 @@ def object_from_dict(d, parent=None, **default_kwargs):
         return getattr(parent, object_type)(**kwargs)
     else:
         return pydoc.locate(object_type)(**kwargs)
+
+
+def flatten_dict(d, parent_key='', sep='_'):
+    items = []
+    for k, v in d.items():
+        new_key = parent_key + sep + k if parent_key else k
+        if isinstance(v, MutableMapping):
+            items.extend(flatten_dict(v, '', sep=sep).items())  # GOD HELP ME
+        else:
+            value = v.item() if isinstance(v, torch.Tensor) else v
+            items.append((new_key, value))
+
+    return dict(items)
+
+
+def loss_to_dict(loss):
+    if not isinstance(loss, dict):
+        return {'loss': loss}
+    else:
+        return loss
 
 
 def set_determenistic(seed=42):

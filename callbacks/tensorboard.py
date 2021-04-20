@@ -16,10 +16,8 @@ class TensorBoardCallback(Callback):
         self.log_dir = os.getcwd()
         self.writer = SummaryWriter(log_dir=self.log_dir)
         self.add_weights_and_grads = add_weights_and_grads
-        self.validation_callback_in_trainer = False
 
     def before_run(self, trainer):
-        self.validation_callback_in_trainer = 'ValidationCallback' in trainer.callbacks
         description = trainer.cfg.description
         if description:
             self.writer.add_text('description', description)
@@ -80,7 +78,9 @@ class TensorBoardCallback(Callback):
             self.writer.add_scalar(name, metric, trainer.state.step)
 
     def __call__(self, trainer):
-        self.writer.add_scalar('trn/loss', trainer.state.last_train_loss, trainer.state.step)
+        for name, loss in trainer.state.last_train_loss.items():
+            self.writer.add_scalar(f'trn/{name}', loss, trainer.state.step)
+
         self.writer.add_scalar('lr', trainer.optimizer.param_groups[0]['lr'], trainer.state.step)
 
         if self.add_weights_and_grads:

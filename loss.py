@@ -87,4 +87,9 @@ class YOLOLoss(nn.Module):
 
         # loss = loss_xy + loss_wh + loss_conf + loss_noobj
         loss = loss_xy + loss_wh + loss_conf
-        return loss
+        return {
+            'loss': loss,
+            'loss_xy': loss_xy.detach(),
+            'loss_wh': loss_wh.detach(),
+            'loss_conf': loss_conf.detach()
+        }
