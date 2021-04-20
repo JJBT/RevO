@@ -58,6 +58,7 @@ class YOLOLoss(nn.Module):
         self.cell_size = img_size[0] // grid_size[0], img_size[1] // grid_size[1]
 
     def forward(self, input, target):
+        # input: (B, S, S, 5)
         # target: (B, S, S, 5)
         # target[i, j, k, :] = [c, x, y, w, h]
         input = input.view(-1, *self.grid_size, 5)
