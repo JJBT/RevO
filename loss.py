@@ -191,7 +191,7 @@ class CustomYOLOLoss(nn.Module):
         noobj_target_conf = noobj_target[..., 0]
         loss_noobj = self.conf_criterion(noobj_pred_logit, noobj_target_conf)
 
-        pred_bbox = obj_pred[..., 1:]
+        pred_bbox = torch.sigmoid(obj_pred[..., 1:])
         target_bbox = obj_target[..., 1:]
         loss_bbox = self.bbox_criterion(pred_bbox, target_bbox)
 
