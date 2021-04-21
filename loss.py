@@ -151,6 +151,27 @@ class EIoULoss(nn.Module):
         return 1 - eiou
 
 
+class FocalEIoULoss(nn.Module):
+    def __init__(self, gamma=2, reduction='none'):
+        super(FocalEIoULoss, self).__init__()
+        self.gamma = gamma
+        self.reduction = reduction
+
+    def forward(self, input, target):
+        """
+        Compute effective IoU loss
+        :param input (torch.Tensor[N, 4]): predicted bounding boxes in ``(xc, yc, w, h)`` format
+        :param target (torch.Tensor[N, 4]): target bounding boxes in ``(xc, yc, w, h)`` format
+        """
+        eiou = compute_effective_iou(bboxes1=input, bboxes2=target, bbox_transform=xcycwh2xyxy)
+        if self.reduction == 'mean':
+            eiou = eiou.mean()
+        elif self.reduction == 'sum':
+            eiou = eiou.sum()
+
+        return 1 - eiou
+
+
 class CustomYOLOLoss(nn.Module):
     def __init__(self,
                  bbox_criterion,
@@ -200,11 +221,12 @@ class CustomYOLOLoss(nn.Module):
 
         loss_obj = self.conf_criterion(obj_pred_logit, obj_target_conf)
 
-        loss = self.lambda_bbox * loss_bbox + \
-               self.lambda_obj * loss_obj + self.lambda_noobj * loss_noobj
+        loss = self.lambda_obj * loss_obj + self.lambda_bbox * loss_bbox + \
+               self.lambda_noobj * loss_noobj
 
         return {
             'loss': loss,
+            'loss_noobj': loss_noobj.detach(),
             'loss_bbox': loss_bbox.detach(),
-            'loss_conf': loss_obj.detach()
+            'loss_obj': loss_obj.detach()
         }
