@@ -1,6 +1,6 @@
 from pytorchtrainer.metric import Metric
 import torch
-from utils.utils import flatten_dict, loss_to_dict
+from utils.utils import loss_to_dict
 from collections import defaultdict
 
 
@@ -20,15 +20,24 @@ class AveragePrecision(Metric):
 
 
 class Recall(Metric):
-    def __init__(self, prediction_transform=lambda x: x):
+    def __init__(self, prediction_transform=None, target_transform=None):
         super().__init__('recall', default_value=0)
         self._true_positives = 0
         self._total_positives = 0
-        self.prediction_transform = prediction_transform
+        if prediction_transform is None:
+            self.prediction_transform = lambda x: x
+        else:
+            self.prediction_transform = prediction_transform
+
+        if target_transform is None:
+            self.target_transform = lambda x: x
+        else:
+            self.target_transform = target_transform
 
     def step(self, y: torch.Tensor, y_pred: torch.Tensor):
         # Just for this case.
         # TODO
+        y = self.target_transform(y)
         y_pred = self.prediction_transform(y_pred)
         if y.size() != y_pred.size():
             raise TypeError("y and y_pred should have the same shape")
@@ -54,15 +63,24 @@ class Recall(Metric):
 
 
 class Precision(Metric):
-    def __init__(self, prediction_transform=lambda x: x):
+    def __init__(self, prediction_transform=None, target_transform=None):
         super().__init__('precision', default_value=0)
         self._true_positives = 0
         self._false_postitives = 0
-        self.prediction_transform = prediction_transform
+        if prediction_transform is None:
+            self.prediction_transform = lambda x: x
+        else:
+            self.prediction_transform = prediction_transform
+
+        if target_transform is None:
+            self.target_transform = lambda x: x
+        else:
+            self.target_transform = target_transform
 
     def step(self, y: torch.Tensor, y_pred: torch.Tensor):
         # Just for this case.
         # TODO
+        y = self.target_transform(y)
         y_pred = self.prediction_transform(y_pred)
         if y.size() != y_pred.size():
             raise TypeError("y and y_pred should have the same shape")
@@ -88,14 +106,23 @@ class Precision(Metric):
 
 
 class TorchLoss(Metric):
-    def __init__(self, loss_function: torch.nn.modules.loss, prediction_transform=lambda x: x):
+    def __init__(self, loss_function: torch.nn.modules.loss, prediction_transform=None, target_transform=None):
         super().__init__('loss', default_value=float('inf'))
         self.loss_function = loss_function
         self._loss_sum_dict = defaultdict(lambda: 0)
         self._total = 0
-        self.prediction_transform = prediction_transform
+        if prediction_transform is None:
+            self.prediction_transform = lambda x: x
+        else:
+            self.prediction_transform = prediction_transform
+
+        if target_transform is None:
+            self.target_transform = lambda x: x
+        else:
+            self.target_transform = target_transform
 
     def step(self, y: torch.Tensor, y_pred: torch.Tensor):
+        y = self.target_transform(y)
         y_pred = self.prediction_transform(y_pred)
         loss_dict = self.loss_function(y_pred, y)
         loss_dict = loss_to_dict(loss_dict)
