@@ -95,7 +95,7 @@ class YOLOLoss(nn.Module):
 
         loss = self.lambda_xy * loss_xy + self.lambda_wh * loss_wh + \
                self.lambda_obj * loss_obj + self.lambda_noobj * loss_noobj
-        
+
         return {
             'loss': loss,
             'loss_xy': loss_xy.detach(),
