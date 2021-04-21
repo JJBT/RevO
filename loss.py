@@ -104,9 +104,10 @@ class YOLOLoss(nn.Module):
 
         return {
             'loss': loss,
+            'loss_noobj': loss_noobj.detach(),
             'loss_xy': loss_xy.detach(),
             'loss_wh': loss_wh.detach(),
-            'loss_conf': loss_obj.detach()
+            'loss_obj': loss_obj.detach()
         }
 
 
