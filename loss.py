@@ -50,28 +50,36 @@ class YOLOLoss(nn.Module):
                  conf_criterion,
                  img_size,
                  grid_size,
+                 lambda_xy=1,
+                 lambda_wh=1,
+                 lambda_obj=1,
+                 lambda_noobj=1
                  ):
         super(YOLOLoss, self).__init__()
         self.bbox_criterion = bbox_criterion
         self.conf_criterion = conf_criterion
         self.img_size = img_size
         self.grid_size = grid_size
+        self.lambda_xy = lambda_xy
+        self.lambda_wh = lambda_wh
+        self.lambda_obj = lambda_obj
+        self.lambda_noobj = lambda_noobj
 
         self.cell_size = img_size[0] // grid_size[0], img_size[1] // grid_size[1]
 
     def forward(self, input, target):
+        # input: (B, S, S, 5)
         # target: (B, S, S, 5)
         # target[i, j, k, :] = [c, x, y, w, h]
-        input = input.view(-1, *self.grid_size, 5)
         obj_mask = target[..., 0] > 0.
         noobj_mask = ~obj_mask
 
         obj_pred, noobj_pred = input[obj_mask], input[noobj_mask]
         obj_target, noobj_target = target[obj_mask], target[noobj_mask]
 
-        # noobj_pred_logit = noobj_pred[..., 0]
-        # noobj_target_conf = noobj_target[..., 0]
-        # loss_noobj = self.conf_criterion(noobj_pred_logit, noobj_target_conf)
+        noobj_pred_logit = noobj_pred[..., 0]
+        noobj_target_conf = noobj_target[..., 0]
+        loss_noobj = self.conf_criterion(noobj_pred_logit, noobj_target_conf)
 
         pred_xy = torch.sigmoid(obj_pred[..., 1:3])
         target_xy = obj_target[..., 1:3]
@@ -81,19 +89,20 @@ class YOLOLoss(nn.Module):
         target_wh = obj_target[..., 3:]
         loss_wh = self.bbox_criterion(pred_wh, target_wh)
 
-        # obj_pred_logit = obj_pred[..., 0]
-        # obj_target_conf = obj_target[..., 0]
-        pred_logit = input[..., 0]
-        target_conf = target[..., 0]
-        loss_conf = self.conf_criterion(pred_logit, target_conf)
+        obj_pred_logit = obj_pred[..., 0]
+        obj_target_conf = obj_target[..., 0]
+        # pred_logit = input[..., 0]
+        # target_conf = target[..., 0]
+        loss_obj = self.conf_criterion(obj_pred_logit, obj_target_conf)
 
-        # loss = loss_xy + loss_wh + loss_conf + loss_noobj
-        loss = loss_xy + loss_wh + loss_conf
+        loss = self.lambda_xy * loss_xy + self.lambda_wh * loss_wh + \
+               self.lambda_obj * loss_obj + self.lambda_noobj * loss_noobj
+
         return {
             'loss': loss,
             'loss_xy': loss_xy.detach(),
             'loss_wh': loss_wh.detach(),
-            'loss_conf': loss_conf.detach()
+            'loss_conf': loss_obj.detach()
         }
 
 

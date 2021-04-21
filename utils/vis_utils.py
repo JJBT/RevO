@@ -119,7 +119,7 @@ def draw_sample(img, output, target, fig=None, ax=None, show=False):
     img_size = img.shape[1:]
     grid_size = target.shape[:2]
 
-    pred = torch.sigmoid(output).view(*grid_size, output.shape[-1])
+    pred = torch.sigmoid(output)
     pred_bboxes = from_yolo_target(pred, img_size, grid_size)
     target_bboxes = from_yolo_target(target, img_size, grid_size)
 

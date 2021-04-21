@@ -81,8 +81,10 @@ def create_metrics(cfg):
     metrics = []
     for metric in cfg.metrics:
         metric_name = metric.type.split('.')[-1].lower()
-        prediction_transform = prediction_transforms_dict.get(metric_name, lambda x: x)
-        metric_obj = object_from_dict(metric, prediction_transform=prediction_transform)
+        prediction_transform = prediction_transforms_dict.get(f'{metric_name}_prediction', lambda x: x)
+        target_transform = prediction_transforms_dict.get(f'{metric_name}_target', lambda x: x)
+        metric_obj = object_from_dict(metric, prediction_transform=prediction_transform,
+                                      target_transform=target_transform)
         metrics.append(metric_obj)
 
     return metrics

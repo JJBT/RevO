@@ -104,33 +104,25 @@ class Trainer:
         return batch
 
     def run_step(self, batch):
+        self.optimizer.zero_grad()
+
         inputs = batch['input']
         targets = batch['target']
         targets = targets.to(self.device)
 
-        with autocast(enabled=self.amp):
-            outputs = self.model(inputs)
+        outputs = self.model(inputs)
 
-            loss_dict = self.criterion(outputs, targets)
+        loss_dict = self.criterion(outputs, targets)
 
-            loss_dict = loss_to_dict(loss_dict)
-            loss = loss_dict['loss']
-            loss /= self.accumulation_steps
-            self.scaler.scale(loss).backward()
+        loss_dict = loss_to_dict(loss_dict)
+        loss = loss_dict['loss']
+        loss.backward()
 
-            if (self.state.step + 1) % self.accumulation_steps == 0:
-                self.scaler.step(self.optimizer)
-                self.scaler.update()
+        self.optimizer.step()
+        if self.scheduler is not None:
+            self.scheduler.step()
 
-                self.optimizer.zero_grad()
-                if self.scheduler is not None:
-                    self.scheduler.step()
-        # if self.state.step == 10:
-        #     print(10)
-        # if self.state.step % 3 == 0:
-        #     draw_batch(inputs['q_img'].detach(), outputs.detach(), targets.detach(), show=True)
-
-            loss_dict['loss'] = loss_dict['loss'].detach()
+        loss_dict['loss'] = loss_dict['loss'].detach()
 
         return loss_dict
 

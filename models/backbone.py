@@ -6,6 +6,7 @@ from torchvision.models._utils import IntermediateLayerGetter
 import torch
 from torch import nn
 
+
 def resnet_backbone(
         name='resnet50',
         pretrained=False,
@@ -42,6 +43,8 @@ def resnet_backbone(
 
     if trainable_layers == 5:
         layers_to_train.append('bn1')
+    else:
+        backbone.bn1.track_running_stats = False
 
     # freeze layers
     for name, parameter in backbone.named_parameters():
@@ -72,6 +75,8 @@ def resnet_backbone_headed(name='resnet50',
 
     if norm_layer is None:
         norm_layer = nn.BatchNorm2d
+    elif norm_layer == 'frozen_bn':
+        norm_layer = FrozenBatchNorm2d
 
     if isinstance(pretrained, str):
         backbone = resnet.__dict__[name](pretrained=False, norm_layer=norm_layer)

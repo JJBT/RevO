@@ -2,6 +2,7 @@ import torch
 from torch import nn
 from models.transformer import SimpleTransformer
 
+
 class PrikolNet(nn.Module):
     def __init__(self, backbone, pool_shape, embd_dim, n_head, attn_pdrop, resid_pdrop,
                  embd_pdrop, n_layer, out_dim, device, **kwargs):
@@ -51,7 +52,8 @@ class PrikolNet(nn.Module):
         # Getting sequences of query feature vectors images and support object instances feature vectors
         _, C_q_fm, W_q_fm, H_q_fm = q_feature_map.shape
         q_feature_vectors = q_feature_map.permute(0, 2, 3, 1).contiguous().view(-1, W_q_fm * H_q_fm, C_q_fm)  # B x C_fm x H_fm x W_fm -> B x W_fm * H_fm x C_fm
-        q_feature_vectors = torch.cat([q_feature_vectors, torch.zeros(*q_feature_vectors.shape[:-1], 4)], dim=2)
+        q_feature_vectors = torch.cat([q_feature_vectors, torch.zeros(*q_feature_vectors.shape[:-1], 4,
+                                                                      device=q_feature_vectors.device)], dim=2)
 
         s_feature_vectors_listed = self.center_pool(s_feature_maps, s_bboxes)
 
@@ -67,7 +69,7 @@ class PrikolNet(nn.Module):
         seq_out = self.transformer({'x': seq, 'mask': mask})  # -> B x C_fm x (W_fm * H_fm + N_padded)
         preds = seq_out[:, -(W_q_fm * H_q_fm):]  # only query vectors are responsible for prediction
         preds = preds.squeeze(-1)                # -> B x output_dim x W_fm * H_fm
-
+        preds = preds.view(-1, H_q_fm, W_q_fm, 5)
         return preds
 
     def _collate_fn(self, q_vectors, s_vectors_listed):
@@ -134,7 +136,7 @@ class CenterPool(nn.Module):
                              (img_yc - cell_y * cell_h) / cell_h,
                              bbox[2] / img_w,
                              bbox[3] / img_h]
-                    label = torch.logit(torch.as_tensor(label), eps=1e-12)
+                    label = torch.logit(torch.as_tensor(label, device=input.device), eps=1e-12)
 
                     feature_vector = torch.cat([feature_vector, label])
                     feature_vectors.append(feature_vector)
