@@ -5,6 +5,8 @@ from torch.nn import functional as F
 from typing import Optional
 from torch import Tensor
 
+from utils.utils import compute_iou, compute_effective_iou, xcycwh2xyxy
+
 
 def binary_focal_loss_with_logits(input, target, gamma, alpha, pos_weight, reduction):
     bce = F.binary_cross_entropy_with_logits(input, target, reduction='none')
@@ -93,3 +95,43 @@ class YOLOLoss(nn.Module):
             'loss_wh': loss_wh.detach(),
             'loss_conf': loss_conf.detach()
         }
+
+
+class IoULoss(nn.Module):
+    def __init__(self, reduction='none'):
+        super(IoULoss, self).__init__()
+        self.reduction = reduction
+
+    def forward(self, input, target):
+        """
+        Compute IoU loss
+        :param input (torch.Tensor[N, 4]): predicted bounding boxes in ``(xc, yc, w, h)`` format
+        :param target (torch.Tensor[N, 4]): target bounding boxes in ``(xc, yc, w, h)`` format
+        """
+        iou = compute_iou(bboxes1=input, bboxes2=target, bbox_transform=xcycwh2xyxy)
+        if self.reduction == 'mean':
+            iou = iou.mean()
+        elif self.reduction == 'sum':
+            iou = iou.sum()
+
+        return 1 - iou
+
+
+class EIoULoss(nn.Module):
+    def __init__(self, reduction='none'):
+        super(EIoULoss, self).__init__()
+        self.reduction = reduction
+
+    def forward(self, input, target):
+        """
+        Compute effective IoU loss
+        :param input (torch.Tensor[N, 4]): predicted bounding boxes in ``(xc, yc, w, h)`` format
+        :param target (torch.Tensor[N, 4]): target bounding boxes in ``(xc, yc, w, h)`` format
+        """
+        eiou = compute_effective_iou(bboxes1=input, bboxes2=target, bbox_transform=xcycwh2xyxy)
+        if self.reduction == 'mean':
+            eiou = eiou.mean()
+        elif self.reduction == 'sum':
+            eiou = eiou.sum()
+
+        return 1 - eiou

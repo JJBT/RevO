@@ -5,6 +5,7 @@ from collections import MutableMapping
 import random
 import pydoc
 from omegaconf.dictconfig import DictConfig
+from torchvision.ops import box_convert
 
 
 def object_from_dict(d, parent=None, **default_kwargs):
@@ -81,3 +82,80 @@ def load_state_dict(model, state_dict):
 
 def get_timestamp():
     return time.strftime("%Y%m%d_%H%M%S", time.localtime())
+
+
+def compute_iou(bboxes1: torch.Tensor, bboxes2: torch.Tensor, bbox_transform=lambda x: x):
+    '''
+    Compute IoU between corresponding boxes of bboxes1 and bboxes2.
+
+    :param bboxes1 (torch.Tensor[N, 4]):
+    :param bboxes2 (torch.Tensor[N, 4]):
+    :param bbox_transform (func): box coordinates converter to ``(xl, yt, xr, yb)`` format
+    :return torch.Tensor[N, 1]:
+    '''
+
+    bboxes1 = bbox_transform(bboxes1)
+    bboxes2 = bbox_transform(bboxes2)
+
+    area1 = (bboxes1[:, 2] - bboxes1[:, 0]) * (bboxes1[:, 3] - bboxes1[:, 1])
+    area2 = (bboxes2[:, 2] - bboxes2[:, 0]) * (bboxes2[:, 3] - bboxes2[:, 1])
+
+    lt = torch.max(bboxes1[:, :2], bboxes2[:, :2])
+    rb = torch.min(bboxes1[:, 2:], bboxes2[:, 2:])
+    wh = (rb - lt).clamp(min=0)
+
+    inter = wh[:, 0] * wh[:, 1]
+    union = area1 + area2 - inter
+
+    return inter / union
+
+
+def _smallest_enclosing_box(bboxes1: torch.Tensor, bboxes2: torch.Tensor, bbox_transform=lambda x: x):
+    bboxes1 = bbox_transform(bboxes1)
+    bboxes2 = bbox_transform(bboxes2)
+
+    lt = torch.min(bboxes1[:, :2], bboxes2[:, :2])
+    rb = torch.max(bboxes1[:, 2:], bboxes2[:, 2:])
+
+    box = torch.cat([lt, rb], dim=1)
+    return box
+
+
+def compute_effective_iou(bboxes1: torch.Tensor, bboxes2: torch.Tensor, bbox_transform=lambda x: x):
+    '''
+    Compute IoU between corresponding boxes of bboxes1 and bboxes2.
+
+    :param bboxes1 (torch.Tensor[N, 4]):
+    :param bboxes2 (torch.Tensor[N, 4]):
+    :param bbox_transform (func): box coordinates converter to ``(xl, yt, xr, yb)`` format
+    :return torch.Tensor[N, 1]:
+    '''
+
+    bboxes1 = bbox_transform(bboxes1)
+    bboxes2 = bbox_transform(bboxes2)
+
+    iou = compute_iou(bboxes1, bboxes2)
+
+    xcyc1 = (bboxes1[:, :2] + bboxes1[:, 2:]) / 2
+    xcyc2 = (bboxes2[:, :2] + bboxes2[:, 2:]) / 2
+    se_box = _smallest_enclosing_box(bboxes1, bboxes2)
+    norm = torch.linalg.norm(xcyc2 - xcyc1, dim=-1)
+    se_diag = torch.linalg.norm(se_box[:, 2:] - se_box[:, :2], dim=-1)
+    dis = norm.square() / se_diag.square()
+
+    wh1 = bboxes1[:, 2:] - bboxes1[:, :2]
+    wh2 = bboxes2[:, 2:] - bboxes2[:, :2]
+    se_box_wh = se_box[:, 2:] - se_box[:, :2]
+    asp = ((wh1 - wh2).square() / se_box_wh.square()).sum(dim=-1)
+
+    return iou - dis - asp
+
+
+def xcycwh2xyxy(bboxes):
+    if torch.is_tensor(bboxes):
+        return box_convert(bboxes, in_fmt='cxcywh', out_fmt='xyxy')
+
+
+def xyxy2xcycwh(bboxes):
+    if torch.is_tensor(bboxes):
+        return box_convert(bboxes, in_fmt='xyxy', out_fmt='cxcywh')
