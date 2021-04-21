@@ -46,7 +46,7 @@ class BFLWithLogitsLoss(nn.Module):
 
 class YOLOLoss(nn.Module):
     def __init__(self,
-                 bbox_criterion,
+                 coord_criterion,
                  conf_criterion,
                  img_size,
                  grid_size,
@@ -56,7 +56,7 @@ class YOLOLoss(nn.Module):
                  lambda_noobj=1
                  ):
         super(YOLOLoss, self).__init__()
-        self.bbox_criterion = bbox_criterion
+        self.coord_criterion = coord_criterion
         self.conf_criterion = conf_criterion
         self.img_size = img_size
         self.grid_size = grid_size
@@ -68,9 +68,14 @@ class YOLOLoss(nn.Module):
         self.cell_size = img_size[0] // grid_size[0], img_size[1] // grid_size[1]
 
     def forward(self, input, target):
-        # input: (B, S, S, 5)
-        # target: (B, S, S, 5)
-        # target[i, j, k, :] = [c, x, y, w, h]
+        '''
+        Compute standard YOLOv3 loss
+        ```{input, target}[i, j, k, :] = (c, x, y, w, h)```
+        :param input (torch.Tensor[N, S, S, 5]): raw model output (logits)
+        :param target (torch.Tensor[N, S, S, 5]): yolo target
+        :return:
+        '''
+
         obj_mask = target[..., 0] > 0.
         noobj_mask = ~obj_mask
 
@@ -83,16 +88,15 @@ class YOLOLoss(nn.Module):
 
         pred_xy = torch.sigmoid(obj_pred[..., 1:3])
         target_xy = obj_target[..., 1:3]
-        loss_xy = self.bbox_criterion(pred_xy, target_xy)
+        loss_xy = self.coord_criterion(pred_xy, target_xy)
 
         pred_wh = torch.sigmoid(obj_pred[..., 3:])
         target_wh = obj_target[..., 3:]
-        loss_wh = self.bbox_criterion(pred_wh, target_wh)
+        loss_wh = self.coord_criterion(pred_wh, target_wh)
 
         obj_pred_logit = obj_pred[..., 0]
         obj_target_conf = obj_target[..., 0]
-        # pred_logit = input[..., 0]
-        # target_conf = target[..., 0]
+
         loss_obj = self.conf_criterion(obj_pred_logit, obj_target_conf)
 
         loss = self.lambda_xy * loss_xy + self.lambda_wh * loss_wh + \
@@ -144,3 +148,62 @@ class EIoULoss(nn.Module):
             eiou = eiou.sum()
 
         return 1 - eiou
+
+
+class CustomYOLOLoss(nn.Module):
+    def __init__(self,
+                 bbox_criterion,
+                 conf_criterion,
+                 img_size,
+                 grid_size,
+                 lambda_noobj=1,
+                 lambda_bbox=1,
+                 lambda_obj=1
+                 ):
+        super(CustomYOLOLoss, self).__init__()
+        self.bbox_criterion = bbox_criterion
+        self.conf_criterion = conf_criterion
+        self.img_size = img_size
+        self.grid_size = grid_size
+        self.lambda_noobj = lambda_noobj
+        self.lambda_bbox = lambda_bbox
+        self.lambda_obj = lambda_obj
+
+        self.cell_size = img_size[0] // grid_size[0], img_size[1] // grid_size[1]
+
+    def forward(self, input, target):
+        '''
+        Compute YOLOv3 loss with {G, C, E}IoULoss for bbox predictions
+        ```{input, target}[i, j, k, :] = (c, x, y, w, h)```
+        :param input (torch.Tensor[N, S, S, 5]): raw model output (logits)
+        :param target (torch.Tensor[N, S, S, 5]): yolo target
+        :return:
+        '''
+
+        obj_mask = target[..., 0] > 0.
+        noobj_mask = ~obj_mask
+
+        obj_pred, noobj_pred = input[obj_mask], input[noobj_mask]
+        obj_target, noobj_target = target[obj_mask], target[noobj_mask]
+
+        noobj_pred_logit = noobj_pred[..., 0]
+        noobj_target_conf = noobj_target[..., 0]
+        loss_noobj = self.conf_criterion(noobj_pred_logit, noobj_target_conf)
+
+        pred_bbox = obj_pred[..., 1:]
+        target_bbox = obj_target[..., 1:]
+        loss_bbox = self.bbox_criterion(pred_bbox, target_bbox)
+
+        obj_pred_logit = obj_pred[..., 0]
+        obj_target_conf = obj_target[..., 0]
+
+        loss_obj = self.conf_criterion(obj_pred_logit, obj_target_conf)
+
+        loss = self.lambda_bbox * loss_bbox + \
+               self.lambda_obj * loss_obj + self.lambda_noobj * loss_noobj
+
+        return {
+            'loss': loss,
+            'loss_bbox': loss_bbox.detach(),
+            'loss_conf': loss_obj.detach()
+        }
