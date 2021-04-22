@@ -10,7 +10,7 @@ from PIL import ImageDraw, Image
 import numpy as np
 from jinja2 import Template
 from settings import BASE_DIR
-from utils.data import from_yolo_target
+from utils.data import from_yolo_target, thr_confidence
 # import pdfkit
 
 
@@ -120,6 +120,7 @@ def draw_sample(img, output, target, fig=None, ax=None, show=False):
     grid_size = target.shape[:2]
 
     pred = torch.sigmoid(output)
+    pred = thr_confidence(pred, 0.5)
     pred_bboxes = from_yolo_target(pred, img_size, grid_size)
     target_bboxes = from_yolo_target(target, img_size, grid_size)
 

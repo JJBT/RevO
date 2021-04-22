@@ -158,6 +158,12 @@ def get_anns_info_df(coco, save=None):
     return anns_info
 
 
+def thr_confidence(input, thr):
+    new_input = input.clone()
+    new_input[..., 0] = (new_input[...,  0] > thr).float()
+    return new_input
+
+
 def to_yolo_target(bboxes, img_size, stride):
     def get_relative_coords(bbox, img_size, cell_size):
         bbox = xyxy2xcycwh(bbox)
@@ -198,8 +204,30 @@ def from_yolo_target(target, img_size, grid_size):
     new_target[:, :, 1] -= new_target[:, :, 3] // 2
     new_target[:, :, 2] -= new_target[:, :, 4] // 2
 
-    new_target = new_target[new_target[:, :, 0] > 0.5][:, 1:].tolist()
+    new_target = new_target[new_target[:, :, 0] > 0][:, 1:].tolist()
 
+    return new_target
+
+
+def from_yolo_target_torch(target, img_size, grid_size):
+    if torch.is_tensor(target):
+        target = target.detach().cpu()
+
+    cell_size = img_size[0] // grid_size[0], img_size[1] // grid_size[1]
+    new_target = target.clone()
+    x_offset = torch.repeat_interleave(torch.unsqueeze(torch.arange(grid_size[1]), dim=0), repeats=grid_size[0], dim=0) * cell_size[0]
+    new_target[..., 1] = x_offset + new_target[..., 1] * cell_size[0]
+    y_offset = torch.repeat_interleave(torch.unsqueeze(torch.arange(grid_size[0]), dim=0).T, repeats=grid_size[1], dim=1) * cell_size[1]
+    new_target[..., 2] = y_offset + new_target[..., 2] * cell_size[1]
+
+    new_target[..., 3] = new_target[..., 3] * img_size[0]
+    new_target[..., 4] = new_target[..., 4] * img_size[1]
+
+    new_target[..., 1] -= new_target[..., 3] // 2
+    new_target[..., 2] -= new_target[..., 4] // 2
+
+    new_target = new_target[new_target[..., 0] > 0]
+    # new_target = new_target.flatten(end_dim=1)
     return new_target
 
 
