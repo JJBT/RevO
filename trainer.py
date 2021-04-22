@@ -68,7 +68,6 @@ class Trainer:
         set_determenistic()
 
         self.train_dataloader_dict = create_train_dataloader(cfg)
-        self.first_batch = next(iter(self.train_dataloader_dict['megapixel_mnist_train']['dataloader']))
         self.val_dataloader_dict = create_val_dataloader(cfg)
         self.state = State()
         self.criterion = create_loss(cfg)
@@ -81,11 +80,9 @@ class Trainer:
         self.callbacks = OrderedDict()
         self.metrics = create_metrics(cfg)
         create_callbacks(cfg, self)
-        self.cfg = cfg
         self.device = create_device(cfg)
+        self.cfg = cfg
         self.stop_validation = False
-        self.amp = cfg.amp
-        self.scaler = GradScaler(enabled=self.amp)
 
     def get_train_batch(self):
         if not getattr(self, 'train_data_iter', False):
@@ -93,7 +90,6 @@ class Trainer:
                 iter(train_dataloader['dataloader']) for _, train_dataloader in self.train_dataloader_dict.items()
             )
         try:
-            # batch = next(self.train_data_iter)
             batch = self.first_batch
         except StopIteration:
             self.train_data_iter = chain.from_iterable(
@@ -160,7 +156,7 @@ class Trainer:
             metric.reset()
 
         with torch.no_grad():
-            for batch in dataloader:
+            for i, batch in enumerate(dataloader):
                 if self.stop_validation:
                     break
 

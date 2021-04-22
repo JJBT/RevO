@@ -121,20 +121,21 @@ def _smallest_enclosing_box(bboxes1: torch.Tensor, bboxes2: torch.Tensor, bbox_t
     return box
 
 
-def compute_effective_iou(bboxes1: torch.Tensor, bboxes2: torch.Tensor, bbox_transform=lambda x: x):
+def compute_effective_iou(bboxes1: torch.Tensor, bboxes2: torch.Tensor, bbox_transform=lambda x: x, pc_iou=None):
     '''
     Compute IoU between corresponding boxes of bboxes1 and bboxes2.
 
     :param bboxes1 (torch.Tensor[N, 4]):
     :param bboxes2 (torch.Tensor[N, 4]):
     :param bbox_transform (func): box coordinates converter to ``(xl, yt, xr, yb)`` format
+    :param pc_iou (torch.Tensor[N, 1]): precomputed IoU
     :return torch.Tensor[N, 1]:
     '''
 
     bboxes1 = bbox_transform(bboxes1)
     bboxes2 = bbox_transform(bboxes2)
 
-    iou = compute_iou(bboxes1, bboxes2)
+    iou = compute_iou(bboxes1, bboxes2) if pc_iou is None else pc_iou
 
     xcyc1 = (bboxes1[:, :2] + bboxes1[:, 2:]) / 2
     xcyc2 = (bboxes2[:, :2] + bboxes2[:, 2:]) / 2
