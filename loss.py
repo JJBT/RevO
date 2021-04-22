@@ -5,7 +5,8 @@ from torch.nn import functional as F
 from typing import Optional
 from torch import Tensor
 
-from utils.utils import compute_iou, compute_effective_iou, xcycwh2xyxy
+from utils.utils import compute_iou, compute_effective_iou
+from utils.data import xcycwh2xyxy
 
 
 def binary_focal_loss_with_logits(input, target, gamma, alpha, pos_weight, reduction):

@@ -5,7 +5,6 @@ from collections import MutableMapping
 import random
 import pydoc
 from omegaconf.dictconfig import DictConfig
-from torchvision.ops import box_convert
 
 
 def object_from_dict(d, parent=None, **default_kwargs):
@@ -151,12 +150,3 @@ def compute_effective_iou(bboxes1: torch.Tensor, bboxes2: torch.Tensor, bbox_tra
 
     return iou - dis - asp
 
-
-def xcycwh2xyxy(bboxes):
-    if torch.is_tensor(bboxes):
-        return box_convert(bboxes, in_fmt='cxcywh', out_fmt='xyxy')
-
-
-def xyxy2xcycwh(bboxes):
-    if torch.is_tensor(bboxes):
-        return box_convert(bboxes, in_fmt='xyxy', out_fmt='cxcywh')

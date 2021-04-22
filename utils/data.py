@@ -5,6 +5,7 @@ import json
 from collections import defaultdict
 
 import torch
+from torchvision.ops import box_convert
 
 
 def get_coco_img_ids(coco):
@@ -159,7 +160,7 @@ def get_anns_info_df(coco, save=None):
 
 def to_yolo_target(bboxes, img_size, stride):
     def get_relative_coords(bbox, img_size, cell_size):
-        bbox = xlytwh2xcycwh(bbox)
+        bbox = xyxy2xcycwh(bbox)
         x, y = (bbox[0] % cell_size[0]) / cell_size[0], (bbox[1] % cell_size[1]) / cell_size[1]
         w, h = bbox[2] / img_size[0], bbox[3] / img_size[1]
         return [x, y, w, h]
@@ -202,8 +203,27 @@ def from_yolo_target(target, img_size, grid_size):
     return new_target
 
 
-def xlytwh2xcycwh(bbox):
-    x = bbox[0] + bbox[2] // 2
-    y = bbox[1] + bbox[3] // 2
-    w, h = bbox[2], bbox[3]
-    return [x, y, w, h]
+def xcycwh2xyxy(bboxes):
+    if torch.is_tensor(bboxes):
+        return box_convert(bboxes, in_fmt='cxcywh', out_fmt='xyxy')
+    elif isinstance(bboxes, np.ndarray):
+        xc, yc, w, h = bboxes.T
+        x1 = xc - 0.5 * w
+        y1 = yc - 0.5 * h
+        x2 = xc + 0.5 * w
+        y2 = yc + 0.5 * h
+
+        return np.stack([x1, y1, x2, y2], axis=-1)
+
+
+def xyxy2xcycwh(bboxes):
+    if torch.is_tensor(bboxes):
+        return box_convert(bboxes, in_fmt='xyxy', out_fmt='cxcywh')
+    elif isinstance(bboxes, np.ndarray):
+        x1, y1, x2, y2 = bboxes.T
+        cx = (x1 + x2) / 2
+        cy = (y1 + y2) / 2
+        w = x2 - x1
+        h = y2 - y1
+
+        return np.stack((cx, cy, w, h), axis=-1)
