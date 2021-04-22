@@ -226,4 +226,4 @@ def xyxy2xcycwh(bboxes):
         w = x2 - x1
         h = y2 - y1
 
-        return np.stack((cx, cy, w, h), axis=-1)
+    return np.stack((cx, cy, w, h), axis=-1)
