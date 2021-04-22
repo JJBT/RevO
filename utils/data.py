@@ -160,7 +160,7 @@ def get_anns_info_df(coco, save=None):
 
 def to_yolo_target(bboxes, img_size, stride):
     def get_relative_coords(bbox, img_size, cell_size):
-        bbox = xyxy2xcycwh(bbox)
+        bbox = xywh2xcycwh(bbox)
         x, y = (bbox[0] % cell_size[0]) / cell_size[0], (bbox[1] % cell_size[1]) / cell_size[1]
         w, h = bbox[2] / img_size[0], bbox[3] / img_size[1]
         return [x, y, w, h]
@@ -206,24 +206,121 @@ def from_yolo_target(target, img_size, grid_size):
 def xcycwh2xyxy(bboxes):
     if torch.is_tensor(bboxes):
         return box_convert(bboxes, in_fmt='cxcywh', out_fmt='xyxy')
+
     elif isinstance(bboxes, np.ndarray):
         xc, yc, w, h = bboxes.T
         x1 = xc - 0.5 * w
         y1 = yc - 0.5 * h
         x2 = xc + 0.5 * w
         y2 = yc + 0.5 * h
-
         return np.stack([x1, y1, x2, y2], axis=-1)
+    elif isinstance(bboxes, (list, tuple)):
+        if isinstance(bboxes[0], (int, float)):
+            xc, yc, w, h = bboxes
+            x1 = xc - 0.5 * w
+            y1 = yc - 0.5 * h
+            x2 = xc + 0.5 * w
+            y2 = yc + 0.5 * h
+            return [x1, y1, x2, y2]
+        elif isinstance(bboxes[0], (list, tuple)):
+            new_bboxes = []
+            for bbox in bboxes:
+                xc, yc, w, h = bbox
+                x1 = xc - 0.5 * w
+                y1 = yc - 0.5 * h
+                x2 = xc + 0.5 * w
+                y2 = yc + 0.5 * h
+                new_bboxes.append([x1, y1, x2, y2])
+            return new_bboxes
 
 
 def xyxy2xcycwh(bboxes):
     if torch.is_tensor(bboxes):
         return box_convert(bboxes, in_fmt='xyxy', out_fmt='cxcywh')
+
     elif isinstance(bboxes, np.ndarray):
         x1, y1, x2, y2 = bboxes.T
         cx = (x1 + x2) / 2
         cy = (y1 + y2) / 2
         w = x2 - x1
         h = y2 - y1
+        return np.stack((cx, cy, w, h), axis=-1)
 
-    return np.stack((cx, cy, w, h), axis=-1)
+    elif isinstance(bboxes, (list, tuple)):
+        if isinstance(bboxes[0], (int, float)):
+            x1, y1, x2, y2 = bboxes
+            cx = (x1 + x2) / 2
+            cy = (y1 + y2) / 2
+            w = x2 - x1
+            h = y2 - y1
+            return [cx, cy, w, h]
+        elif isinstance(bboxes[0], (list, tuple)):
+            new_bboxes = []
+            for bbox in bboxes:
+                x1, y1, x2, y2 = bbox
+                cx = (x1 + x2) / 2
+                cy = (y1 + y2) / 2
+                w = x2 - x1
+                h = y2 - y1
+                new_bboxes.append([cx, cy, w, h])
+            return new_bboxes
+
+
+def xywh2xcycwh(bboxes):
+    if torch.is_tensor(bboxes):
+        x, y, w, h = bboxes.unbind(-1)
+        xc = x + 0.5 * w
+        yc = y + 0.5 * h
+        return torch.stack([xc, yc, w, h], dim=-1)
+
+    elif isinstance(bboxes, np.ndarray):
+        x, y, w, h = bboxes.T
+        xc = x + 0.5 * w
+        yc = y + 0.5 * h
+        return np.stack((xc, yc, w, h), axis=-1)
+
+    elif isinstance(bboxes, (list, tuple)):
+        if isinstance(bboxes[0], (int, float)):
+            x, y, w, h = bboxes
+            xc = x + 0.5 * w
+            yc = y + 0.5 * h
+            return [xc, yc, w, h]
+        elif isinstance(bboxes[0], (list, tuple)):
+            new_bboxes = []
+            for bbox in bboxes:
+                x, y, w, h = bbox
+                xc = x + 0.5 * w
+                yc = y + 0.5 * h
+
+                new_bboxes.append([xc, yc, w, h])
+            return new_bboxes
+
+
+def xcycwh2xywh(bboxes):
+    if torch.is_tensor(bboxes):
+        xc, yc, w, h = bboxes.unbind(-1)
+        x = xc - 0.5 * w
+        y = yc - 0.5 * h
+        return torch.stack([x, y, w, h], dim=-1)
+
+    elif isinstance(bboxes, np.ndarray):
+        xc, yc, w, h = bboxes.T
+        x = xc - 0.5 * w
+        y = yc - 0.5 * h
+        return np.stack((x, y, w, h), axis=-1)
+
+    elif isinstance(bboxes, (list, tuple)):
+        if isinstance(bboxes[0], (int, float)):
+            xc, yc, w, h = bboxes
+            x = xc - 0.5 * w
+            y = yc - 0.5 * h
+            return [x, y, w, h]
+        elif isinstance(bboxes[0], (list, tuple)):
+            new_bboxes = []
+            for bbox in bboxes:
+                xc, yc, w, h = bbox
+                x = xc - 0.5 * w
+                y = yc - 0.5 * h
+
+                new_bboxes.append([x, y, w, h])
+            return new_bboxes
