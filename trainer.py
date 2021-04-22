@@ -90,7 +90,7 @@ class Trainer:
                 iter(train_dataloader['dataloader']) for _, train_dataloader in self.train_dataloader_dict.items()
             )
         try:
-            batch = self.first_batch
+            batch = next(self.train_data_iter)
         except StopIteration:
             self.train_data_iter = chain.from_iterable(
                 iter(train_dataloader['dataloader']) for _, train_dataloader in self.train_dataloader_dict.items()
@@ -156,7 +156,7 @@ class Trainer:
             metric.reset()
 
         with torch.no_grad():
-            for i, batch in enumerate(dataloader):
+            for batch in dataloader:
                 if self.stop_validation:
                     break
 
