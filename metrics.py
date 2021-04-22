@@ -2,17 +2,19 @@ import torch
 from utils.utils import loss_to_dict
 from collections import defaultdict
 from utils.precision_recall import average_precision_compute
-from utils.data import from_yolo_target_torch
+from utils.data import from_yolo_target_torch, xcycwh2xyxy
 from torchvision.ops import box_iou
-from utils
+from utils.pred_transforms import transforms_dict
 
 
 class Metric:
     def __init__(self, name: str, default_value=None, target_transform=None, prediction_transform=None):
         self.name = name.replace(' ', '_')
         self.default_value = default_value
-        self.target_transform = target_transform if target_transform else lambda x: x
-        self.prediction_transform = prediction_transform if prediction_transform else lambda x: x
+        self.target_transform = target_transform if target_transform else \
+            transforms_dict.get(f'{self.name}_target', lambda x: x)
+        self.prediction_transform = prediction_transform if prediction_transform else \
+            transforms_dict.get(f'{self.name}_prediction', lambda x: x)
 
     def prepare(self, y: torch.Tensor, y_pred: torch.Tensor):
         y = self.target_transform(y)
@@ -45,7 +47,7 @@ class APAccumulator:
         self.confs = []
 
     def step(self, mask, pred_bboxes):
-        labels = mask.sum(dim=1).bool()
+        labels = mask.sum(dim=0).bool()
         confs = pred_bboxes[..., 0]
         self.labels.append(labels)
         self.confs.append(confs)
@@ -77,8 +79,10 @@ class AveragePrecision(Metric):
 
     def step(self, y: torch.Tensor, y_pred: torch.Tensor):
         for i in range(y.shape[0]):
-            target_bboxes = from_yolo_target_torch(y[i], [320, 320], [10, 10])
-            pred_bboxes = from_yolo_target_torch(y_pred[i], [320, 320], [10, 10])
+            target_bboxes = self.target_transform(y[i])
+            pred_bboxes = self.prediction_transform(y_pred[i])
+            target_bboxes[..., 1:] = xcycwh2xyxy(target_bboxes[..., 1:])
+            pred_bboxes[..., 1:] = xcycwh2xyxy(pred_bboxes[..., 1:])
             for name, accumulator in self.accumulators.items():
                 mask = self.compute_IoU_mask(target_bboxes[..., 1:], pred_bboxes[..., 1:], accumulator.thr_overlap)
                 accumulator.step(mask, pred_bboxes)
