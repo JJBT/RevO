@@ -164,13 +164,15 @@ def thr_confidence(input, thr):
     return new_input
 
 
-def to_yolo_target(bboxes, img_size, stride):
-    def get_relative_coords(bbox, img_size, cell_size):
-        bbox = xywh2xcycwh(bbox)
-        x, y = (bbox[0] % cell_size[0]) / cell_size[0], (bbox[1] % cell_size[1]) / cell_size[1]
-        w, h = bbox[2] / img_size[0], bbox[3] / img_size[1]
-        return [x, y, w, h]
+def get_relative_coords(bbox, img_size, grid_size):
+    cell_size = img_size[0] // grid_size[0], img_size[1] // grid_size[1]
+    bbox = xywh2xcycwh(bbox)
+    x, y = (bbox[0] % cell_size[0]) / cell_size[0], (bbox[1] % cell_size[1]) / cell_size[1]
+    w, h = bbox[2] / img_size[0], bbox[3] / img_size[1]
+    return [x, y, w, h]
 
+
+def to_yolo_target(bboxes, img_size, stride):
     w, h = img_size
     grid_w, grid_h = w // stride, h // stride
     cell_w, cell_h = w // grid_w, h // grid_h
@@ -180,13 +182,14 @@ def to_yolo_target(bboxes, img_size, stride):
         img_xc, img_yc = bbox[0] + bbox[2] // 2, bbox[1] + bbox[3] // 2
         cell_x, cell_y = int(img_xc / cell_w), int(img_yc / cell_h)
 
-        cell_target = [1., *get_relative_coords(bbox, img_size, (cell_w, cell_h))]
+        cell_target = [1., *get_relative_coords(bbox, img_size, (grid_w, grid_h))]
         target[cell_y, cell_x] = np.array(cell_target)
 
     return target
 
 
 def from_yolo_target(target, img_size, grid_size):
+    """Returns list of bboxes in ``(xl, yt, w, h)`` format"""
     if torch.is_tensor(target):
         target = target.detach().cpu().numpy()
 
@@ -210,6 +213,8 @@ def from_yolo_target(target, img_size, grid_size):
 
 
 def from_yolo_target_torch(target, img_size, grid_size):
+    """Returns bboxes in ``(c, xl, yt, w, h)`` format"""
+
     if torch.is_tensor(target):
         target = target.detach().cpu()
 
@@ -227,7 +232,6 @@ def from_yolo_target_torch(target, img_size, grid_size):
     new_target[..., 2] -= new_target[..., 4] // 2
 
     new_target = new_target[new_target[..., 0] > 0]
-    # new_target = new_target.flatten(end_dim=1)
     return new_target
 
 
@@ -351,4 +355,44 @@ def xcycwh2xywh(bboxes):
                 y = yc - 0.5 * h
 
                 new_bboxes.append([x, y, w, h])
+            return new_bboxes
+
+
+def xywh2xyxy(bboxes):
+    if torch.is_tensor(bboxes):
+        return box_convert(bboxes, in_fmt='xywh', out_fmt='xyxy')
+
+    elif isinstance(bboxes, np.ndarray):
+        x, y, w, h = bboxes.T
+        return np.stack([x, y, x + w, y + h], axis=-1)
+
+    elif isinstance(bboxes, (list, tuple)):
+        if isinstance(bboxes[0], (int, float)):
+            x, y, w, h = bboxes
+            return [x, y, x + w, y + h]
+        elif isinstance(bboxes[0], (list, tuple)):
+            new_bboxes = []
+            for bbox in bboxes:
+                x, y, w, h = bbox
+                new_bboxes.append([x, y, x + w, y + h])
+            return new_bboxes
+
+
+def xyxy2xywh(bboxes):
+    if torch.is_tensor(bboxes):
+        return box_convert(bboxes, in_fmt='xyxy', out_fmt='xywh')
+
+    elif isinstance(bboxes, np.ndarray):
+        x1, y1, x2, y2 = bboxes.T
+        return np.stack([x1, y1, x2 - x1, y2 - y1], axis=-1)
+
+    elif isinstance(bboxes, (list, tuple)):
+        if isinstance(bboxes[0], (int, float)):
+            x1, y1, x2, y2 = bboxes
+            return [x1, y1, x2 - x1, y2 - y1]
+        elif isinstance(bboxes[0], (list, tuple)):
+            new_bboxes = []
+            for bbox in bboxes:
+                x1, y1, x2, y2 = bbox
+                new_bboxes.append([x1, y1, x2 - x1, y2 - y1])
             return new_bboxes

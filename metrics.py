@@ -2,7 +2,7 @@ import torch
 from utils.utils import loss_to_dict
 from collections import defaultdict
 from utils.precision_recall import average_precision_compute
-from utils.data import from_yolo_target_torch, xcycwh2xyxy
+from utils.data import from_yolo_target_torch, xywh2xyxy
 from torchvision.ops import box_iou
 from utils.pred_transforms import transforms_dict
 
@@ -59,32 +59,31 @@ class APAccumulator:
 
 
 class AveragePrecision(Metric):
-    def __init__(self, target_transform=None, prediction_transform=None, thr_confidence=0):
+    def __init__(self, target_transform=None, prediction_transform=None):
         super().__init__('ap', default_value=0, target_transform=target_transform,
                          prediction_transform=prediction_transform)
-        self.thr_confidence = thr_confidence
         self.accumulators = {
             'ap': APAccumulator(thr_overlap=0.5)
         }
 
     @staticmethod
-    def compute_IoU_mask(y: torch.Tensor, y_pred: torch.Tensor, overlap_threshold):
-        IoU = box_iou(y, y_pred)
+    def get_iou_mask(y: torch.Tensor, y_pred: torch.Tensor, overlap_threshold):
+        iou = box_iou(y, y_pred)
         for i in range(y.shape[0]):
-            maxj = IoU[i, :].argmax()
-            IoU[i, :maxj] = 0
-            IoU[i, (maxj + 1):] = 0
+            max_idx = iou[i, :].argmax()
+            iou[i, :max_idx] = 0
+            iou[i, (max_idx + 1):] = 0
 
-        return IoU >= overlap_threshold
+        return iou >= overlap_threshold
 
     def step(self, y: torch.Tensor, y_pred: torch.Tensor):
         for i in range(y.shape[0]):
             target_bboxes = self.target_transform(y[i])
             pred_bboxes = self.prediction_transform(y_pred[i])
-            target_bboxes[..., 1:] = xcycwh2xyxy(target_bboxes[..., 1:])
-            pred_bboxes[..., 1:] = xcycwh2xyxy(pred_bboxes[..., 1:])
+            target_bboxes[..., 1:] = xywh2xyxy(target_bboxes[..., 1:])
+            pred_bboxes[..., 1:] = xywh2xyxy(pred_bboxes[..., 1:])
             for name, accumulator in self.accumulators.items():
-                mask = self.compute_IoU_mask(target_bboxes[..., 1:], pred_bboxes[..., 1:], accumulator.thr_overlap)
+                mask = self.get_iou_mask(target_bboxes[..., 1:], pred_bboxes[..., 1:], accumulator.thr_overlap)
                 accumulator.step(mask, pred_bboxes)
 
     def compute(self):
