@@ -10,7 +10,9 @@ transforms_dict = {
     'precision_prediction': lambda x: (x[..., 0] > 0).float(),
     'precision_target': lambda x: (x[..., 0] > 0).float(),
     'ap_prediction': lambda x: from_yolo_target_torch(torch.sigmoid(x), [320, 320], [10, 10]),
-    'ap_target': lambda x: from_yolo_target_torch(x, [320, 320], [10, 10])
+    'ap_target': lambda x: from_yolo_target_torch(x, [320, 320], [10, 10]),
+    'iou_prediction': lambda x: from_yolo_target_torch(torch.sigmoid(x), [320, 320], [10, 10]),
+    'iou_target': lambda x: from_yolo_target_torch(x, [320, 320], [10, 10]),
 }
 
 

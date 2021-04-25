@@ -4,8 +4,8 @@ import os
 import logging
 from settings import BASE_DIR
 from callbacks import LoadCheckpointCallback
-from metrics import Recall, Precision
-from utils.pred_transforms import prediction_transforms_dict
+from metrics import Recall, Precision, IoU
+from utils.pred_transforms import transforms_dict
 
 logger = logging.getLogger(__name__)
 
@@ -19,9 +19,8 @@ def run_validation(cfg):
         filename=cfg.ckpt
     ))
     trainer._before_run_callbacks()
-    dataloader = trainer.val_dataloader_dict['megapixel_mnist_train_val']['dataloader']
-    metrics = trainer.evaluate(dataloader=dataloader, metrics=[Recall(prediction_transform=prediction_transforms_dict['recall']),
-                                        Precision(prediction_transform=prediction_transforms_dict['precision'])])
+    dataloader = trainer.val_dataloader_dict['megapixel_mnist_val_train_cats']['dataloader']
+    metrics = trainer.evaluate(dataloader=dataloader, metrics=[IoU()])
     logger.info(f'Validation {os.path.join(ckpt_dir, cfg.ckpt)}')
     metrics_report = ''
     for k, v in metrics.items():

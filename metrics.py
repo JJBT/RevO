@@ -3,7 +3,7 @@ from utils.utils import loss_to_dict
 from collections import defaultdict
 from utils.precision_recall import average_precision_compute
 from utils.data import from_yolo_target_torch, xywh2xyxy
-from torchvision.ops import box_iou
+from torchvision.ops import box_iou, nms
 from utils.pred_transforms import transforms_dict
 
 
@@ -97,6 +97,46 @@ class AveragePrecision(Metric):
         for name, accumulator in self.accumulators.items():
             accumulator.labels.clear()
             accumulator.confs.clear()
+
+
+class IoU(Metric):
+    def __init__(self, thr=0.5, target_transform=None, prediction_transform=None):
+        super().__init__('iou', default_value=0, target_transform=target_transform,
+                         prediction_transform=prediction_transform)
+        self.total_score = 0
+        self.total_samples = 0
+        self.thr = thr
+
+    def step(self, y: torch.Tensor, y_pred: torch.Tensor):
+        for i in range(y.shape[0]):
+            target_bboxes = self.target_transform(y[i])
+            pred_bboxes = self.prediction_transform(y_pred[i])
+
+            target_bboxes[..., 1:] = xywh2xyxy(target_bboxes[..., 1:])
+            pred_bboxes[..., 1:] = xywh2xyxy(pred_bboxes[..., 1:])
+
+            non_suppressed_bboxes_idxs = nms(boxes=pred_bboxes[..., 1:], scores=pred_bboxes[..., 0], iou_threshold=self.thr)
+            non_suppressed_bboxes = pred_bboxes[non_suppressed_bboxes_idxs]
+
+            iou_scores = box_iou(target_bboxes[..., 1:], non_suppressed_bboxes[..., 1:])
+            max_iou_scores = torch.max(iou_scores, dim=1)
+
+            self.total_score += torch.sum(max_iou_scores.values)
+            self.total_samples += torch.sum(torch.any(iou_scores, dim=1))
+
+    def compute(self):
+        numerator = self.total_score
+        denominator = self.total_samples
+        if denominator == 0:
+            result = 0.
+        else:
+            result = numerator / denominator
+
+        return result
+
+    def reset(self):
+        self.total_samples = 0
+        self.total_score = 0
 
 
 class Recall(Metric):
