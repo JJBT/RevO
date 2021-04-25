@@ -1,3 +1,5 @@
+import time
+
 import torch
 from torch import nn
 from models.transformer import SimpleTransformer
@@ -52,11 +54,10 @@ class PrikolNet(nn.Module):
         # Getting sequences of query feature vectors images and support object instances feature vectors
         _, C_q_fm, W_q_fm, H_q_fm = q_feature_map.shape
         q_feature_vectors = q_feature_map.permute(0, 2, 3, 1).contiguous().view(-1, W_q_fm * H_q_fm, C_q_fm)  # B x C_fm x H_fm x W_fm -> B x W_fm * H_fm x C_fm
-        q_feature_vectors = torch.cat([q_feature_vectors, torch.zeros(*q_feature_vectors.shape[:-1], 4,
-                                                                      device=q_feature_vectors.device)], dim=2)
+        # q_feature_vectors = torch.cat([q_feature_vectors, torch.zeros(*q_feature_vectors.shape[:-1], 4,
+        #                                                               device=q_feature_vectors.device)], dim=2)
 
         s_feature_vectors_listed = self.center_pool(s_feature_maps, s_bboxes)
-
 
 
         # Shaping batch from feature vector sequences
@@ -107,6 +108,7 @@ class CenterPool(nn.Module):
         """
         super(CenterPool, self).__init__()
         self.img_size = img_size
+        self.label_fuser = LabelFuser(in_dim=4, out_dim=2048)
 
     def forward(self, input, bboxes):
         """
@@ -136,11 +138,27 @@ class CenterPool(nn.Module):
                              (img_yc - cell_y * cell_h) / cell_h,
                              bbox[2] / img_w,
                              bbox[3] / img_h]
-                    label = torch.logit(torch.as_tensor(label, device=input.device), eps=1e-12)
+                    # label = torch.logit(torch.as_tensor(label, device=input.device), eps=1e-12)
+                    # feature_vector = torch.cat([feature_vector, label])
 
-                    feature_vector = torch.cat([feature_vector, label])
+                    feature_vector = self.label_fuser(
+                        feature_vector, torch.tensor(label, dtype=feature_vector.dtype, device=feature_vector.device)
+                    )
                     feature_vectors.append(feature_vector)
 
             feature_vectors_listed.append(feature_vectors)
 
         return feature_vectors_listed
+
+
+class LabelFuser(nn.Module):
+    def __init__(self, in_dim, out_dim):
+        super(LabelFuser, self).__init__()
+        self.in_dim = in_dim
+        self.out_dim = out_dim
+
+        self.linear = nn.Linear(in_dim, out_dim)
+
+    def forward(self, feature_vector, label):
+        out = feature_vector + self.linear(label)
+        return out
