@@ -8,6 +8,7 @@ from callbacks.callback import Callback
 from torch.utils.tensorboard import SummaryWriter
 from torch import nn
 from utils.vis_utils import draw_batch, image_grid
+from omegaconf import OmegaConf
 
 
 class TensorBoardCallback(Callback):
@@ -18,6 +19,9 @@ class TensorBoardCallback(Callback):
         self.add_weights_and_grads = add_weights_and_grads
 
     def before_run(self, trainer):
+        cfg = OmegaConf.to_yaml(trainer.cfg)
+        cfg = cfg.replace('\n', '  \n')
+        self.writer.add_text('cfg', cfg)
         description = trainer.cfg.description
         if description:
             self.writer.add_text('description', description)
