@@ -125,7 +125,7 @@ def draw_sample(img, output, target, fig=None, ax=None, show=False):
     target_bboxes = from_yolo_target(target, img_size, grid_size)
 
     img = inv_normalize(img)
-    img = img.permute(1, 2, 0).numpy()
+    img = img.permute(1, 2, 0).cpu().numpy()
     img = (img * 255 / np.max(img)).astype('uint8')
 
     if fig is None:

@@ -7,7 +7,7 @@ from models.transformer import SimpleTransformer
 
 class PrikolNet(nn.Module):
     def __init__(self, backbone, pool_shape, embd_dim, n_head, attn_pdrop, resid_pdrop,
-                 embd_pdrop, n_layer, out_dim, device, **kwargs):
+                 embd_pdrop, n_layer, out_dim, **kwargs):
         super(PrikolNet, self).__init__()
         self.embd_dim = embd_dim
         self.n_head = n_head
@@ -16,7 +16,6 @@ class PrikolNet(nn.Module):
         self.embd_pdrop = embd_pdrop
         self.n_layer = n_layer
         self.out_dim = out_dim
-        self.device = device
 
         self.backbone = backbone
 
@@ -37,9 +36,6 @@ class PrikolNet(nn.Module):
         q_img = sample['q_img']
         s_imgs = sample['s_imgs']
         s_bboxes = sample['s_bboxes']
-
-        q_img = q_img.to(self.device)
-        s_imgs = s_imgs.to(self.device)
 
         B, K, C_s, W_s, H_s = s_imgs.shape
         s_imgs = s_imgs.view((B * K, C_s, W_s, H_s))  # B x K x C x W x H -> B*K x W x H
@@ -63,8 +59,8 @@ class PrikolNet(nn.Module):
         # Shaping batch from feature vector sequences
         # and creating mask for transformer
         seq, mask = self._collate_fn(q_feature_vectors, s_feature_vectors_listed)
-        seq = seq.to(self.device)
-        mask = mask.to(self.device)
+        seq = seq.to(fm.device)
+        mask = mask.to(fm.device)
 
         # Getting predictions
         seq_out = self.transformer({'x': seq, 'mask': mask})  # -> B x C_fm x (W_fm * H_fm + N_padded)

@@ -12,11 +12,10 @@ def create_backbone(cfg):
 
 
 def create_model(cfg):
-    device = create_device(cfg)
     input_size = cfg.data.input_size
     backbone = create_backbone(cfg.model.backbone)
-    model = object_from_dict(cfg.model, backbone=backbone, pool_shape=input_size, device=device)
-    return model.to(device)
+    model = object_from_dict(cfg.model, backbone=backbone, pool_shape=input_size)
+    return model
 
 
 def create_optimizer(cfg, model: torch.nn.Module):

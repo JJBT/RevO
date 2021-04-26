@@ -7,8 +7,7 @@ import logging
 from collections import OrderedDict
 from itertools import chain
 from utils.utils import set_determenistic, flatten_dict, loss_to_dict
-from torch.cuda.amp import GradScaler
-from torch.cuda.amp import autocast
+from accelerate import Accelerator
 
 from utils.vis_utils import draw_batch
 logger = logging.getLogger(__name__)
@@ -80,9 +79,11 @@ class Trainer:
         self.callbacks = OrderedDict()
         self.metrics = create_metrics(cfg)
         create_callbacks(cfg, self)
-        self.device = create_device(cfg)
         self.cfg = cfg
         self.stop_validation = False
+        self.accelerator = Accelerator(cpu=bool(cfg.device == 'cpu'))
+        self.model, self.optimizer = self.accelerator.prepare(self.model, self.optimizer)
+        self.prepare_dataloader_dict(self.train_dataloader_dict, self.val_dataloader_dict)
 
     def get_train_batch(self):
         if not getattr(self, 'train_data_iter', False):
@@ -104,7 +105,6 @@ class Trainer:
 
         inputs = batch['input']
         targets = batch['target']
-        targets = targets.to(self.device)
 
         outputs = self.model(inputs)
 
@@ -112,7 +112,7 @@ class Trainer:
 
         loss_dict = loss_to_dict(loss_dict)
         loss = loss_dict['loss']
-        loss.backward()
+        self.accelerator.backward(loss)
 
         self.optimizer.step()
         if self.scheduler is not None:
@@ -162,7 +162,6 @@ class Trainer:
 
                 input_tensor = batch['input']
                 target_tensor = batch['target']
-                target_tensor = target_tensor.to(self.device)
                 outputs = self.model(input_tensor)
 
                 for metric in metrics:
@@ -172,6 +171,11 @@ class Trainer:
         self.model.train(previous_training_flag)
 
         return flatten_dict(metrics_computed)
+
+    def prepare_dataloader_dict(self, *args):
+        for d in args:
+            for name in d:
+                d[name]['dataloader'] = self.accelerator.prepare(d[name]['dataloader'])
 
     def register_callback(self, callback: Callback):
         callback.set_trainer(self)

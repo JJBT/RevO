@@ -53,7 +53,6 @@ class TensorBoardCallback(Callback):
 
                     inputs = batch['input']
                     targets = batch['target']
-                    targets = targets.to(trainer.device)
                     outputs = trainer.model(inputs)
                     images = inputs['q_img']
 

@@ -53,9 +53,12 @@ class APAccumulator:
         self.confs.append(confs)
 
     def compute(self):
-        labels = torch.cat(self.labels)
-        confs = torch.cat(self.confs)
-        return average_precision_compute(preds=confs, target=labels).item()
+        if len(self.labels) == 0 or len(self.confs) == 0:
+            return 0
+        else:
+            labels = torch.cat(self.labels)
+            confs = torch.cat(self.confs)
+            return average_precision_compute(preds=confs, target=labels).item()
 
 
 class AveragePrecision(Metric):

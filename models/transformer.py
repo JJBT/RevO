@@ -33,7 +33,7 @@ class NarrowSelfAttention(nn.Module):
         # causal self-attention; Self-attend: (B, nh, T, hs) x (B, nh, hs, T) -> (B, nh, T, T)
         att = (q @ k.transpose(-2, -1)).contiguous() * (1.0 / math.sqrt(k.size(-1)))
         mask = mask.unsqueeze(1)  # (B, T, T) -> (B, 1, T, T)
-        att = att.masked_fill(mask == 0, -1*INF).clone()
+        att = att.masked_fill(mask == 0, -1*INF)
         att = F.softmax(att, dim=-1)
 
         att = self.attn_drop(att)
