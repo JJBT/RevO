@@ -7,9 +7,9 @@ import logging
 from collections import OrderedDict
 from itertools import chain
 from utils.utils import set_determenistic, flatten_dict, loss_to_dict
-from accelerate import Accelerator
+from accelerate import Accelerator, GradScalerKwargs
+import copy
 
-from utils.vis_utils import draw_batch
 logger = logging.getLogger(__name__)
 
 
@@ -81,9 +81,11 @@ class Trainer:
         create_callbacks(cfg, self)
         self.cfg = cfg
         self.stop_validation = False
-        self.accelerator = Accelerator(cpu=bool(cfg.device == 'cpu'))
+        self.grad_scaler_kwargs = GradScalerKwargs(init_scale=2048, enabled=cfg.amp)
+        self.accelerator = Accelerator(cpu=bool(cfg.device == 'cpu'), fp16=cfg.amp)
         self.model, self.optimizer = self.accelerator.prepare(self.model, self.optimizer)
-        self.prepare_dataloader_dict(self.train_dataloader_dict, self.val_dataloader_dict)
+        self.train_dataloader_dict, self.val_dataloader_dict = \
+            self.prepare_dataloader_dict(self.train_dataloader_dict, self.val_dataloader_dict)
 
     def get_train_batch(self):
         if not getattr(self, 'train_data_iter', False):
@@ -173,9 +175,15 @@ class Trainer:
         return flatten_dict(metrics_computed)
 
     def prepare_dataloader_dict(self, *args):
-        for d in args:
+        result = list()
+        for dataloader_dict in args:
+            d = copy.deepcopy(dataloader_dict)
             for name in d:
                 d[name]['dataloader'] = self.accelerator.prepare(d[name]['dataloader'])
+
+            result.append(d)
+
+        return tuple(result)
 
     def register_callback(self, callback: Callback):
         callback.set_trainer(self)
