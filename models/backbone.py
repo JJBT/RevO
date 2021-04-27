@@ -13,6 +13,7 @@ def resnet_backbone(
         trainable_layers=3,
         returned_layer=4,
         norm_layer=None,
+        map_location=None,
         **kwargs
 ):
     """
@@ -30,10 +31,10 @@ def resnet_backbone(
 
     if isinstance(pretrained, str):
         backbone = resnet.__dict__[name](pretrained=False, norm_layer=norm_layer)
-        state_dict = torch.load(pretrained)
+        state_dict = torch.load(pretrained, map_location=map_location)
         # I WANNA KILL MY FAMILY AND MYSELF
-        state_dict.pop('fc.weight')
-        state_dict.pop('fc.bias')
+        state_dict.pop('fc.weight', None)
+        state_dict.pop('fc.bias', None)
         backbone.load_state_dict(state_dict, strict=False)
     else:
         backbone = resnet.__dict__[name](pretrained=pretrained, norm_layer=norm_layer)
@@ -63,6 +64,7 @@ def resnet_backbone_headed(name='resnet50',
                               returned_layer=4,
                               head_out_dim=512,
                               norm_layer=None,
+                              map_location=None,
                               **kwargs):
 
     def _extract_layers(model, returned_layer):
@@ -80,10 +82,10 @@ def resnet_backbone_headed(name='resnet50',
 
     if isinstance(pretrained, str):
         backbone = resnet.__dict__[name](pretrained=False, norm_layer=norm_layer)
-        state_dict = torch.load(pretrained)
+        state_dict = torch.load(pretrained, map_location=map_location)
         # I WANNA KILL MY FAMILY AND MYSELF
-        state_dict.pop('fc.weight')
-        state_dict.pop('fc.bias')
+        state_dict.pop('fc.weight', None)
+        state_dict.pop('fc.bias', None)
         backbone.load_state_dict(state_dict, strict=False)
     else:
         backbone = resnet.__dict__[name](pretrained=pretrained, norm_layer=norm_layer)
