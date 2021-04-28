@@ -104,7 +104,7 @@ class Trainer:
         return batch
 
     def run_step(self, batch):
-        if (self.state.step + 1) % self.accumulation_steps == 0:
+        if self.accumulation_steps == 1 or (self.state.step + 1) % self.accumulation_steps == 1:
             self.optimizer.zero_grad()
 
         inputs = batch['input']
@@ -115,7 +115,7 @@ class Trainer:
         loss_dict = self.criterion(outputs, targets)
 
         loss_dict = loss_to_dict(loss_dict)
-        loss = loss_dict['loss']
+        loss = loss_dict['loss'] / self.accumulation_steps
         self.accelerator.backward(loss)
 
         if (self.state.step + 1) % self.accumulation_steps == 0:
