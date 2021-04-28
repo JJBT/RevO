@@ -10,23 +10,26 @@ bs: 32
 desired_bs: 32
 k_shot: 3
 device: cuda:0
+amp: false
 
 metrics:
+  - type: metrics.AveragePrecision
   - type: metrics.Recall
   - type: metrics.Precision
+  - type: metrics.IoU
 
 hooks:
   - type: callbacks.LogCallback
-    frequency: 2
+    frequency: 20
 
   - type: callbacks.ValidationCallback
     frequency: 300
 
   - type: callbacks.TensorBoardCallback
-    frequency: 2
+    frequency: 20
 
   - type: callbacks.SaveCheckpointCallback
-    frequency: 600
+    frequency: 5000
 
 model:
   type: models.prikol.PrikolNet
@@ -38,7 +41,7 @@ model:
     returned_layer: 4
     stride: 32
   # transformer
-  embd_dim: 2052
+  embd_dim: 2048
   n_head: 4
   attn_pdrop: 0.1
   resid_pdrop: 0.1
@@ -51,14 +54,15 @@ optimizer:
   lr: 3e-7
 
 loss:
-  type: loss.YOLOLoss
+  type: loss.CustomYOLOLoss
   bbox_criterion:
-    type: torch.nn.MSELoss
+    type: loss.EIoULoss
+    reduction: sum
   conf_criterion:
     type: torch.nn.BCEWithLogitsLoss
-    pos_weight:
-      type: torch.tensor
-      data: 90
+  lambda_noobj: 1
+  lambda_bbox: 1
+  lambda_obj: 7
   img_size: ${data.input_size}
   grid_size: [10, 10]
 
