@@ -13,9 +13,9 @@ device: cuda:0
 amp: false
 
 metrics:
-  - type: metrics.AveragePrecision
   - type: metrics.Recall
   - type: metrics.Precision
+  - type: metrics.AveragePrecision
   - type: metrics.IoU
 
 hooks:
@@ -40,6 +40,7 @@ model:
     trainable_layers: 3
     returned_layer: 4
     stride: 32
+    norm_layer: frozen_bn
   # transformer
   embd_dim: 2048
   n_head: 4
@@ -60,9 +61,11 @@ loss:
     reduction: sum
   conf_criterion:
     type: torch.nn.BCEWithLogitsLoss
+    reduction: sum
   lambda_noobj: 1
   lambda_bbox: 1
   lambda_obj: 7
+
   img_size: ${data.input_size}
   grid_size: [10, 10]
 
