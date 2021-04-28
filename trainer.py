@@ -79,6 +79,7 @@ class Trainer:
         self.callbacks = OrderedDict()
         self.metrics = create_metrics(cfg)
         create_callbacks(cfg, self)
+        self._check_frequencies()
         self.cfg = cfg
         self.stop_validation = False
         self.grad_scaler_kwargs = GradScalerKwargs(init_scale=2048, enabled=cfg.amp)
@@ -103,7 +104,8 @@ class Trainer:
         return batch
 
     def run_step(self, batch):
-        self.optimizer.zero_grad()
+        if (self.state.step + 1) % self.accumulation_steps == 0:
+            self.optimizer.zero_grad()
 
         inputs = batch['input']
         targets = batch['target']
@@ -116,9 +118,10 @@ class Trainer:
         loss = loss_dict['loss']
         self.accelerator.backward(loss)
 
-        self.optimizer.step()
-        if self.scheduler is not None:
-            self.scheduler.step()
+        if (self.state.step + 1) % self.accumulation_steps == 0:
+            self.optimizer.step()
+            if self.scheduler is not None:
+                self.scheduler.step()
 
         loss_dict['loss'] = loss_dict['loss'].detach()
 
@@ -184,6 +187,15 @@ class Trainer:
             result.append(d)
 
         return tuple(result)
+
+    def _check_frequencies(self):
+        if 'ValidationCallback' in self.callbacks:
+            assert self.callbacks['ValidationCallback'].frequency % self.accumulation_steps == 0, \
+                'accumulation_steps must be divisor of ValidationCallback frequency'
+
+        if 'TensorBoardCallback' in self.callbacks:
+            assert self.callbacks['TensorBoardCallback'].frequency % self.accumulation_steps == 0, \
+                'accumulation_steps must be divisor of TensorboardCallback frequency'
 
     def register_callback(self, callback: Callback):
         callback.set_trainer(self)
