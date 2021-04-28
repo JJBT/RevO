@@ -65,7 +65,7 @@ class Block(nn.Module):
 
     def forward(self, input):
         x, mask = input['x'], input['mask']
-        x = self.attn({'x': self.ln1(x), 'mask': mask}) # NO RES CONNECTION
+        x = x + self.attn({'x': self.ln1(x), 'mask': mask})
         x = x + self.mlp(self.ln2(x))
         return {'x': x, 'mask': mask}
 
