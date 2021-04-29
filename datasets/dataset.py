@@ -109,6 +109,8 @@ class ObjectDetectionDataset(Dataset):
 
         if len(img.shape) < 3:
             img = cv2.cvtColor(img, cv2.COLOR_GRAY2RGB)
+        else:
+            img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
 
         return img
 
