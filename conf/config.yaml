@@ -48,7 +48,7 @@ model:
   resid_pdrop: 0.1
   embd_pdrop: 0.1
   n_layer: 1
-  out_dim: 5
+  out_dim: 10 # n_bboxes * 5
 
 optimizer:
   type: torch.optim.Adam

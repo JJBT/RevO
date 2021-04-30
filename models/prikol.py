@@ -66,7 +66,7 @@ class PrikolNet(nn.Module):
         seq_out = self.transformer({'x': seq, 'mask': mask})  # -> B x C_fm x (W_fm * H_fm + N_padded)
         preds = seq_out[:, -(W_q_fm * H_q_fm):]  # only query vectors are responsible for prediction
         preds = preds.squeeze(-1)                # -> B x output_dim x W_fm * H_fm
-        preds = preds.view(-1, H_q_fm, W_q_fm, 5)
+        preds = preds.view(-1, H_q_fm, W_q_fm, preds.shape[-1])
         return preds
 
     def _collate_fn(self, q_vectors, s_vectors_listed):
