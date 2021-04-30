@@ -220,6 +220,8 @@ def from_yolo_target_torch(target, img_size, grid_size):
 
     cell_size = img_size[0] // grid_size[0], img_size[1] // grid_size[1]
     new_target = target.clone()
+    new_target = torch.stack(torch.split(new_target, 5, -1))
+
     x_offset = torch.repeat_interleave(torch.unsqueeze(torch.arange(grid_size[1]), dim=0), repeats=grid_size[0], dim=0) * cell_size[0]
     new_target[..., 1] = x_offset + new_target[..., 1] * cell_size[0]
     y_offset = torch.repeat_interleave(torch.unsqueeze(torch.arange(grid_size[0]), dim=0).T, repeats=grid_size[1], dim=1) * cell_size[1]
