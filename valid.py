@@ -5,7 +5,7 @@ import logging
 from settings import BASE_DIR
 from callbacks import LoadCheckpointCallback
 from metrics import Recall, Precision, IoU
-from utils.pre_metrics_transforms import transforms_dict
+from utils.pre_metrics_transform import transforms_dict
 
 logger = logging.getLogger(__name__)
 

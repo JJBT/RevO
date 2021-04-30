@@ -49,8 +49,6 @@ class YOLOLoss(nn.Module):
     def __init__(self,
                  coord_criterion,
                  conf_criterion,
-                 img_size,
-                 grid_size,
                  lambda_xy=1,
                  lambda_wh=1,
                  lambda_obj=1,
@@ -59,14 +57,11 @@ class YOLOLoss(nn.Module):
         super(YOLOLoss, self).__init__()
         self.coord_criterion = coord_criterion
         self.conf_criterion = conf_criterion
-        self.img_size = img_size
-        self.grid_size = grid_size
         self.lambda_xy = lambda_xy
         self.lambda_wh = lambda_wh
         self.lambda_obj = lambda_obj
         self.lambda_noobj = lambda_noobj
 
-        self.cell_size = img_size[0] // grid_size[0], img_size[1] // grid_size[1]
 
     def forward(self, input, target):
         '''
@@ -135,7 +130,10 @@ class YOLOLoss(nn.Module):
                 [pred_logit[i, s] for i, s in
                  zip(torch.repeat_interleave(torch.arange(obj_pred.shape[0]), n_bbox - 1), not_responsible_idx)]
             )
-            loss_noobj += self.conf_criterion(pred_not_resp_logit, torch.zeros_like(pred_not_resp_logit))
+            loss_noobj += self.conf_criterion(
+                pred_not_resp_logit,
+                torch.zeros_like(pred_not_resp_logit)
+            )
 
 
         loss = self.lambda_noobj * loss_noobj + self.lambda_xy * loss_xy + \
@@ -221,8 +219,6 @@ class CustomYOLOLoss(nn.Module):
     def __init__(self,
                  bbox_criterion,
                  conf_criterion,
-                 img_size,
-                 grid_size,
                  lambda_noobj=1,
                  lambda_bbox=1,
                  lambda_obj=1
@@ -230,13 +226,10 @@ class CustomYOLOLoss(nn.Module):
         super(CustomYOLOLoss, self).__init__()
         self.bbox_criterion = bbox_criterion
         self.conf_criterion = conf_criterion
-        self.img_size = img_size
-        self.grid_size = grid_size
         self.lambda_noobj = lambda_noobj
         self.lambda_bbox = lambda_bbox
         self.lambda_obj = lambda_obj
 
-        self.cell_size = img_size[0] // grid_size[0], img_size[1] // grid_size[1]
 
     def forward(self, input, target):
         '''
@@ -297,7 +290,10 @@ class CustomYOLOLoss(nn.Module):
             pred_not_resp_logit = torch.stack(
                 [pred_logit[i, s] for i, s in zip(torch.repeat_interleave(torch.arange(obj_pred.shape[0]), n_bbox - 1), not_responsible_idx)]
             )
-            loss_noobj += self.conf_criterion(pred_not_resp_logit, torch.zeros_like(pred_not_resp_logit))
+            loss_noobj += self.conf_criterion(
+                pred_not_resp_logit,
+                torch.zeros_like(pred_not_resp_logit)
+            )
 
         loss = self.lambda_obj * loss_obj + self.lambda_bbox * loss_bbox + \
                self.lambda_noobj * loss_noobj

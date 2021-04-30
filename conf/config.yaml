@@ -66,9 +66,6 @@ loss:
   lambda_bbox: 1
   lambda_obj: 7
 
-  img_size: ${data.input_size}
-  grid_size: [10, 10]
-
 scheduler:
   type: torch.optim.lr_scheduler.StepLR
   step_size: 1000

@@ -4,7 +4,7 @@ from collections import defaultdict
 from utils.precision_recall import average_precision_compute
 from utils.data import from_yolo_target_torch, xywh2xyxy
 from torchvision.ops import box_iou, nms
-from utils.pre_metrics_transforms import transforms_dict
+from utils.pre_metrics_transform import transforms_dict
 
 
 class Metric:
