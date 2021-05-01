@@ -128,12 +128,13 @@ class CustomYOLOLoss(torch.nn.Module):
         self.lambda_obj = lambda_obj
 
     def forward(self, input, target):
-        """Compute YOLO loss
-        Args:
-            pred: (Tensor) yolo output, sized [n_batch, Bx5 + C, S, S], 5=len([x, y, w, h, conf])
-            target: (Tensor) targets, sized [n_batch, Bx5 + C, S, S]
-        Returns:
-            (Tensor) loss value, sized [1,]
+        """
+        Compute YOLOv3 loss with {G, C, E}IoULoss for bbox predictions
+        ```{input, target}[i, j, k, :] = (c, x, y, w, h)```
+        :param input (torch.Tensor[N, S, S, 5]): raw model output (logits)
+        :param target (torch.Tensor[N, S, S, 5]): yolo target
+        :return:
+        '''
         """
 
         n_bboxes = input.shape[-1] // 5
