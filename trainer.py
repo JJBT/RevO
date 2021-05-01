@@ -161,14 +161,13 @@ class Trainer:
             metric.reset()
 
         with torch.no_grad():
-            for i, batch in enumerate(dataloader):
-                if self.stop_validation or i == 2:
+            for batch in dataloader:
+                if self.stop_validation:
                     break
 
                 input_tensor = batch['input']
                 target_tensor = batch['target']
                 outputs = self.model(input_tensor)
-                print(torch.sigmoid(outputs[..., ::5]))
 
                 for metric in metrics:
                     metric.step(y=target_tensor, y_pred=outputs)

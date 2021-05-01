@@ -2,7 +2,7 @@ import torch
 from utils.utils import loss_to_dict
 from collections import defaultdict
 from utils.precision_recall import average_precision_compute
-from utils.data import from_yolo_target_torch, xywh2xyxy
+from utils.data import xywh2xyxy
 from torchvision.ops import box_iou, nms
 from utils.pre_metrics_transform import transforms_dict
 
@@ -19,8 +19,6 @@ class Metric:
     def prepare(self, y: torch.Tensor, y_pred: torch.Tensor):
         y = self.target_transform(y)
         y_pred = self.prediction_transform(y_pred)
-        if y.size() != y_pred.size():
-            raise TypeError("y and y_pred should have the same shape")
 
         if isinstance(y, torch.Tensor):
             y = y.detach()
@@ -81,8 +79,8 @@ class AveragePrecision(Metric):
 
     def step(self, y: torch.Tensor, y_pred: torch.Tensor):
         for i in range(y.shape[0]):
-            target_bboxes = self.target_transform(y[i])
-            pred_bboxes = self.prediction_transform(y_pred[i])
+            target_bboxes, pred_bboxes = self.prepare(y[i], y_pred[i])
+
             target_bboxes[..., 1:] = xywh2xyxy(target_bboxes[..., 1:])
             pred_bboxes[..., 1:] = xywh2xyxy(pred_bboxes[..., 1:])
             for name, accumulator in self.accumulators.items():
@@ -112,8 +110,7 @@ class IoU(Metric):
 
     def step(self, y: torch.Tensor, y_pred: torch.Tensor):
         for i in range(y.shape[0]):
-            target_bboxes = self.target_transform(y[i])
-            pred_bboxes = self.prediction_transform(y_pred[i])
+            target_bboxes, pred_bboxes = self.prepare(y[i], y_pred[i])
 
             target_bboxes[..., 1:] = xywh2xyxy(target_bboxes[..., 1:])
             pred_bboxes[..., 1:] = xywh2xyxy(pred_bboxes[..., 1:])
