@@ -1,3 +1,5 @@
+import time
+
 import torch
 from torch import nn
 from torch.nn import functional as F
@@ -43,108 +45,6 @@ class BFLWithLogitsLoss(nn.Module):
              target (torch.Tensor): binary target
         """
         return binary_focal_loss_with_logits(input, target, self.gamma, self.alpha, self.pos_weight, self.reduction)
-
-
-class YOLOLoss(nn.Module):
-    def __init__(self,
-                 coord_criterion,
-                 conf_criterion,
-                 lambda_xy=1,
-                 lambda_wh=1,
-                 lambda_obj=1,
-                 lambda_noobj=1
-                 ):
-        super(YOLOLoss, self).__init__()
-        self.coord_criterion = coord_criterion
-        self.conf_criterion = conf_criterion
-        self.lambda_xy = lambda_xy
-        self.lambda_wh = lambda_wh
-        self.lambda_obj = lambda_obj
-        self.lambda_noobj = lambda_noobj
-
-
-    def forward(self, input, target):
-        '''
-        Compute standard YOLOv3 loss
-        ```{input, target}[i, j, k, :] = (c, x, y, w, h)```
-        :param input (torch.Tensor[N, S, S, 5]): raw model output (logits)
-        :param target (torch.Tensor[N, S, S, n_bbox * 5]): yolo target
-        :return:
-        '''
-
-        obj_mask = target[..., 0] > 0.
-        noobj_mask = ~obj_mask
-
-        n_bbox = input.shape[-1] // 5
-        conf_idx = torch.arange(n_bbox * 5) % 5 == 0
-        coord_idx = ~conf_idx
-
-        obj_pred, noobj_pred = input[obj_mask], input[noobj_mask]
-        obj_target, noobj_target = target[obj_mask], target[noobj_mask]
-
-        # Cells with no objects
-        noobj_pred_logit = noobj_pred[..., conf_idx]
-        loss_noobj = self.conf_criterion(noobj_pred_logit, torch.zeros_like(noobj_pred_logit))
-
-        # Cells with objects
-        # Responsible bboxes
-        pred_bbox = torch.sigmoid(
-            obj_pred[..., coord_idx].view(obj_pred.shape[0] * n_bbox, 4)
-        )
-        target_bbox = obj_target[..., 1:]
-        iou = compute_iou(
-            pred_bbox,
-            torch.repeat_interleave(target_bbox[:, None, :], repeats=n_bbox, dim=1).view(obj_target.shape[0] * n_bbox,
-                                                                                         4),
-            bbox_transform=xcycwh2xyxy
-        )
-        responsible_idx = iou.view(obj_target.shape[0], n_bbox).argmax(dim=1)
-        pred_resp_bbox = torch.stack(
-            [pred_bbox[n_bbox * i + s] for i, s in zip(range(obj_pred.shape[0]), responsible_idx)]
-        )
-        loss_xy = self.coord_criterion(
-            pred_resp_bbox[..., :2],
-            target_bbox[..., :2]
-        )
-
-        loss_wh = self.coord_criterion(
-            pred_resp_bbox[..., 2:],
-            target_bbox[..., 2:]
-        )
-
-        # Responsible confs
-        pred_logit = obj_pred[..., conf_idx]
-        pred_resp_logit = torch.stack(
-            [pred_logit[i, s] for i, s in zip(range(obj_pred.shape[0]), responsible_idx)]
-        )
-        loss_obj = self.conf_criterion(
-            pred_resp_logit,
-            torch.ones_like(pred_resp_logit)
-        )
-
-        # Not responsible confs
-        idx = torch.repeat_interleave(torch.arange(n_bbox)[None, :], repeats=obj_pred.shape[0], dim=0).to(responsible_idx.device)
-        not_responsible_idx = idx[idx != idx.unsqueeze(1)]
-        if not_responsible_idx.nelement() > 0:
-            pred_not_resp_logit = torch.stack(
-                [pred_logit[i, s] for i, s in
-                 zip(torch.repeat_interleave(torch.arange(obj_pred.shape[0]), n_bbox - 1), not_responsible_idx)]
-            )
-            loss_noobj += self.conf_criterion(
-                pred_not_resp_logit,
-                torch.zeros_like(pred_not_resp_logit)
-            )
-
-        loss = self.lambda_noobj * loss_noobj + self.lambda_xy * loss_xy + \
-               self.lambda_wh * loss_wh + self.lambda_obj * loss_obj
-
-        return {
-            'loss': loss,
-            'loss_noobj': loss_noobj.detach(),
-            'loss_xy': loss_xy.detach(),
-            'loss_wh': loss_wh.detach(),
-            'loss_obj': loss_obj.detach()
-        }
 
 
 class IoULoss(nn.Module):
@@ -238,6 +138,7 @@ class CustomYOLOLoss(nn.Module):
         :param target (torch.Tensor[N, S, S, 5]): yolo target
         :return:
         '''
+
         obj_mask = target[..., 0] > 0.
         noobj_mask = ~obj_mask
 
@@ -267,6 +168,7 @@ class CustomYOLOLoss(nn.Module):
         pred_resp_bbox = torch.stack(
             [pred_bbox[n_bbox * i + s] for i, s in zip(range(obj_pred.shape[0]), responsible_idx)]
         )
+
         loss_bbox = self.bbox_criterion(
             pred_resp_bbox,
             target_bbox
@@ -293,6 +195,81 @@ class CustomYOLOLoss(nn.Module):
                 pred_not_resp_logit,
                 torch.zeros_like(pred_not_resp_logit)
             )
+        loss = self.lambda_obj * loss_obj + self.lambda_bbox * loss_bbox + \
+               self.lambda_noobj * loss_noobj
+
+        return {
+            'loss': loss,
+            'loss_noobj': loss_noobj.detach(),
+            'loss_bbox': loss_bbox.detach(),
+            'loss_obj': loss_obj.detach()
+        }
+
+
+class CustomLoss(torch.nn.Module):
+    def __init__(self,
+                 bbox_criterion,
+                 conf_criterion,
+                 lambda_noobj=1,
+                 lambda_bbox=1,
+                 lambda_obj=1
+                 ):
+        super(CustomLoss, self).__init__()
+        self.bbox_criterion = bbox_criterion
+        self.conf_criterion = conf_criterion
+        self.lambda_noobj = lambda_noobj
+        self.lambda_bbox = lambda_bbox
+        self.lambda_obj = lambda_obj
+
+
+    def forward(self, input, target):
+        """Compute YOLO loss
+        Args:
+            pred: (Tensor) yolo output, sized [n_batch, Bx5 + C, S, S], 5=len([x, y, w, h, conf])
+            target: (Tensor) targets, sized [n_batch, Bx5 + C, S, S]
+        Returns:
+            (Tensor) loss value, sized [1,]
+        """
+
+        n_bboxes = input.shape[-1] // 5
+        obj_mask = target[..., 0] > 0
+        n_obj_cells = obj_mask.sum()
+        obj_pred = input[obj_mask].view(n_obj_cells * n_bboxes, 5)
+        n_noobj_cells = input.shape[0] * input.shape[1] * input.shape[2] - n_obj_cells
+        noobj_pred = input[~obj_mask].view(n_noobj_cells * n_bboxes, 5)
+
+        obj_target = target[obj_mask]
+
+        # Compute loss for cells which have no objects
+        noobj_logit = noobj_pred[..., 0]
+        loss_noobj = self.conf_criterion(noobj_logit, torch.zeros_like(noobj_logit))
+
+        # Compute loss for cells which contain objects
+        pred_bbox = torch.sigmoid(obj_pred[:, 1:])
+        target_bbox = obj_target[:, 1:]
+
+        iou = compute_iou(
+            pred_bbox,
+            torch.repeat_interleave(
+                target_bbox[:, None, :], repeats=n_bboxes, dim=1
+            ).view(n_obj_cells * n_bboxes, 4),
+            bbox_transform=xcycwh2xyxy
+        )
+        responsible_idx = iou.view(n_obj_cells, n_bboxes).argmax(dim=1)
+        obj_responsible_mask = torch.zeros(n_obj_cells * n_bboxes, dtype=torch.bool)
+        for cell_idx, max_iou_idx in enumerate(responsible_idx):
+            obj_responsible_mask[n_bboxes * cell_idx + max_iou_idx] = 1
+
+        pred_responsible = obj_pred[obj_responsible_mask]
+
+        if n_bboxes > 1:
+            loss_noobj += self.conf_criterion(
+                obj_pred[~obj_responsible_mask][..., 0],
+                torch.zeros_like(obj_pred[~obj_responsible_mask][..., 0])
+            )
+
+        loss_bbox = self.bbox_criterion(torch.sigmoid(pred_responsible[..., 1:]), obj_target[..., 1:])
+        loss_obj = self.conf_criterion(pred_responsible[..., 0], obj_target[..., 0])
 
         loss = self.lambda_obj * loss_obj + self.lambda_bbox * loss_bbox + \
                self.lambda_noobj * loss_noobj
