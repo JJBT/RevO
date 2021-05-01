@@ -123,8 +123,8 @@ class YOLOLoss(nn.Module):
         )
 
         # Not responsible confs
-        idx = torch.repeat_interleave(torch.arange(n_bbox)[None, :], repeats=obj_pred.shape[0], dim=0)
-        not_responsible_idx = idx[idx != idx.unsqueeze(1)].to(responsible_idx.device)
+        idx = torch.repeat_interleave(torch.arange(n_bbox)[None, :], repeats=obj_pred.shape[0], dim=0).to(responsible_idx.device)
+        not_responsible_idx = idx[idx != idx.unsqueeze(1)]
         if not_responsible_idx.nelement() > 0:
             pred_not_resp_logit = torch.stack(
                 [pred_logit[i, s] for i, s in
@@ -283,8 +283,8 @@ class CustomYOLOLoss(nn.Module):
         )
 
         # Not responsible confs
-        idx = torch.repeat_interleave(torch.arange(n_bbox)[None, :], repeats=obj_pred.shape[0], dim=0)
-        not_responsible_idx = idx[idx != responsible_idx.unsqueeze(1)].to(responsible_idx.device)
+        idx = torch.repeat_interleave(torch.arange(n_bbox)[None, :], repeats=obj_pred.shape[0], dim=0).to(responsible_idx.device)
+        not_responsible_idx = idx[idx != responsible_idx.unsqueeze(1)]
         if not_responsible_idx.nelement() > 0:
             pred_not_resp_logit = torch.stack(
                 [pred_logit[i, s] for i, s in zip(torch.repeat_interleave(torch.arange(obj_pred.shape[0]), n_bbox - 1), not_responsible_idx)]
