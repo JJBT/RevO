@@ -2,14 +2,12 @@ import os
 from collections import defaultdict
 from operator import itemgetter
 import numpy as np
-import pandas as pd
-from PIL import Image
 import cv2
 import torch
-from torch.utils.data import Dataset, DataLoader
+from torch.utils.data import Dataset
 from torch.utils.data._utils.collate import default_collate
 
-from utils.data import load_coco_samples, get_category_based_anns, to_yolo_target
+from utils.data import get_category_based_anns, to_yolo_target
 
 
 class ObjectDetectionDataset(Dataset):
@@ -40,9 +38,11 @@ class ObjectDetectionDataset(Dataset):
         self.q_anns = get_category_based_anns(self.q_coco)
         self.s_anns = get_category_based_anns(self.s_coco)
 
-        self.s_anns_categories = defaultdict(set)
+        self.s_anns_by_categories = defaultdict(set)
         for i, item in enumerate(self.s_anns):
-            self.s_anns_categories[item['anns'][0]['category_id']].add(i)
+            self.s_anns_by_categories[item['anns'][0]['category_id']].add(i)
+
+        self.cats = self.q_coco.cats
 
     def __getitem__(self, idx: int):
         """
@@ -61,7 +61,7 @@ class ObjectDetectionDataset(Dataset):
         q_file_name = q_ann['file_name']
         q_img = self._imread(os.path.join(self.q_root, q_file_name), cv2.COLOR_BGR2RGB)
 
-        s_anns_idxs = np.random.choice(list(self.s_anns_categories[q_bbox_cat[0]] - {idx}), self.k_shot)
+        s_anns_idxs = np.random.choice(list(self.s_anns_by_categories[q_bbox_cat[0]] - {idx}), self.k_shot)
         s_anns = itemgetter(*s_anns_idxs)(self.s_anns)
         if len(s_anns_idxs) == 1:
             s_anns = (s_anns, )

@@ -5,7 +5,9 @@ import json
 from collections import defaultdict
 
 import torch
+from torch.utils.data import DataLoader, SubsetRandomSampler
 from torchvision.ops import box_convert
+
 
 
 def get_coco_img_ids(coco):
@@ -398,3 +400,19 @@ def xyxy2xywh(bboxes):
                 x1, y1, x2, y2 = bbox
                 new_bboxes.append([x1, y1, x2 - x1, y2 - y1])
             return new_bboxes
+
+
+def get_single_cat_dataloader(complete_dataloader, cat_id):
+    dataset = complete_dataloader.dataset
+    batch_size = complete_dataloader.batch_sampler.batch_size
+    collate_fn = complete_dataloader.collate_fn
+
+    sc_q_idxs = [idx for idx, item in enumerate(dataset.q_anns) if item['anns'][0]['category_id'] == cat_id]
+    sampler = SubsetRandomSampler(sc_q_idxs)
+
+    return DataLoader(
+        dataset,
+        batch_size=batch_size,
+        sampler=sampler,
+        collate_fn=collate_fn
+    )

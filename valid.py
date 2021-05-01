@@ -4,8 +4,7 @@ import os
 import logging
 from settings import BASE_DIR
 from callbacks import LoadCheckpointCallback
-from metrics import Recall, Precision, IoU
-from utils.pre_metrics_transform import transforms_dict
+
 
 logger = logging.getLogger(__name__)
 
@@ -19,14 +18,24 @@ def run_validation(cfg):
         filename=cfg.ckpt
     ))
     trainer._before_run_callbacks()
-    dataloader = trainer.val_dataloader_dict['megapixel_mnist_val_train_cats']['dataloader']
-    metrics = trainer.evaluate(dataloader=dataloader, metrics=[IoU()])
-    logger.info(f'Validation {os.path.join(ckpt_dir, cfg.ckpt)}')
-    metrics_report = ''
-    for k, v in metrics.items():
-        metrics_report += f'{k} : {v:.4f} \n'
 
-    logger.info(metrics_report)
+    logger.info(f'Validation {os.path.join(ckpt_dir, cfg.ckpt)}')
+    for name, dataloader_dict in trainer.val_dataloader_dict.items():
+        logger.info(f'Dataset: {name}')
+
+        cats = dataloader_dict['dataloader'].dataset.cats
+        for cat_id in cats:
+            metrics_report = ''
+            metrics_report += f'id: {cat_id} name: {cats[cat_id]["name"]}'.ljust(25)
+
+            dataloader = get_single_cat_dataloader(dataloader_dict['dataloader'], cat_id=cat_id)
+            metrics = trainer.evaluate(dataloader=dataloader, metrics=trainer.metrics)
+            metrics_report += '|  '
+            for k, v in metrics.items():
+                metrics_report += f'{k}: {v:.3f}  |  '
+
+            logger.info(metrics_report)
+
     logger.info('Done')
 
 

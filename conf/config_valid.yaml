@@ -1,8 +1,21 @@
 defaults:
   - hydra: custom
-  - data_path: local_path
+  - data_path: theta
 
 description: 'Validation'
 
-path: outputs/2021-03-10/22-42-16/
-ckpt: checkpoint-20.pt
+bs: 32
+desired_bs: 32
+device: cuda:0
+path: null
+ckpt: null
+
+metrics:
+  - type: metrics.Recall
+  - type: metrics.Precision
+  - type: metrics.AveragePrecision
+  - type: metrics.IoU
+
+validation_dataset:
+  - ${megapixel_mnist_val_novel_cats}
+  - ${megapixel_mnist_val_train_cats}
