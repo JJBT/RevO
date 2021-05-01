@@ -1,8 +1,9 @@
 import torch
 from utils.utils import object_from_dict
-from torch.utils.data import DataLoader
+from torch.utils.data import DataLoader, Subset
 import albumentations as albu
 from models.prikol import PrikolNet
+import numpy as np
 from datasets.dataset import ObjectDetectionDataset, object_detection_collate_fn
 
 
@@ -63,8 +64,18 @@ def create_dataloader(cfg):
     s_transform = create_augmentations(cfg.transforms)
     params['q_transform'] = q_transform
     params['s_transform'] = s_transform
+    dataset_length = cfg.len
 
     dataset = ObjectDetectionDataset(**params)
+
+    if dataset_length:
+        if cfg.shuffle:
+            idx = np.random.choice(len(dataset), dataset_length, replace=False)
+        else:
+            idx = np.arange(dataset_length)
+
+        dataset = Subset(dataset, idx)
+
     dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=cfg.shuffle, collate_fn=object_detection_collate_fn)
     dataloader_dict = {
         'name': cfg.name,
