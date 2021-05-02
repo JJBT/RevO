@@ -4,6 +4,7 @@ import os
 import logging
 from settings import BASE_DIR
 from callbacks import LoadCheckpointCallback
+from utils.data import get_single_cat_dataloader
 
 
 logger = logging.getLogger(__name__)
@@ -29,6 +30,7 @@ def run_validation(cfg):
             metrics_report += f'id: {cat_id} name: {cats[cat_id]["name"]}'.ljust(25)
 
             dataloader = get_single_cat_dataloader(dataloader_dict['dataloader'], cat_id=cat_id)
+            dataloader = trainer.accelerator.prepare(dataloader)
             metrics = trainer.evaluate(dataloader=dataloader, metrics=trainer.metrics)
             metrics_report += '|  '
             for k, v in metrics.items():

@@ -5,6 +5,7 @@ from torchvision.ops.misc import FrozenBatchNorm2d
 from torchvision.models._utils import IntermediateLayerGetter
 import torch
 from torch import nn
+from models.simclr_resnet import get_resnet
 
 
 def resnet_backbone(
@@ -118,3 +119,46 @@ def resnet_backbone_headed(name='resnet50',
     ]))
     return_layer = {f'head': 'output'}
     return IntermediateLayerGetter(model=backbone, return_layers=return_layer)
+
+
+def simclr_backbone(
+        path,
+        trainable_layers=3,
+        returned_layer=4,
+        map_location=None,
+        **kwargs
+):
+    """
+    :param name: resnet architecture. Possible values are 'ResNet', 'resnet18', 'resnet34', 'resnet50',
+             'resnet101', 'resnet152', 'resnext50_32x4d', 'resnext101_32x8d', 'wide_resnet50_2', 'wide_resnet101_2'
+    :param pretrained: If True, returns a model with backbone pre-trained on Imagenet
+    :param trainable_layers: number of trainable (not frozen) resnet layers starting from final block.
+            Valid values are between 0 and 5, with 5 meaning all backbone layers are trainable.
+    :param returned_layer: layer of the network to return.
+    """
+
+    backbone, _ = get_resnet(depth=50, width_multiplier=1, sk_ratio=0)
+    state_dict = torch.load(path, map_location=map_location)
+    # I WANNA KILL MY FAMILY AND MYSELF
+    state_dict.pop('fc.weight', None)
+    state_dict.pop('fc.bias', None)
+    backbone.load_state_dict(state_dict, strict=False)
+
+    assert 0 <= trainable_layers <= 5
+    layers_to_train = ['net.4', 'net.3', 'net.2', 'net.1', 'net.0'][:trainable_layers]
+
+    if trainable_layers == 5:
+        layers_to_train.append('bn1')
+    else:
+        backbone.net[0][1][0].track_running_stats = False
+
+    # freeze layers
+    for name, parameter in backbone.named_parameters():
+        if all([not name.startswith(layer) for layer in layers_to_train]):
+            parameter.requires_grad_(False)
+
+    assert 0 < returned_layer < 5
+    return_layer = {f'{returned_layer}': 'output'}
+    # print(backbone.net[4])
+    # print(list(backbone.net.named_children()))
+    return IntermediateLayerGetter(model=backbone.net, return_layers=return_layer)

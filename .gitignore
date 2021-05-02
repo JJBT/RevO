@@ -137,6 +137,7 @@ mnist/
 
 # Configs
 conf/data_path/local.yaml
+conf/config.yaml
 
 # Custom
 .idea/
