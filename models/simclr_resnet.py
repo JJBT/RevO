@@ -1,14 +1,18 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from torchvision.ops.misc import FrozenBatchNorm2d
+
 
 BATCH_NORM_EPSILON = 1e-5
 BATCH_NORM_DECAY = 0.9  # == pytorch's default value as well
 
 
 class BatchNormRelu(nn.Sequential):
-    def __init__(self, num_channels, relu=True):
-        super().__init__(nn.BatchNorm2d(num_channels, eps=BATCH_NORM_EPSILON), nn.ReLU() if relu else nn.Identity())
+    def __init__(self, num_channels, relu=True, frozen=False):
+        super().__init__(FrozenBatchNorm2d(num_channels, eps=BATCH_NORM_EPSILON) if frozen else
+                         nn.BatchNorm2d(num_channels, eps=BATCH_NORM_EPSILON),
+                         nn.ReLU() if relu else nn.Identity())
 
 
 def conv(in_channels, out_channels, kernel_size=3, stride=1, bias=False):
@@ -17,13 +21,13 @@ def conv(in_channels, out_channels, kernel_size=3, stride=1, bias=False):
 
 
 class SelectiveKernel(nn.Module):
-    def __init__(self, in_channels, out_channels, stride, sk_ratio, min_dim=32):
+    def __init__(self, in_channels, out_channels, stride, sk_ratio, min_dim=32, frozen_bn=False):
         super().__init__()
         assert sk_ratio > 0.0
         self.main_conv = nn.Sequential(conv(in_channels, 2 * out_channels, stride=stride),
-                                       BatchNormRelu(2 * out_channels))
+                                       BatchNormRelu(2 * out_channels, frozen=frozen_bn))
         mid_dim = max(int(out_channels * sk_ratio), min_dim)
-        self.mixing_conv = nn.Sequential(conv(out_channels, mid_dim, kernel_size=1), BatchNormRelu(mid_dim),
+        self.mixing_conv = nn.Sequential(conv(out_channels, mid_dim, kernel_size=1), BatchNormRelu(mid_dim, frozen=frozen_bn),
                                          conv(mid_dim, 2 * out_channels, kernel_size=1))
 
     def forward(self, x):
@@ -36,7 +40,7 @@ class SelectiveKernel(nn.Module):
 
 
 class Projection(nn.Module):
-    def __init__(self, in_channels, out_channels, stride, sk_ratio=0):
+    def __init__(self, in_channels, out_channels, stride, frozen_bn=False, sk_ratio=0):
         super().__init__()
         if sk_ratio > 0:
             self.shortcut = nn.Sequential(nn.ZeroPad2d((0, 1, 0, 1)),
@@ -45,7 +49,7 @@ class Projection(nn.Module):
                                           conv(in_channels, out_channels, kernel_size=1))
         else:
             self.shortcut = conv(in_channels, out_channels, kernel_size=1, stride=stride)
-        self.bn = BatchNormRelu(out_channels, relu=False)
+        self.bn = BatchNormRelu(out_channels, relu=False, frozen=frozen_bn)
 
     def forward(self, x):
         return self.bn(self.shortcut(x))
@@ -54,20 +58,20 @@ class Projection(nn.Module):
 class BottleneckBlock(nn.Module):
     expansion = 4
 
-    def __init__(self, in_channels, out_channels, stride, sk_ratio=0, use_projection=False):
+    def __init__(self, in_channels, out_channels, stride, sk_ratio=0, use_projection=False, frozen_bn=False):
         super().__init__()
         if use_projection:
-            self.projection = Projection(in_channels, out_channels * 4, stride, sk_ratio)
+            self.projection = Projection(in_channels, out_channels * 4, stride, frozen_bn, sk_ratio)
         else:
             self.projection = nn.Identity()
-        ops = [conv(in_channels, out_channels, kernel_size=1), BatchNormRelu(out_channels)]
+        ops = [conv(in_channels, out_channels, kernel_size=1), BatchNormRelu(out_channels, frozen=frozen_bn)]
         if sk_ratio > 0:
-            ops.append(SelectiveKernel(out_channels, out_channels, stride, sk_ratio))
+            ops.append(SelectiveKernel(out_channels, out_channels, stride, sk_ratio, frozen_bn=frozen_bn))
         else:
             ops.append(conv(out_channels, out_channels, stride=stride))
-            ops.append(BatchNormRelu(out_channels))
+            ops.append(BatchNormRelu(out_channels, frozen=frozen_bn))
         ops.append(conv(out_channels, out_channels * 4, kernel_size=1))
-        ops.append(BatchNormRelu(out_channels * 4, relu=False))
+        ops.append(BatchNormRelu(out_channels * 4, relu=False, frozen=frozen_bn))
         self.net = nn.Sequential(*ops)
 
     def forward(self, x):
@@ -76,12 +80,12 @@ class BottleneckBlock(nn.Module):
 
 
 class Blocks(nn.Module):
-    def __init__(self, num_blocks, in_channels, out_channels, stride, sk_ratio=0):
+    def __init__(self, num_blocks, in_channels, out_channels, stride, sk_ratio=0, frozen_bn=False):
         super().__init__()
-        self.blocks = nn.ModuleList([BottleneckBlock(in_channels, out_channels, stride, sk_ratio, True)])
+        self.blocks = nn.ModuleList([BottleneckBlock(in_channels, out_channels, stride, sk_ratio, True, frozen_bn)])
         self.channels_out = out_channels * BottleneckBlock.expansion
         for _ in range(num_blocks - 1):
-            self.blocks.append(BottleneckBlock(self.channels_out, out_channels, 1, sk_ratio))
+            self.blocks.append(BottleneckBlock(self.channels_out, out_channels, 1, sk_ratio, frozen_bn=frozen_bn))
 
     def forward(self, x):
         for b in self.blocks:
@@ -90,34 +94,34 @@ class Blocks(nn.Module):
 
 
 class Stem(nn.Sequential):
-    def __init__(self, sk_ratio, width_multiplier):
+    def __init__(self, sk_ratio, width_multiplier, frozen_bn):
         ops = []
         channels = 64 * width_multiplier // 2
         if sk_ratio > 0:
             ops.append(conv(3, channels, stride=2))
-            ops.append(BatchNormRelu(channels))
+            ops.append(BatchNormRelu(channels, frozen=frozen_bn))
             ops.append(conv(channels, channels))
-            ops.append(BatchNormRelu(channels))
+            ops.append(BatchNormRelu(channels, frozen=frozen_bn))
             ops.append(conv(channels, channels * 2))
         else:
             ops.append(conv(3, channels * 2, kernel_size=7, stride=2))
-        ops.append(BatchNormRelu(channels * 2))
+        ops.append(BatchNormRelu(channels * 2, frozen=frozen_bn))
         ops.append(nn.MaxPool2d(kernel_size=3, stride=2, padding=1))
         super().__init__(*ops)
 
 
 class ResNet(nn.Module):
-    def __init__(self, layers, width_multiplier, sk_ratio):
+    def __init__(self, layers, width_multiplier, sk_ratio, frozen_bn):
         super().__init__()
-        ops = [Stem(sk_ratio, width_multiplier)]
+        ops = [Stem(sk_ratio, width_multiplier, frozen_bn)]
         channels_in = 64 * width_multiplier
-        ops.append(Blocks(layers[0], channels_in, 64 * width_multiplier, 1, sk_ratio))
+        ops.append(Blocks(layers[0], channels_in, 64 * width_multiplier, 1, sk_ratio, frozen_bn))
         channels_in = ops[-1].channels_out
-        ops.append(Blocks(layers[1], channels_in, 128 * width_multiplier, 2, sk_ratio))
+        ops.append(Blocks(layers[1], channels_in, 128 * width_multiplier, 2, sk_ratio, frozen_bn))
         channels_in = ops[-1].channels_out
-        ops.append(Blocks(layers[2], channels_in, 256 * width_multiplier, 2, sk_ratio))
+        ops.append(Blocks(layers[2], channels_in, 256 * width_multiplier, 2, sk_ratio, frozen_bn))
         channels_in = ops[-1].channels_out
-        ops.append(Blocks(layers[3], channels_in, 512 * width_multiplier, 2, sk_ratio))
+        ops.append(Blocks(layers[3], channels_in, 512 * width_multiplier, 2, sk_ratio, frozen_bn))
         channels_in = ops[-1].channels_out
         self.channels_out = channels_in
         self.net = nn.Sequential(*ops)
@@ -153,9 +157,9 @@ class ContrastiveHead(nn.Module):
         return x
 
 
-def get_resnet(depth=50, width_multiplier=1, sk_ratio=0):  # sk_ratio=0.0625 is recommended
+def get_resnet(depth=50, width_multiplier=1, sk_ratio=0, frozen_bn=False):  # sk_ratio=0.0625 is recommended
     layers = {50: [3, 4, 6, 3], 101: [3, 4, 23, 3], 152: [3, 8, 36, 3], 200: [3, 24, 36, 3]}[depth]
-    resnet = ResNet(layers, width_multiplier, sk_ratio)
+    resnet = ResNet(layers, width_multiplier, sk_ratio, frozen_bn)
     return resnet, ContrastiveHead(resnet.channels_out)
 
 

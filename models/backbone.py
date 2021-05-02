@@ -125,6 +125,7 @@ def simclr_backbone(
         path,
         trainable_layers=3,
         returned_layer=4,
+        frozen_bn=False,
         map_location=None,
         **kwargs
 ):
@@ -137,12 +138,9 @@ def simclr_backbone(
     :param returned_layer: layer of the network to return.
     """
 
-    backbone, _ = get_resnet(depth=50, width_multiplier=1, sk_ratio=0)
-    state_dict = torch.load(path, map_location=map_location)
-    # I WANNA KILL MY FAMILY AND MYSELF
-    state_dict.pop('fc.weight', None)
-    state_dict.pop('fc.bias', None)
-    backbone.load_state_dict(state_dict, strict=False)
+    backbone, _ = get_resnet(depth=50, width_multiplier=1, sk_ratio=0, frozen_bn=frozen_bn)
+    state_dict = torch.load(path, map_location=map_location)['resnet']
+    backbone.load_state_dict(state_dict, strict=True)
 
     assert 0 <= trainable_layers <= 5
     layers_to_train = ['net.4', 'net.3', 'net.2', 'net.1', 'net.0'][:trainable_layers]
@@ -159,6 +157,5 @@ def simclr_backbone(
 
     assert 0 < returned_layer < 5
     return_layer = {f'{returned_layer}': 'output'}
-    # print(backbone.net[4])
-    # print(list(backbone.net.named_children()))
+    
     return IntermediateLayerGetter(model=backbone.net, return_layers=return_layer)
