@@ -402,6 +402,13 @@ def xyxy2xywh(bboxes):
             return new_bboxes
 
 
+def _upscale_yolo_bboxes(bboxes, img_size, grid_size):
+    cell_size = img_size[0] / grid_size[0], img_size[1] / grid_size[1]
+    if torch.is_tensor(bboxes):
+        x, y, w, h = bboxes.unbind(-1)
+        return torch.stack([x * cell_size[0], y * cell_size[1], w * img_size[0], h * img_size[1]], dim=-1)
+
+
 def get_single_cat_dataloader(complete_dataloader, cat_id):
     dataset = complete_dataloader.dataset
     batch_size = complete_dataloader.batch_sampler.batch_size

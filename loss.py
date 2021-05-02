@@ -6,7 +6,7 @@ from typing import Optional
 from torch import Tensor
 
 from utils.utils import compute_iou, compute_effective_iou
-from utils.data import xcycwh2xyxy
+from utils.data import _upscale_yolo_bboxes, xcycwh2xyxy
 
 
 def binary_focal_loss_with_logits(input, target, gamma, alpha, pos_weight, reduction):
@@ -112,20 +112,27 @@ class FocalEIoULoss(nn.Module):
         return eiou_fl
 
 
-class CustomYOLOLoss(torch.nn.Module):
+class YOLOLoss(torch.nn.Module):
     def __init__(self,
+                 img_size,
+                 grid_size,
                  bbox_criterion,
                  conf_criterion,
                  lambda_noobj=1,
                  lambda_bbox=1,
-                 lambda_obj=1
+                 lambda_obj=1,
                  ):
-        super(CustomYOLOLoss, self).__init__()
+        super(YOLOLoss, self).__init__()
+        self.img_size = img_size
+        self.grid_size = grid_size
         self.bbox_criterion = bbox_criterion
         self.conf_criterion = conf_criterion
         self.lambda_noobj = lambda_noobj
         self.lambda_bbox = lambda_bbox
         self.lambda_obj = lambda_obj
+
+        self._bbox_transform = lambda bbox, convert=xcycwh2xyxy, scale=_upscale_yolo_bboxes:\
+            convert(scale(bbox, self.img_size, self.grid_size))
 
     def forward(self, input, target):
         """
@@ -159,14 +166,13 @@ class CustomYOLOLoss(torch.nn.Module):
             torch.repeat_interleave(
                 target_bbox[:, None, :], repeats=n_bboxes, dim=1
             ).view(n_obj_cells * n_bboxes, 4),
-            bbox_transform=xcycwh2xyxy
+            bbox_transform=self._bbox_transform
         )
         responsible_idx = iou.view(n_obj_cells, n_bboxes).argmax(dim=1)
+
         obj_responsible_mask = torch.zeros(n_obj_cells * n_bboxes, dtype=torch.bool)
         for cell_idx, max_iou_idx in enumerate(responsible_idx):
             obj_responsible_mask[n_bboxes * cell_idx + max_iou_idx] = 1
-
-        pred_responsible = obj_pred[obj_responsible_mask]
 
         if n_bboxes > 1:
             loss_noobj += self.conf_criterion(
@@ -174,8 +180,98 @@ class CustomYOLOLoss(torch.nn.Module):
                 torch.zeros_like(obj_pred[~obj_responsible_mask][..., 0])
             )
 
-        loss_bbox = self.bbox_criterion(torch.sigmoid(pred_responsible[..., 1:]), obj_target[..., 1:])
-        loss_obj = self.conf_criterion(pred_responsible[..., 0], obj_target[..., 0])
+        loss_bbox = self.bbox_criterion(
+            pred_bbox[obj_responsible_mask],
+            obj_target[..., 1:]
+        )
+
+        loss_obj = self.conf_criterion(obj_pred[obj_responsible_mask][..., 0], obj_target[..., 0])
+
+        loss = self.lambda_obj * loss_obj + self.lambda_bbox * loss_bbox + \
+               self.lambda_noobj * loss_noobj
+
+        return {
+            'loss': loss,
+            'loss_noobj': loss_noobj.detach(),
+            'loss_bbox': loss_bbox.detach(),
+            'loss_obj': loss_obj.detach()
+        }
+
+
+class CustomYOLOLoss(torch.nn.Module):
+    def __init__(self,
+                 img_size,
+                 grid_size,
+                 bbox_criterion,
+                 conf_criterion,
+                 lambda_noobj=1,
+                 lambda_bbox=1,
+                 lambda_obj=1,
+                 ):
+        super(CustomYOLOLoss, self).__init__()
+        self.img_size = img_size
+        self.grid_size = grid_size
+        self.bbox_criterion = bbox_criterion
+        self.conf_criterion = conf_criterion
+        self.lambda_noobj = lambda_noobj
+        self.lambda_bbox = lambda_bbox
+        self.lambda_obj = lambda_obj
+
+        self._bbox_transform = lambda bbox, convert=xcycwh2xyxy, scale=_upscale_yolo_bboxes:\
+            convert(scale(bbox, self.img_size, self.grid_size))
+
+    def forward(self, input, target):
+        """
+        Compute YOLOv3 loss with {G, C, E}IoULoss for bbox predictions
+        ```{input, target}[i, j, k, :] = (c, x, y, w, h)```
+        :param input (torch.Tensor[N, S, S, 5]): raw model output (logits)
+        :param target (torch.Tensor[N, S, S, 5]): yolo target
+        :return:
+        '''
+        """
+
+        n_bboxes = input.shape[-1] // 5
+        obj_mask = target[..., 0] > 0
+        n_obj_cells = obj_mask.sum()
+        obj_pred = input[obj_mask].view(n_obj_cells * n_bboxes, 5)
+        n_noobj_cells = input.shape[0] * input.shape[1] * input.shape[2] - n_obj_cells
+        noobj_pred = input[~obj_mask].view(n_noobj_cells * n_bboxes, 5)
+
+        obj_target = target[obj_mask]
+
+        # Compute loss for cells which have no objects
+        noobj_logit = noobj_pred[..., 0]
+        loss_noobj = self.conf_criterion(noobj_logit, torch.zeros_like(noobj_logit))
+
+        # Compute loss for cells which contain objects
+        pred_bbox = torch.sigmoid(obj_pred[:, 1:])
+        target_bbox = obj_target[:, 1:]
+
+        iou = compute_iou(
+            pred_bbox,
+            torch.repeat_interleave(
+                target_bbox[:, None, :], repeats=n_bboxes, dim=1
+            ).view(n_obj_cells * n_bboxes, 4),
+            bbox_transform=self._bbox_transform
+        )
+        responsible_idx = iou.view(n_obj_cells, n_bboxes).argmax(dim=1)
+
+        obj_responsible_mask = torch.zeros(n_obj_cells * n_bboxes, dtype=torch.bool)
+        for cell_idx, max_iou_idx in enumerate(responsible_idx):
+            obj_responsible_mask[n_bboxes * cell_idx + max_iou_idx] = 1
+
+        if n_bboxes > 1:
+            loss_noobj += self.conf_criterion(
+                obj_pred[~obj_responsible_mask][..., 0],
+                torch.zeros_like(obj_pred[~obj_responsible_mask][..., 0])
+            )
+
+        loss_bbox = self.bbox_criterion(
+            _upscale_yolo_bboxes(pred_bbox[obj_responsible_mask], self.img_size, self.grid_size),
+            _upscale_yolo_bboxes(obj_target[..., 1:], self.img_size, self.grid_size)
+        )
+
+        loss_obj = self.conf_criterion(obj_pred[obj_responsible_mask][..., 0], obj_target[..., 0])
 
         loss = self.lambda_obj * loss_obj + self.lambda_bbox * loss_bbox + \
                self.lambda_noobj * loss_noobj
