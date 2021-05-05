@@ -88,10 +88,10 @@ def find_lr(cfg):
     log_lr_range_test_history(num_iter, lr_finder.history)
 
 
-@hydra.main(config_path='conf', config_name='config_find_lr')
+@hydra.main(config_path='../conf', config_name='config_find_lr')
 def run(cfg: DictConfig):
     cfg = OmegaConf.create(cfg)
-    trainer_cfg_filename = os.path.join(BASE_DIR, 'conf', 'config.yaml')
+    trainer_cfg_filename = os.path.join(BASE_DIR, '../conf', 'config.yaml')
     trainer_cfg = OmegaConf.load(trainer_cfg_filename)
     merged_cfg = OmegaConf.merge(trainer_cfg, cfg)
 
