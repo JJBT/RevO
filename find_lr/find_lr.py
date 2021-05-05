@@ -2,7 +2,7 @@ import os
 import hydra
 from omegaconf import DictConfig, OmegaConf
 import logging
-from torch_lr_finder import LRFinder, TrainDataLoaderIter, ValDataLoaderIter
+from lr_finder import LRFinder, TrainDataLoaderIter, ValDataLoaderIter
 from matplotlib import pyplot as plt
 from settings import BASE_DIR
 
