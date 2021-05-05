@@ -85,8 +85,6 @@ class TensorBoardCallback(Callback):
         for name, param in trainer.model.named_parameters():
             if 'bn' not in name:
                 self.writer.add_histogram(name, param, trainer.state.step)
-                if param.requires_grad:
-                    self.writer.add_histogram(name + '_grad', param.grad, trainer.state.step)
 
     def add_grads_histogram(self, trainer):
         for name, param in trainer.model.named_parameters():
