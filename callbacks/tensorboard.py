@@ -80,6 +80,13 @@ class TensorBoardCallback(Callback):
         for name, metric in metrics.items():
             self.writer.add_scalar(name, metric, trainer.state.step)
 
+    def add_params_histogram(self, trainer):
+        for name, param in trainer.model.named_parameters():
+            if 'bn' not in name:
+                self.writer.add_histogram(name, param, trainer.state.step)
+                if param.requires_grad:
+                    self.writer.add_histogram(name + '_grad', param.grad, trainer.state.step)
+
     def __call__(self, trainer):
         for name, loss in trainer.state.last_train_loss.items():
             self.writer.add_scalar(f'trn/{name}', loss, trainer.state.step)
@@ -87,8 +94,4 @@ class TensorBoardCallback(Callback):
         self.writer.add_scalar('lr', trainer.optimizer.param_groups[0]['lr'], trainer.state.step)
 
         if self.add_weights_and_grads:
-            for name, param in trainer.model.named_parameters():
-                if 'bn' not in name:
-                    self.writer.add_histogram(name, param, trainer.state.step)
-                    if param.requires_grad:
-                        self.writer.add_histogram(name + '_grad', param.grad, trainer.state.step)
+            self.add_params_histogram(trainer)
