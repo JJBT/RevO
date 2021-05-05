@@ -19,7 +19,12 @@ def create_model(cfg):
 
 
 def create_optimizer(cfg, model: torch.nn.Module):
-    optimizer = object_from_dict(cfg.optimizer, params=filter(lambda x: x.requires_grad, model.parameters()))
+    params = [
+        {'params': filter(lambda x: x.requires_grad, model.backbone.parameters()), 'lr': cfg.optimizer.backbone_lr},
+        {'params': filter(lambda x: x.requires_grad, model.center_pool.parameters()), 'lr': cfg.optimizer.transformer_lr},
+        {'params': filter(lambda x: x.requires_grad, model.transformer.parameters()), 'lr': cfg.optimizer.transformer_lr}
+    ]
+    optimizer = object_from_dict(cfg.optimizer, ignore_keys=['backbone_lr', 'transformer_lr'], params=params)
     return optimizer
 
 
