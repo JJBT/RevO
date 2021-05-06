@@ -1,8 +1,9 @@
 import os
 import hydra
+import torch.optim
 from omegaconf import DictConfig, OmegaConf
 import logging
-from lr_finder import LRFinder, TrainDataLoaderIter, ValDataLoaderIter
+from lr_finder.lr_finder import LRFinder, TrainDataLoaderIter, ValDataLoaderIter
 from matplotlib import pyplot as plt
 from settings import BASE_DIR
 
@@ -48,13 +49,13 @@ def find_lr(cfg):
     custom_train_iter = CustomTrainIter(next(iter(trainer.train_dataloader_dict.values()))['dataloader'])
     custom_val_iter = CustomValIter(next(iter(trainer.val_dataloader_dict.values()))['dataloader'])
 
-    optimizer = net_optimizer(trainer.optimizer, trainer.model)
+    optimizer = trainer.optimizer
     if cfg.num_iter == 'auto':
         num_iter = auto_num_iter(custom_train_iter)
     else:
         num_iter = cfg.num_iter
 
-    lr_finder = LRFinder(trainer.model, optimizer, trainer.criterion, device=trainer.device)
+    lr_finder = LRFinder(trainer.model, optimizer, trainer.criterion, device=trainer.accelerator.device)
     lr_finder.reset()
     if cfg.strategy == 'training_loss':
         lr_finder.range_test(custom_train_iter, end_lr=cfg.end_lr, num_iter=num_iter, step_mode=cfg.step_mode)
@@ -88,10 +89,10 @@ def find_lr(cfg):
     log_lr_range_test_history(num_iter, lr_finder.history)
 
 
-@hydra.main(config_path='../conf', config_name='config_find_lr')
+@hydra.main(config_path='conf', config_name='config_find_lr')
 def run(cfg: DictConfig):
     cfg = OmegaConf.create(cfg)
-    trainer_cfg_filename = os.path.join(BASE_DIR, '../conf', 'config.yaml')
+    trainer_cfg_filename = os.path.join(BASE_DIR, 'conf', 'config.yaml')
     trainer_cfg = OmegaConf.load(trainer_cfg_filename)
     merged_cfg = OmegaConf.merge(trainer_cfg, cfg)
 

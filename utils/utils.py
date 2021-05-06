@@ -12,6 +12,10 @@ def object_from_dict(d, parent=None, ignore_keys=None, **default_kwargs):
     kwargs = d.copy()
     kwargs = dict(kwargs)
     object_type = kwargs.pop('type')
+
+    if object_type is None:
+        return None
+
     if ignore_keys:
         for key in ignore_keys:
             kwargs.pop(key, None)
