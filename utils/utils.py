@@ -55,13 +55,6 @@ def loss_to_dict(loss):
         return loss
 
 
-def freeze_layers(model, layers_to_train):
-    """Freeze layers not included in layers_to_train"""
-    for name, parameter in model.named_parameters():
-        if all([not name.startswith(layer) for layer in layers_to_train]):
-            parameter.requires_grad_(False)
-
-
 def set_determenistic(seed=42):
     random.seed(seed)
     np.random.seed(seed)
