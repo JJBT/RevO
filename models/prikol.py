@@ -19,7 +19,7 @@ class PrikolNet(nn.Module):
 
         self.backbone = backbone
 
-        self.center_pool = CenterPool(img_size=pool_shape)
+        self.center_pool = CenterPool(img_size=pool_shape, empd_dim=self.embd_dim)
         self.transformer = SimpleTransformer(self.embd_dim, self.n_head, self.attn_pdrop, self.resid_pdrop,
                                              self.embd_pdrop, self.n_layer, self.out_dim)
 
@@ -97,14 +97,15 @@ class CenterPool(nn.Module):
     """
     Pulls out feature vectors of object instances given feature map and bbox coordinates
     """
-    def __init__(self, img_size):
+    def __init__(self, img_size, embd_dim):
         """
         Args:
             img_size: image original size
         """
         super(CenterPool, self).__init__()
         self.img_size = img_size
-        self.label_fuser = LabelFuser(in_dim=4, out_dim=2048)
+        self.embd_dim = embd_dim
+        self.label_fuser = LabelFuser(in_dim=4, out_dim=self.embd_dim)
 
     def forward(self, input, bboxes):
         """
