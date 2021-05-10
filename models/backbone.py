@@ -6,6 +6,8 @@ from torchvision.models._utils import IntermediateLayerGetter
 import torch
 from torch import nn
 from models.simclr_resnet import get_resnet
+from models import darknet
+from utils.utils import freeze_layers
 
 
 def resnet_backbone(
@@ -48,10 +50,7 @@ def resnet_backbone(
     else:
         backbone.bn1.track_running_stats = False
 
-    # freeze layers
-    for name, parameter in backbone.named_parameters():
-        if all([not name.startswith(layer) for layer in layers_to_train]):
-            parameter.requires_grad_(False)
+    freeze_layers(backbone, layers_to_train)
 
     assert 0 < returned_layer < 5
     return_layer = {f'layer{returned_layer}': 'output'}
@@ -97,10 +96,7 @@ def simclr_backbone(pretrained,
     else:
         backbone.net[0][1][0].track_running_stats = False
 
-    # freeze layers
-    for name, parameter in backbone.named_parameters():
-        if all([not name.startswith(layer) for layer in layers_to_train]):
-            parameter.requires_grad_(False)
+    freeze_layers(backbone, layers_to_train)
 
     assert 0 < returned_layer < 5
     return_layer = {f'{returned_layer}': 'output'}
@@ -148,10 +144,7 @@ def resnet_backbone_headed(name='resnet50',
     else:
         backbone.bn1.track_running_stats = False
 
-    # freeze layers
-    for name, parameter in backbone.named_parameters():
-        if all([not name.startswith(layer) for layer in layers_to_train]):
-            parameter.requires_grad_(False)
+    freeze_layers(backbone, layers_to_train)
 
     assert 0 < returned_layer < 5
 
@@ -168,3 +161,37 @@ def resnet_backbone_headed(name='resnet50',
     ]))
     return_layer = {f'head': 'output'}
     return IntermediateLayerGetter(model=backbone, return_layers=return_layer)
+
+
+def darknet_backbone(pretrained,
+                     name='darknet53',
+                     trainable_layers=4,
+                     returned_layer=5,
+                     norm_layer=None,
+                     map_location=None,
+                     **kwargs):
+    assert isinstance(pretrained, str)
+    if norm_layer is None:
+        norm_layer = nn.BatchNorm2d
+    elif norm_layer == 'frozen_bn':
+        norm_layer = FrozenBatchNorm2d
+
+    backbone = darknet.__dict__[name](norm_layer=norm_layer)
+    state_dict = torch.load(pretrained, map_location=map_location)
+    backbone.load_state_dict(state_dict, strict=True)
+
+    assert 0 <= trainable_layers <= 6
+    layers_to_train = ['layer5', 'layer4', 'layer3', 'layer2', 'layer1', 'conv1'][:trainable_layers]
+
+    if trainable_layers == 6:
+        layers_to_train.append('bn1')
+    else:
+        backbone.bn1.track_running_stats = False
+
+    freeze_layers(backbone, layers_to_train)
+
+    assert 0 < returned_layer < 6
+    return_layer = {f'layer{returned_layer}': 'output'}
+
+    return IntermediateLayerGetter(model=backbone, return_layers=return_layer)
+
