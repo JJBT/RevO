@@ -19,7 +19,7 @@ class PrikolNet(nn.Module):
 
         self.backbone = backbone
 
-        self.center_pool = CenterPool(img_size=pool_shape, empd_dim=self.embd_dim)
+        self.center_pool = CenterPool(img_size=pool_shape, embd_dim=self.embd_dim)
         self.transformer = SimpleTransformer(self.embd_dim, self.n_head, self.attn_pdrop, self.resid_pdrop,
                                              self.embd_pdrop, self.n_layer, self.out_dim)
 
