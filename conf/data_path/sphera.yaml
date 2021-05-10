@@ -1,0 +1,31 @@
+# @package _global_
+data:
+  coco_train_root: /home/jupyter/work/resources/data/mscoco/train2017
+  coco_val_root: /home/jupyter/work/resources/data/mscoco/val2017
+  coco_annotations_root: /home/jupyter/work/resources/data/mscoco/annotations
+
+
+  fsod_root: /home/jupyter/work/resources/data/fsod/images
+  fsod_annotations_root: /home/jupyter/work/resources/data/fsod/annotations
+
+  megapixel_mnist_train_root: /home/jupyter/work/resources/data/megapixel_mnist/train
+  megapixel_mnist_val_novel_cats_root: /home/jupyter/work/resources/data/megapixel_mnist/val_novel_cats
+  megapixel_mnist_val_train_cats_root: /home/jupyter/work/resources/data/megapixel_mnist/val_train_cats
+  megapixel_mnist_annotations_root: /home/jupyter/work/resources/data/megapixel_mnist/annotations
+
+  megapixel_omniglot_train_root: /home/jupyter/work/resources/data/megapixel_omniglot/train
+  megapixel_omniglot_val_novel_cats_root: /home/jupyter/work/resources/data/megapixel_omniglot/val_novel_cats
+  megapixel_omniglot_val_train_cats_root: /home/jupyter/work/resources/data/megapixel_omniglot/val_train_cats
+  megapixel_omniglot_annotations_root: /home/jupyter/work/resources/data/megapixel_omniglot/annotations
+
+  megapixel_emnist_train_root: /home/jupyter/work/resources/data/megapixel_emnist/train
+  megapixel_emnist_val_novel_cats_root: /home/jupyter/work/resources/data/megapixel_emnist/val_novel_cats
+  megapixel_emnist_val_train_cats_root: /home/jupyter/work/resources/data/megapixel_emnist/val_train_cats
+  megapixel_emnist_annotations_root: /home/jupyter/work/resources/data/megapixel_emnist/annotations
+
+  megapixel_mnist_grided_train_root: /home/jupyter/work/resources/data/megapixel_mnist_grided/train
+  megapixel_mnist_grided_val_novel_cats_root: /home/jupyter/work/resources/data/megapixel_mnist_grided/val_novel_cats
+  megapixel_mnist_grided_val_train_cats_root: /home/jupyter/work/resources/data/megapixel_mnist_grided/val_train_cats
+  megapixel_mnist_grided_annotations_root: /home/jupyter/work/resources/data/megapixel_mnist_grided/annotations
+
+  custom_annotations_root: /home/jupyter/work/resources/RevO/data/annotations

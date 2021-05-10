@@ -13,9 +13,19 @@ data:
   megapixel_mnist_val_train_cats_root: /data/megapixel_mnist/val_train_cats
   megapixel_mnist_annotations_root: /data/megapixel_mnist/annotations
 
+  megapixel_emnist_train_root: /data/megapixel_emnist/train
+  megapixel_emnist_val_novel_cats_root: /data/megapixel_emnist/val_novel_cats
+  megapixel_emnist_val_train_cats_root: /data/megapixel_emnist/val_train_cats
+  megapixel_emnist_annotations_root: /data/megapixel_emnist/annotations
+
+  megapixel_omniglot_train_root: /data/megapixel_omniglot/train
+  megapixel_omniglot_val_novel_cats_root: /data/megapixel_omniglot/val_novel_cats
+  megapixel_omniglot_val_train_cats_root: /data/megapixel_omniglot/val_train_cats
+  megapixel_omniglot_annotations_root: /data/megapixel_omniglot/annotations
+
   megapixel_mnist_grided_train_root: /data/megapixel_mnist_grided/train
   megapixel_mnist_grided_val_novel_cats_root: /data/megapixel_mnist_grided/val_novel_cats
   megapixel_mnist_grided_val_train_cats_root: /data/megapixel_mnist_grided/val_train_cats
   megapixel_mnist_grided_annotations_root: /data/megapixel_mnist_grided/annotations
 
-  custom_annotations_root: /home/objdet/FSKD/data/annotations
+  custom_annotations_root: /home/objdet/RevO/data/annotations

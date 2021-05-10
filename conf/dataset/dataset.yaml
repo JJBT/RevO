@@ -16,6 +16,7 @@ coco_train:
     annotations: ${data.coco_annotations_root}/person_keypoints_val2017.json
   shuffle: true
   draw: false
+  len: null
 
 coco_val:
   name: coco_val
@@ -33,6 +34,7 @@ coco_val:
     annotations: ${data.coco_annotations_root}/person_keypoints_val2017.json
   shuffle: false
   draw: false
+  len: null
 
 fsod_train:
   name: fsod_train
@@ -50,6 +52,7 @@ fsod_train:
     annotations: ${data.fsod_annotations_root}/fsod_train.json
   shuffle: true
   draw: false
+  len: null
 
 fsod_val:
   name: fsod_val
@@ -67,6 +70,61 @@ fsod_val:
     annotations: ${data.fsod_annotations_root}/fsod_test.json
   shuffle: true
   draw: false
+  len: null
+
+megapixel_emnist_train:
+  name: megapixel_emnist_train
+  bs: ${bs}
+  k_shot: ${k_shot}
+  bbox_format: ${data.bbox_format}
+  input_size: ${data.input_size}
+  transforms: ${data.train_transforms}
+  backbone_stride: ${model.backbone.stride}
+  query:
+    root: ${data.megapixel_emnist_train_root}
+    annotations: ${data.megapixel_emnist_annotations_root}/train.json
+  support:
+    root: ${data.megapixel_emnist_train_root}
+    annotations: ${data.megapixel_emnist_annotations_root}/train.json
+  shuffle: true
+  draw: true
+  len: 300
+
+megapixel_emnist_val_novel_cats:
+  name: megapixel_emnist_val_novel_cats
+  bs: ${bs}
+  k_shot: ${k_shot}
+  bbox_format: ${data.bbox_format}
+  input_size: ${data.input_size}
+  transforms: ${data.train_transforms}
+  backbone_stride: ${model.backbone.stride}
+  query:
+    root: ${data.megapixel_emnist_val_novel_cats_root}
+    annotations: ${data.megapixel_emnist_annotations_root}/val_novel_cats.json
+  support:
+    root: ${data.megapixel_emnist_val_novel_cats_root}
+    annotations: ${data.megapixel_emnist_annotations_root}/val_novel_cats.json
+  shuffle: true
+  draw: true
+  len: null
+
+megapixel_emnist_val_train_cats:
+  name: megapixel_emnist_val_train_cats
+  bs: ${bs}
+  k_shot: ${k_shot}
+  bbox_format: ${data.bbox_format}
+  input_size: ${data.input_size}
+  transforms: ${data.train_transforms}
+  backbone_stride: ${model.backbone.stride}
+  query:
+    root: ${data.megapixel_emnist_val_train_cats_root}
+    annotations: ${data.megapixel_emnist_annotations_root}/val_train_cats.json
+  support:
+    root: ${data.megapixel_emnist_val_train_cats_root}
+    annotations: ${data.megapixel_emnist_annotations_root}/val_train_cats.json
+  shuffle: true
+  draw: true
+  len: null
 
 megapixel_mnist_train:
   name: megapixel_mnist_train
@@ -84,6 +142,7 @@ megapixel_mnist_train:
     annotations: ${data.megapixel_mnist_annotations_root}/train.json
   shuffle: true
   draw: true
+  len: 300
 
 megapixel_mnist_val_novel_cats:
   name: megapixel_mnist_val_novel_cats
@@ -101,6 +160,7 @@ megapixel_mnist_val_novel_cats:
     annotations: ${data.megapixel_mnist_annotations_root}/val_novel_cats.json
   shuffle: true
   draw: true
+  len: null
 
 megapixel_mnist_val_train_cats:
   name: megapixel_mnist_val_train_cats
@@ -118,6 +178,62 @@ megapixel_mnist_val_train_cats:
     annotations: ${data.megapixel_mnist_annotations_root}/val_train_cats.json
   shuffle: true
   draw: true
+  len: null
+
+
+megapixel_omniglot_train:
+  name: megapixel_omniglot_train
+  bs: ${bs}
+  k_shot: ${k_shot}
+  bbox_format: ${data.bbox_format}
+  input_size: ${data.input_size}
+  transforms: ${data.train_transforms}
+  backbone_stride: ${model.backbone.stride}
+  query:
+    root: ${data.megapixel_omniglot_train_root}
+    annotations: ${data.megapixel_omniglot_annotations_root}/train.json
+  support:
+    root: ${data.megapixel_omniglot_train_root}
+    annotations: ${data.megapixel_omniglot_annotations_root}/train.json
+  shuffle: true
+  draw: true
+  len: null
+
+megapixel_omniglot_val_train_cats:
+  name: megapixel_omniglot_val_train_cats
+  bs: ${bs}
+  k_shot: ${k_shot}
+  bbox_format: ${data.bbox_format}
+  input_size: ${data.input_size}
+  transforms: ${data.train_transforms}
+  backbone_stride: ${model.backbone.stride}
+  query:
+    root: ${data.megapixel_omniglot_val_train_cats_root}
+    annotations: ${data.megapixel_omniglot_annotations_root}/val_train_cats.json
+  support:
+    root: ${data.megapixel_omniglot_val_train_cats_root}
+    annotations: ${data.megapixel_omniglot_annotations_root}/val_train_cats.json
+  shuffle: true
+  draw: true
+  len: null
+
+megapixel_omniglot_val_novel_cats:
+  name: megapixel_omniglot_val_novel_cats
+  bs: ${bs}
+  k_shot: ${k_shot}
+  bbox_format: ${data.bbox_format}
+  input_size: ${data.input_size}
+  transforms: ${data.train_transforms}
+  backbone_stride: ${model.backbone.stride}
+  query:
+    root: ${data.megapixel_omniglot_val_novel_cats_root}
+    annotations: ${data.megapixel_omniglot_annotations_root}/val_novel_cats.json
+  support:
+    root: ${data.megapixel_omniglot_val_novel_cats_root}
+    annotations: ${data.megapixel_omniglot_annotations_root}/val_novel_cats.json
+  shuffle: true
+  draw: true
+  len: null
 
 megapixel_mnist_grided_train:
   name: megapixel_mnist_grided_train
@@ -135,6 +251,7 @@ megapixel_mnist_grided_train:
     annotations: ${data.megapixel_mnist_grided_annotations_root}/train.json
   shuffle: true
   draw: false
+  len: null
 
 megapixel_mnist_grided_val_novel_cats:
   name: megapixel_mnist_grided_val_novel_cats
@@ -152,6 +269,7 @@ megapixel_mnist_grided_val_novel_cats:
     annotations: ${data.megapixel_mnist_grided_annotations_root}/val_novel_cats.json
   shuffle: true
   draw: true
+  len: null
 
 megapixel_mnist_grided_val_train_cats:
   name: megapixel_mnist_grided_val_train_cats
@@ -169,3 +287,4 @@ megapixel_mnist_grided_val_train_cats:
     annotations: ${data.megapixel_mnist_grided_annotations_root}/val_train_cats.json
   shuffle: true
   draw: true
+  len: null
