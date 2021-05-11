@@ -32,3 +32,21 @@ class CosineAnnealingWithWarmUp(_LRScheduler):
         return [self.eta_min + (base_lr - self.eta_min) *
                 (1 + math.cos(math.pi * self.last_epoch / self.T_max)) / 2
                 for base_lr in self.base_lrs]
+
+
+class WarmUp(_LRScheduler):
+    def __init__(self, optimizer, W_steps, eta_min=0, last_epoch=-1, verbose=False):
+        self.W_steps = W_steps
+        self.eta_min = eta_min
+        super(WarmUp, self).__init__(optimizer, last_epoch, verbose)
+
+    def get_lr(self):
+        if not self._get_lr_called_within_step:
+            warnings.warn("To get the last learning rate computed by the scheduler, "
+                          "please use `get_last_lr()`.", UserWarning)
+        if self.last_epoch == 0:
+            return self.base_lrs
+        elif self.last_epoch <= self.W_steps:
+            return [base_lr * (self.last_epoch / self.W_steps) for base_lr in self.base_lrs]
+        else:
+            return self.base_lrs
