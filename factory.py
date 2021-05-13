@@ -41,7 +41,8 @@ def create_loss(cfg):
 def create_train_dataloader(cfg):
     train_dataloaders = dict()
     for dataset_cfg in cfg.data.train_dataset:
-        dataloader_dict = create_dataloader(dataset_cfg)
+        dataset = create_dataset(dataset_cfg)
+        dataloader_dict = create_dataloader(dataset_cfg, dataset)
         train_dataloaders[dataloader_dict['name']] = dataloader_dict
     return train_dataloaders
 
@@ -49,14 +50,15 @@ def create_train_dataloader(cfg):
 def create_val_dataloader(cfg):
     val_dataloaders = dict()
     for dataset_cfg in cfg.data.validation_dataset:
-        dataloader_dict = create_dataloader(dataset_cfg)
+        dataset = create_dataset(dataset_cfg)
+        dataloader_dict = create_dataloader(dataset_cfg, dataset)
         val_dataloaders[dataloader_dict['name']] = dataloader_dict
     return val_dataloaders
 
 
-def create_dataloader(cfg):
-    batch_size = cfg.bs
+def create_dataset(cfg):
     params = dict()
+    params['type'] = cfg.type
     params['q_root'] = cfg.query.root
     params['s_root'] = cfg.support.root
     params['q_ann_filename'] = cfg.query.annotations
@@ -68,10 +70,16 @@ def create_dataloader(cfg):
     s_transform = create_augmentations(cfg.transforms)
     params['q_transform'] = q_transform
     params['s_transform'] = s_transform
+
+    dataset = object_from_dict(params)
+    return dataset
+
+
+
+def create_dataloader(cfg, dataset):
+    batch_size = cfg.bs
     dataset_length = cfg.len
     shuffle = cfg.shuffle
-
-    dataset = ObjectDetectionDataset(**params)
 
     if dataset_length:
         if shuffle:

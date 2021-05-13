@@ -73,6 +73,7 @@ fsod_val:
   len: null
 
 megapixel_emnist_train:
+  type: datasets.dataset.ObjectDetectionDataset
   name: megapixel_emnist_train
   bs: ${bs}
   k_shot: ${k_shot}
@@ -91,6 +92,7 @@ megapixel_emnist_train:
   len: 300
 
 megapixel_emnist_val_novel_cats:
+  type: datasets.dataset.ObjectDetectionDataset
   name: megapixel_emnist_val_novel_cats
   bs: ${bs}
   k_shot: ${k_shot}
@@ -109,6 +111,7 @@ megapixel_emnist_val_novel_cats:
   len: null
 
 megapixel_emnist_val_train_cats:
+  type: datasets.dataset.ObjectDetectionDataset
   name: megapixel_emnist_val_train_cats
   bs: ${bs}
   k_shot: ${k_shot}
@@ -127,6 +130,7 @@ megapixel_emnist_val_train_cats:
   len: null
 
 megapixel_mnist_train:
+  type: datasets.dataset.ObjectDetectionDataset
   name: megapixel_mnist_train
   bs: ${bs}
   k_shot: ${k_shot}
@@ -145,6 +149,7 @@ megapixel_mnist_train:
   len: 300
 
 megapixel_mnist_val_novel_cats:
+  type: datasets.dataset.ObjectDetectionDataset
   name: megapixel_mnist_val_novel_cats
   bs: ${bs}
   k_shot: ${k_shot}
@@ -163,6 +168,7 @@ megapixel_mnist_val_novel_cats:
   len: null
 
 megapixel_mnist_val_train_cats:
+  type: datasets.dataset.ObjectDetectionDataset
   name: megapixel_mnist_val_train_cats
   bs: ${bs}
   k_shot: ${k_shot}
@@ -182,6 +188,7 @@ megapixel_mnist_val_train_cats:
 
 
 megapixel_omniglot_train:
+  type: datasets.dataset.ObjectDetectionDataset
   name: megapixel_omniglot_train
   bs: ${bs}
   k_shot: ${k_shot}
@@ -200,6 +207,7 @@ megapixel_omniglot_train:
   len: null
 
 megapixel_omniglot_val_train_cats:
+  type: datasets.dataset.ObjectDetectionDataset
   name: megapixel_omniglot_val_train_cats
   bs: ${bs}
   k_shot: ${k_shot}
@@ -218,6 +226,7 @@ megapixel_omniglot_val_train_cats:
   len: null
 
 megapixel_omniglot_val_novel_cats:
+  type: datasets.dataset.ObjectDetectionDataset
   name: megapixel_omniglot_val_novel_cats
   bs: ${bs}
   k_shot: ${k_shot}
