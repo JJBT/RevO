@@ -237,3 +237,25 @@ class TorchLoss(Metric):
     def reset(self):
         self._loss_sum_dict = defaultdict(lambda: 0)
         self._total = 0
+
+
+class Accuracy(Metric):
+    def __init__(self):
+        super().__init__("accuracy", default_value=0)
+        self.total_correct = 0
+        self.total = 0
+
+    def step(self, y, y_pred):
+        y, y_pred = self.prepare(y, y_pred)
+
+        correct = torch.eq(y, y_pred)
+
+        self.total_correct += torch.sum(correct).item()
+        self.total += correct.shape[0]
+
+    def compute(self):
+        return self.total_correct / self.total
+
+    def reset(self):
+        self.total_correct = 0
+        self.total = 0

@@ -93,6 +93,81 @@ class PrikolNet(nn.Module):
         return batch, mask
 
 
+class PrikolNetClassification(nn.Module):
+    def __init__(self, backbone, pool_shape, embd_dim, n_head, attn_pdrop, resid_pdrop,
+                 embd_pdrop, n_layer, out_dim, **kwargs):
+        super().__init__()
+        self.embd_dim = embd_dim
+        self.n_head = n_head
+        self.attn_pdrop = attn_pdrop
+        self.resid_pdrop = resid_pdrop
+        self.embd_pdrop = embd_pdrop
+        self.n_layer = n_layer
+        self.out_dim = out_dim
+
+        self.backbone = backbone
+
+        self.transformer = SimpleTransformer(self.embd_dim, self.n_head, self.attn_pdrop, self.resid_pdrop,
+                                             self.embd_pdrop, self.n_layer, self.out_dim)
+
+    def forward(self, sample):
+        """
+        Args:
+            sample (dict): input sample
+                sampe['q_img'] (torch.Tensor): batch of query images (BxCxHxW)
+                sampe['s_imgs'] (torch.Tensor): batch of support set images (BxKxCxHxW)
+                sampe['s_bboxes'] (List[List[List[float, ..]]]): batch of bbox coordinates for support
+                                                                 set images (conditionally BxKxVx4, K - length of support set
+                                                                                                    V - number of instances per image)
+        """
+        q_img = sample['q_img']
+        s_imgs = sample['s_imgs']
+
+        B, K, C_s, W_s, H_s = s_imgs.shape
+        s_imgs = s_imgs.view((B * K, C_s, W_s, H_s))  # B x K x C x W x H -> B*K x W x H
+
+        # Getting feature maps of query and support images
+        # B x C_ x W_ x H_ -> B x C_fm x W_fm x H_fm
+        layer = 'output'
+        fm = self.backbone(torch.cat([q_img, s_imgs]))[layer]
+        fm = fm.squeeze(-1).squeeze(-1)
+
+        q_feature_vectors = fm[:B]
+        s_feature_vectors = fm[B:]
+
+        # Shaping batch from feature vector sequences
+        # and creating mask for transformer
+        seq, mask = self._collate_fn(q_feature_vectors, s_feature_vectors)
+        seq = seq.to(fm.device)
+        mask = mask.to(fm.device)
+
+        # Getting predictions
+        seq_out = self.transformer({'x': seq, 'mask': mask})  # -> B x C_fm x (W_fm * H_fm + N_padded)
+        preds = seq_out[:, -1]  # only query vectors are responsible for prediction
+        preds = preds.squeeze(-1)                # -> B x output_dim x W_fm * H_fm
+        return preds
+
+    def _collate_fn(self, q_vectors, s_vectors):
+        """
+        Collates batch from a sequences of feature vectors with varying length and creates mask for transformer
+        Args:
+            q_vectors (torch.Tensor): sequence of query feature vectors (H_fm * W_fm x embd_dim)
+            s_vectors_listed (List[List[List[float]]]): list of support feature vectors
+
+        """
+        batch_size, embd_dim = q_vectors.shape
+        K = s_vectors.shape[0] // batch_size
+
+        batch = torch.zeros(batch_size, K + 1, embd_dim)
+        mask = torch.zeros(size=(batch_size, K + 1, K + 1), dtype=torch.bool)
+
+        batch[:, :K] = torch.stack(torch.split(s_vectors, K))
+        batch[:, -1] = q_vectors
+        mask[:, -1, :] = torch.ones(K + 1)
+
+        return batch, mask
+
+
 class CenterPool(nn.Module):
     """
     Pulls out feature vectors of object instances given feature map and bbox coordinates

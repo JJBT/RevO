@@ -23,6 +23,11 @@ data:
   megapixel_omniglot_val_train_cats_root: /data/megapixel_omniglot/val_train_cats
   megapixel_omniglot_annotations_root: /data/megapixel_omniglot/annotations
 
+  omniglot_train_root: /data/new_omniglot/train
+  omniglot_val_novel_cats_root: /data/new_omniglot/val_novel_cats
+  omniglot_annotations_root: /data/new_omniglot/annotations
+
+
   megapixel_mnist_grided_train_root: /data/megapixel_mnist_grided/train
   megapixel_mnist_grided_val_novel_cats_root: /data/megapixel_mnist_grided/val_novel_cats
   megapixel_mnist_grided_val_train_cats_root: /data/megapixel_mnist_grided/val_train_cats

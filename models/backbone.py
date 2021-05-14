@@ -14,7 +14,7 @@ def resnet_backbone(
         name='resnet50',
         pretrained=False,
         trainable_layers=3,
-        returned_layer=4,
+        returned_layer='layer4',
         norm_layer=None,
         map_location=None,
         **kwargs
@@ -52,8 +52,7 @@ def resnet_backbone(
 
     freeze_layers(backbone, layers_to_train)
 
-    assert 0 < returned_layer < 5
-    return_layer = {f'layer{returned_layer}': 'output'}
+    return_layer = {returned_layer: 'output'}
 
     return IntermediateLayerGetter(model=backbone, return_layers=return_layer)
 

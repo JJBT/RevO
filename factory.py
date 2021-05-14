@@ -3,7 +3,6 @@ from utils.utils import object_from_dict
 from torch.utils.data import DataLoader, SubsetRandomSampler
 import albumentations as albu
 import numpy as np
-from datasets.dataset import ObjectDetectionDataset, object_detection_collate_fn
 
 
 def create_backbone(cfg):
@@ -19,12 +18,7 @@ def create_model(cfg):
 
 
 def create_optimizer(cfg, model: torch.nn.Module):
-    params = [
-        {'params': filter(lambda x: x.requires_grad, model.backbone.parameters()), 'lr': cfg.optimizer.backbone_lr},
-        {'params': filter(lambda x: x.requires_grad, model.center_pool.parameters()), 'lr': cfg.optimizer.transformer_lr},
-        {'params': filter(lambda x: x.requires_grad, model.transformer.parameters()), 'lr': cfg.optimizer.transformer_lr}
-    ]
-    optimizer = object_from_dict(cfg.optimizer, ignore_keys=['backbone_lr', 'transformer_lr'], params=params)
+    optimizer = object_from_dict(cfg.optimizer, params=filter(lambda x: x.requires_grad, model.parameters()))
     return optimizer
 
 
@@ -75,7 +69,6 @@ def create_dataset(cfg):
     return dataset
 
 
-
 def create_dataloader(cfg, dataset):
     batch_size = cfg.bs
     dataset_length = cfg.len
@@ -92,8 +85,9 @@ def create_dataloader(cfg, dataset):
     else:
         sampler = None
 
+    collate_fn = object_from_dict(cfg.collate_fn)
     dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=shuffle,
-                            sampler=sampler, collate_fn=object_detection_collate_fn)
+                            sampler=sampler, collate_fn=collate_fn)
     dataloader_dict = {
         'name': cfg.name,
         'dataloader': dataloader,

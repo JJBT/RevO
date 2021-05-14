@@ -1,6 +1,7 @@
 # @package _global_
 
 coco_train:
+  type: datasets.ObjectDetectionDataset
   name: coco_train
   bs: ${bs}
   k_shot: ${k_shot}
@@ -8,6 +9,8 @@ coco_train:
   input_size: ${data.input_size}
   transforms: ${data.train_transforms}
   backbone_stride: ${model.backbone.stride}
+  collate_fn:
+    type: datasets.object_detection_collate_fn
   query:
     root: ${data.coco_train_root}
     annotations: ${data.coco_annotations_root}/person_keypoints_val2017.json
@@ -19,6 +22,7 @@ coco_train:
   len: null
 
 coco_val:
+  type: datasets.ObjectDetectionDataset
   name: coco_val
   bs: ${bs}
   k_shot: ${k_shot}
@@ -26,6 +30,8 @@ coco_val:
   input_size: ${data.input_size}
   transforms: ${data.val_transforms}
   backbone_stride: ${model.backbone.stride}
+  collate_fn:
+    type: datasets.object_detection_collate_fn
   query:
     root: ${data.coco_val_root}
     annotations: ${data.coco_annotations_root}/person_keypoints_val2017.json
@@ -37,6 +43,7 @@ coco_val:
   len: null
 
 fsod_train:
+  type: datasets.ObjectDetectionDataset
   name: fsod_train
   bs: ${bs}
   k_shot: ${k_shot}
@@ -44,6 +51,8 @@ fsod_train:
   input_size: ${data.input_size}
   transforms: ${data.train_transforms}
   backbone_stride: ${model.backbone.stride}
+  collate_fn:
+    type: datasets.object_detection_collate_fn
   query:
     root: ${data.fsod_root}
     annotations: ${data.fsod_annotations_root}/fsod_train.json
@@ -55,6 +64,7 @@ fsod_train:
   len: null
 
 fsod_val:
+  type: datasets.ObjectDetectionDataset
   name: fsod_val
   bs: ${bs}
   k_shot: ${k_shot}
@@ -62,6 +72,8 @@ fsod_val:
   input_size: ${data.input_size}
   transforms: ${data.train_transforms}
   backbone_stride: ${model.backbone.stride}
+  collate_fn:
+    type: datasets.object_detection_collate_fn
   query:
     root: ${data.fsod_root}
     annotations: ${data.fsod_annotations_root}/fsod_test.json
@@ -73,7 +85,7 @@ fsod_val:
   len: null
 
 megapixel_emnist_train:
-  type: datasets.dataset.ObjectDetectionDataset
+  type: datasets.ObjectDetectionDataset
   name: megapixel_emnist_train
   bs: ${bs}
   k_shot: ${k_shot}
@@ -81,6 +93,8 @@ megapixel_emnist_train:
   input_size: ${data.input_size}
   transforms: ${data.train_transforms}
   backbone_stride: ${model.backbone.stride}
+  collate_fn:
+    type: datasets.object_detection_collate_fn
   query:
     root: ${data.megapixel_emnist_train_root}
     annotations: ${data.megapixel_emnist_annotations_root}/train.json
@@ -92,7 +106,7 @@ megapixel_emnist_train:
   len: 300
 
 megapixel_emnist_val_novel_cats:
-  type: datasets.dataset.ObjectDetectionDataset
+  type: datasets.ObjectDetectionDataset
   name: megapixel_emnist_val_novel_cats
   bs: ${bs}
   k_shot: ${k_shot}
@@ -100,6 +114,8 @@ megapixel_emnist_val_novel_cats:
   input_size: ${data.input_size}
   transforms: ${data.train_transforms}
   backbone_stride: ${model.backbone.stride}
+  collate_fn:
+    type: datasets.object_detection_collate_fn
   query:
     root: ${data.megapixel_emnist_val_novel_cats_root}
     annotations: ${data.megapixel_emnist_annotations_root}/val_novel_cats.json
@@ -111,7 +127,7 @@ megapixel_emnist_val_novel_cats:
   len: null
 
 megapixel_emnist_val_train_cats:
-  type: datasets.dataset.ObjectDetectionDataset
+  type: datasets.ObjectDetectionDataset
   name: megapixel_emnist_val_train_cats
   bs: ${bs}
   k_shot: ${k_shot}
@@ -119,6 +135,8 @@ megapixel_emnist_val_train_cats:
   input_size: ${data.input_size}
   transforms: ${data.train_transforms}
   backbone_stride: ${model.backbone.stride}
+  collate_fn:
+    type: datasets.object_detection_collate_fn
   query:
     root: ${data.megapixel_emnist_val_train_cats_root}
     annotations: ${data.megapixel_emnist_annotations_root}/val_train_cats.json
@@ -130,7 +148,7 @@ megapixel_emnist_val_train_cats:
   len: null
 
 megapixel_mnist_train:
-  type: datasets.dataset.ObjectDetectionDataset
+  type: datasets.ObjectDetectionDataset
   name: megapixel_mnist_train
   bs: ${bs}
   k_shot: ${k_shot}
@@ -138,6 +156,8 @@ megapixel_mnist_train:
   input_size: ${data.input_size}
   transforms: ${data.train_transforms}
   backbone_stride: ${model.backbone.stride}
+  collate_fn:
+    type: datasets.object_detection_collate_fn
   query:
     root: ${data.megapixel_mnist_train_root}
     annotations: ${data.megapixel_mnist_annotations_root}/train.json
@@ -149,7 +169,7 @@ megapixel_mnist_train:
   len: 300
 
 megapixel_mnist_val_novel_cats:
-  type: datasets.dataset.ObjectDetectionDataset
+  type: datasets.ObjectDetectionDataset
   name: megapixel_mnist_val_novel_cats
   bs: ${bs}
   k_shot: ${k_shot}
@@ -157,6 +177,8 @@ megapixel_mnist_val_novel_cats:
   input_size: ${data.input_size}
   transforms: ${data.train_transforms}
   backbone_stride: ${model.backbone.stride}
+  collate_fn:
+    type: datasets.object_detection_collate_fn
   query:
     root: ${data.megapixel_mnist_val_novel_cats_root}
     annotations: ${data.megapixel_mnist_annotations_root}/val_novel_cats.json
@@ -168,7 +190,7 @@ megapixel_mnist_val_novel_cats:
   len: null
 
 megapixel_mnist_val_train_cats:
-  type: datasets.dataset.ObjectDetectionDataset
+  type: datasets.ObjectDetectionDataset
   name: megapixel_mnist_val_train_cats
   bs: ${bs}
   k_shot: ${k_shot}
@@ -176,6 +198,8 @@ megapixel_mnist_val_train_cats:
   input_size: ${data.input_size}
   transforms: ${data.train_transforms}
   backbone_stride: ${model.backbone.stride}
+  collate_fn:
+    type: datasets.object_detection_collate_fn
   query:
     root: ${data.megapixel_mnist_val_train_cats_root}
     annotations: ${data.megapixel_mnist_annotations_root}/val_train_cats.json
@@ -186,9 +210,50 @@ megapixel_mnist_val_train_cats:
   draw: true
   len: null
 
+omniglot_train:
+  type: datasets.ObjectClassificationDataset
+  name: omniglot_train
+  bs: ${bs}
+  k_shot: ${k_shot}
+  bbox_format: ${data.bbox_format}
+  input_size: ${data.input_size}
+  transforms: ${data.train_transforms}
+  backbone_stride: ${model.backbone.stride}
+  collate_fn:
+    type: datasets.object_classification_collate_fn
+  query:
+    root: ${data.omniglot_train_root}
+    annotations: ${data.omniglot_annotations_root}/train.json
+  support:
+    root: ${data.omniglot_train_root}
+    annotations: ${data.omniglot_annotations_root}/train.json
+  shuffle: true
+  draw: true
+  len: null
+
+omniglot_val_novel_cats:
+  type: datasets.ObjectClassificationDataset
+  name: omniglot_val_novel_cats
+  bs: ${bs}
+  k_shot: ${k_shot}
+  bbox_format: ${data.bbox_format}
+  input_size: ${data.input_size}
+  transforms: ${data.train_transforms}
+  backbone_stride: ${model.backbone.stride}
+  collate_fn:
+    type: datasets.object_classification_collate_fn
+  query:
+    root: ${data.omniglot_val_novel_cats_root}
+    annotations: ${data.omniglot_annotations_root}/val_novel_cats.json
+  support:
+    root: ${data.omniglot_val_novel_cats_root}
+    annotations: ${data.omniglot_annotations_root}/val_novel_cats.json
+  shuffle: true
+  draw: false
+  len: null
 
 megapixel_omniglot_train:
-  type: datasets.dataset.ObjectDetectionDataset
+  type: datasets.ObjectDetectionDataset
   name: megapixel_omniglot_train
   bs: ${bs}
   k_shot: ${k_shot}
@@ -196,6 +261,8 @@ megapixel_omniglot_train:
   input_size: ${data.input_size}
   transforms: ${data.train_transforms}
   backbone_stride: ${model.backbone.stride}
+  collate_fn:
+    type: datasets.object_detection_collate_fn
   query:
     root: ${data.megapixel_omniglot_train_root}
     annotations: ${data.megapixel_omniglot_annotations_root}/train.json
@@ -203,11 +270,11 @@ megapixel_omniglot_train:
     root: ${data.megapixel_omniglot_train_root}
     annotations: ${data.megapixel_omniglot_annotations_root}/train.json
   shuffle: true
-  draw: true
+  draw: false
   len: null
 
 megapixel_omniglot_val_train_cats:
-  type: datasets.dataset.ObjectDetectionDataset
+  type: datasets.ObjectDetectionDataset
   name: megapixel_omniglot_val_train_cats
   bs: ${bs}
   k_shot: ${k_shot}
@@ -215,6 +282,8 @@ megapixel_omniglot_val_train_cats:
   input_size: ${data.input_size}
   transforms: ${data.train_transforms}
   backbone_stride: ${model.backbone.stride}
+  collate_fn:
+    type: datasets.object_detection_collate_fn
   query:
     root: ${data.megapixel_omniglot_val_train_cats_root}
     annotations: ${data.megapixel_omniglot_annotations_root}/val_train_cats.json
@@ -226,7 +295,7 @@ megapixel_omniglot_val_train_cats:
   len: null
 
 megapixel_omniglot_val_novel_cats:
-  type: datasets.dataset.ObjectDetectionDataset
+  type: datasets.ObjectDetectionDataset
   name: megapixel_omniglot_val_novel_cats
   bs: ${bs}
   k_shot: ${k_shot}
@@ -234,66 +303,14 @@ megapixel_omniglot_val_novel_cats:
   input_size: ${data.input_size}
   transforms: ${data.train_transforms}
   backbone_stride: ${model.backbone.stride}
+  collate_fn:
+    type: datasets.object_detection_collate_fn
   query:
     root: ${data.megapixel_omniglot_val_novel_cats_root}
     annotations: ${data.megapixel_omniglot_annotations_root}/val_novel_cats.json
   support:
     root: ${data.megapixel_omniglot_val_novel_cats_root}
     annotations: ${data.megapixel_omniglot_annotations_root}/val_novel_cats.json
-  shuffle: true
-  draw: true
-  len: null
-
-megapixel_mnist_grided_train:
-  name: megapixel_mnist_grided_train
-  bs: ${bs}
-  k_shot: ${k_shot}
-  bbox_format: ${data.bbox_format}
-  input_size: ${data.input_size}
-  transforms: ${data.train_transforms}
-  backbone_stride: ${model.backbone.stride}
-  query:
-    root: ${data.megapixel_mnist_grided_train_root}
-    annotations: ${data.megapixel_mnist_grided_annotations_root}/train.json
-  support:
-    root: ${data.megapixel_mnist_grided_train_root}
-    annotations: ${data.megapixel_mnist_grided_annotations_root}/train.json
-  shuffle: true
-  draw: false
-  len: null
-
-megapixel_mnist_grided_val_novel_cats:
-  name: megapixel_mnist_grided_val_novel_cats
-  bs: ${bs}
-  k_shot: ${k_shot}
-  bbox_format: ${data.bbox_format}
-  input_size: ${data.input_size}
-  transforms: ${data.train_transforms}
-  backbone_stride: ${model.backbone.stride}
-  query:
-    root: ${data.megapixel_mnist_grided_val_novel_cats_root}
-    annotations: ${data.megapixel_mnist_grided_annotations_root}/val_novel_cats.json
-  support:
-    root: ${data.megapixel_mnist_grided_val_novel_cats_root}
-    annotations: ${data.megapixel_mnist_grided_annotations_root}/val_novel_cats.json
-  shuffle: true
-  draw: true
-  len: null
-
-megapixel_mnist_grided_val_train_cats:
-  name: megapixel_mnist_grided_val_train_cats
-  bs: ${bs}
-  k_shot: ${k_shot}
-  bbox_format: ${data.bbox_format}
-  input_size: ${data.input_size}
-  transforms: ${data.train_transforms}
-  backbone_stride: ${model.backbone.stride}
-  query:
-    root: ${data.megapixel_mnist_grided_val_train_cats_root}
-    annotations: ${data.megapixel_mnist_grided_annotations_root}/val_train_cats.json
-  support:
-    root: ${data.megapixel_mnist_grided_val_train_cats_root}
-    annotations: ${data.megapixel_mnist_grided_annotations_root}/val_train_cats.json
   shuffle: true
   draw: true
   len: null
