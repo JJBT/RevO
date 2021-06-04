@@ -1,0 +1,208 @@
+* {
+    padding: 0;
+    margin: 0;
+    outline: none !important;
+    box-shadow: none;
+    box-sizing: border-box;
+}
+
+body {
+    position: relative;
+    font-size: 18px;
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 500;
+    color: #fff;
+    background-color: #141414;
+    position: relative;
+}
+
+img {
+    width: 100%;
+    height: 100%;
+}
+
+.main {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    padding: 0 16px;
+}
+
+.container {
+    max-width: 1028px;
+    width: 100%;
+    margin: 0 auto;
+    padding-left: 24px;
+    padding-right: 24px;
+    box-sizing: border-box;
+}
+
+.heading {
+    display: block;
+    margin-bottom: 80px;
+}
+
+.title {
+    text-align: center;
+    font-size: 40px;
+}
+
+.link-project {
+    display: block;
+    text-align: center;
+    font-size: 16px;
+    color: #08c5d1;
+    text-decoration: none;
+    margin-top: 24px;
+    transition: color 0.5s ease-in-out;
+    -webkit-transition: color 0.5s ease-in-out;
+    -moz-transition: color 0.5s ease-in-out;
+    -ms-transition: color 0.5s ease-in-out;
+    -o-transition: color 0.5s ease-in-out;
+}
+
+.link-project:hover {
+    color: #fff;
+}
+
+.box-main {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 60px;
+}
+
+.before-wrapper {
+    margin-right: 200px;
+
+}
+
+.input_interfaces_query {
+    width: 320px;
+    height: 320px;
+    margin-bottom: 15px;
+    border: 1px solid blue;
+}
+
+.before__min-wrapper {}
+
+.input_interfaces_support {
+    display: flex;
+}
+
+.input_interfaces_support .input_interface {
+    width: 105px;
+    height: 105px;
+    margin-right: 5px;
+    border: 1px solid blue;
+    overflow: hidden;
+}
+
+.input_interfaces_support .input_interface:last-child {
+    margin-right: 0;
+}
+
+.input_interfaces_support .view_holders {
+    position: relative;
+    width: 105px;
+    height: 105px;
+}
+.input_interfaces_query {
+    overflow: hidden;
+}
+.input_interfaces_query .canvas_holder {    
+    position: relative;
+    overflow: hidden;
+    width: 320px;
+    height: 320px;
+}
+
+.output_interface .view_holders {
+    position: relative;
+    overflow: hidden;
+    width: 320px;
+    height: 320px;
+    z-index: -1;
+}
+.btn-wrapper {
+    display: flex;
+    justify-content: center;
+    margin: 0 auto;
+}
+.btn {
+    display: block;
+    width: 240px;
+    color: #fff;
+    background-color: #08c5d1;
+    border: 1px solid #08c5d1;
+    padding: 16px;
+    font-size: 16px;
+    font-weight: 400;
+    text-align: center;
+    line-height: 1;
+    letter-spacing: 0.18px;
+    text-decoration: none;
+    white-space: nowrap;
+    cursor: pointer;
+
+    border-radius: 24px;
+    -webkit-border-radius: 24px;
+    -moz-border-radius: 24px;
+    -ms-border-radius: 24px;
+    -o-border-radius: 24px;
+    -webkit-border-radius: 24px;
+    transition: color 0.5s ease-in-out, background-color 0.5s ease-in-out, opacity 0.3s ease-in-out;
+    -webkit-transition: color 0.5s ease-in-out, background-color 0.5s ease-in-out, opacity 0.3s ease-in-out;
+    -moz-transition: color 0.5s ease-in-out, background-color 0.5s ease-in-out, opacity 0.3s ease-in-out;
+    -ms-transition: color 0.5s ease-in-out, background-color 0.5s ease-in-out, opacity 0.3s ease-in-out;
+    -o-transition: color 0.5s ease-in-out, background-color 0.5s ease-in-out, opacity 0.3s ease-in-out;
+}
+
+.btn-clear {
+    color: #08c5d1;
+    background-color: transparent;
+    margin-right: 20px;
+
+}
+
+.btn-submit {
+    color: #fff;
+    background-color: #08c5d1;
+
+}
+
+.btn-submit:hover {
+    color: #08c5d1;
+    background-color: transparent;
+}
+
+.btn-clear:hover {
+    color: #fff;
+    background-color: #08c5d1;
+}
+
+
+.output_interfaces {
+    border: 1px solid blue;
+    width: 320px;
+    height: 320px;
+    position: relative;
+}
+
+.output_interfaces::before {
+    content: "";
+    display: block;
+    width: 36px;
+    height: 36px;
+    position: absolute;
+    top: 50%;
+    left: -116px;
+    background-image: url("../img/arrow-right.svg");
+    background-image: 36px 36px;
+    background-repeat: no-repeat;
+    transform: translateY(-50%);
+    -webkit-transform: translateY(-50%);
+    -moz-transform: translateY(-50%);
+    -ms-transform: translateY(-50%);
+    -o-transform: translateY(-50%);
+}

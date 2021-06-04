@@ -147,3 +147,4 @@ data_preprocessing/create_gs_anns_manually.py
 img/
 checkpoints/
 experiments/
+visualization/

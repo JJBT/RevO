@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Demo</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles/input_sketchpad.css') }}">
+    <link type="text/css" href="{{ url_for('static', filename='styles/jquery-ui.css') }}" rel="stylesheet">
+
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles/styles.css') }}">
+    <link href="https://fonts.googleapis.com/css?family=Montserrat:400,500,700,800,900&display=swap&subset=cyrillic"
+        rel="stylesheet">
+
+
+
+</head>
+
+<body>
+    <script src="{{ url_for('static', filename='js/jquery/jquery.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/jquery/jquery-ui.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/jquery/jquery.ui.touch-punch.js') }}"></script>
+
+    <script src="{{ url_for('static', filename='js/sketchpad.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/input_image.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/output_image.js') }}"></script>
+
+    <script src="{{ url_for('static', filename='js/all_io.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+
+    <script>
+      $.getJSON("/config/", function(config) {
+        io = main_url(config, "/", "#box");
+      });
+    </script>
+
+    <div class="main">
+        <section class="container">
+            <div class="heading">
+            <h1 class="title">Few-Shot Object Detection Without Fine-Tuning</h1>
+            <a href="https://github.com/JJBT/RevO" class="link-project">github</a>
+        </div>
+        <div id="box">
+
+        </div>
+
+        </section>
+    </div>
+</body>
+
+</html>
