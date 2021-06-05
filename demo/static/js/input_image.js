@@ -22,9 +22,10 @@ const image_input = {
     this.sketchpad = new Sketchpad({
       element: '.interface[interface_id=' + id + '] .sketch',
       width: this.shape[0],
-      height: this.shape[1]
+      height: this.shape[1],
+      penSize: this.io_master.config.pen_size
     });
-    this.sketchpad.penSize = this.target.find(".brush.selected").attr("size");
+    // this.sketchpad.penSize = this.target.find(".brush.selected").attr("size");
     this.canvas = this.target.find('.canvas_holder canvas')[0];
     this.context = this.canvas.getContext("2d");
     this.target.find(".brush").click(function (e) {

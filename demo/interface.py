@@ -9,7 +9,7 @@ import webbrowser
 class Interface:
     instances = weakref.WeakSet()
 
-    def __init__(self, fn, model, input_components, output_components):
+    def __init__(self, fn, model, input_components, output_components, pen_size):
         if isinstance(input_components, list):
             self.inputs = [comp for comp in input_components]
         else:
@@ -21,6 +21,7 @@ class Interface:
             self.outputs = [output_components]
         self.model = model
         self.prediction_fn = fn
+        self.pen_size = pen_size
         self.server = None
         self.port = None
         self.host = None
@@ -62,5 +63,6 @@ class Interface:
             "output_interfaces": [
                 (comp.__class__.__name__.lower(), comp.get_context())
                 for comp in self.outputs],
+            "pen_size": self.pen_size
         }
         return config

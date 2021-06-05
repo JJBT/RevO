@@ -19,10 +19,10 @@ app = Flask(__name__,
 def main():
     return render_template('index.html',
                            config=app.interface.config,
-                           input_interfaces=[interface[0]
-                                             for interface in app.interface.config["input_interfaces"]],
-                           output_interfaces=[interface[0]
-                                              for interface in app.interface.config["output_interfaces"]],
+                           # input_interfaces=[interface[0]
+                           #                   for interface in app.interface.config["input_interfaces"]],
+                           # output_interfaces=[interface[0]
+                           #                    for interface in app.interface.config["output_interfaces"]],
                            )
 
 
