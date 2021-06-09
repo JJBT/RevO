@@ -6,6 +6,7 @@ import math
 import settings
 import torch
 from torchvision.transforms import Normalize
+from torchvision.ops import nms
 from PIL import ImageDraw, Image
 import numpy as np
 from jinja2 import Template
@@ -153,6 +154,34 @@ def draw_sample(img, output, target, fig=None, ax=None, show=False):
     if show:
         plt.show()
     return fig, ax
+
+
+def yet_another_draw_sample(img, output):
+    img_size = img.shape[1:]
+    grid_size = output.shape[:2]
+
+    pred = torch.sigmoid(output)
+    pred = thr_confidence(pred, 0.5)
+    pred_bboxes = from_yolo_target(pred, img_size, grid_size)
+    # pred_bboxes_inds = nms(boxes=pred_bboxes[..., 1:], scores=pred_bboxes[..., 0])
+
+    img = inv_normalize(img)
+    img = img.permute(1, 2, 0).cpu().numpy()
+    img = (img * 255 / np.max(img)).astype('uint8')
+
+    rects = []
+    for pred_bbox in pred_bboxes:
+        x, y, w, h = list(map(int, pred_bbox))
+        shapes = [(x, y), (x + w, y + h)]
+        rects.append(shapes)
+
+    img_pil = Image.fromarray(img)
+    img_d = ImageDraw.Draw(img_pil)
+
+    for rect in rects:
+        img_d.rectangle(rect, outline=(255, 0, 0), width=3)
+    img_pil.save('save.png')
+    return img_pil
 
 
 def image_grid(images, titles=None):
