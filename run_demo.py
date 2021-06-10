@@ -20,6 +20,9 @@ def create_model(cfg):
         filename=cfg.ckpt
     ))
     trainer._before_run_callbacks()
+    model = trainer.model
+    model.device = trainer.accelerator.device
+    cfg.size = model.pen_size
     return trainer.model
 
 
@@ -35,15 +38,21 @@ def run(cfg: DictConfig):
     main(model)
 
 
+def to_device(input, device):
+    input['q_img'] = input['q_img'].to(device)
+    input['s_imgs'] = input['s_imgs'].to(device)
+
+
 def fn(input, model):
     pr_input = preprocess_input(input)
+    to_device(pr_input, model.device)
     outputs = model(pr_input)
     output_img = draw(pr_input['q_img'][0], outputs[0])
     return output_img
 
 
 def main(model):
-    pen_size = 11
+    pen_size = model.pen_size
     input_components = [
         ImageInput(
             shape=(320, 320),
