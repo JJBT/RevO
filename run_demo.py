@@ -22,7 +22,7 @@ def create_model(cfg):
     trainer._before_run_callbacks()
     model = trainer.model
     model.device = trainer.accelerator.device
-    cfg.size = model.pen_size
+    model.pen_size = cfg.size
     return trainer.model
 
 
