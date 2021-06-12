@@ -21,6 +21,7 @@ def create_model(cfg):
     ))
     trainer._before_run_callbacks()
     model = trainer.model
+    model.eval()
     model.device = trainer.accelerator.device
     model.pen_size = cfg.size
     return trainer.model
