@@ -48,8 +48,7 @@ def fn(input, model):
     pr_input = preprocess_input(input)
     to_device(pr_input, model.device)
     outputs = model(pr_input)
-    output_img = draw(pr_input['q_img'][0], outputs[0])
-    return output_img
+    return draw(pr_input['q_img'][0], outputs[0])
 
 
 def main(model):

@@ -23,8 +23,7 @@ class TensorBoardCallback(Callback):
         cfg = OmegaConf.to_yaml(trainer.cfg)
         cfg = cfg.replace('\n', '  \n')
         self.writer.add_text('cfg', cfg)
-        description = trainer.cfg.description
-        if description:
+        if description := trainer.cfg.description:
             self.writer.add_text('description', description)
 
     def after_run(self, trainer):
@@ -89,7 +88,7 @@ class TensorBoardCallback(Callback):
     def add_grads_histogram(self, trainer):
         for name, param in trainer.model.named_parameters():
             if 'bn' not in name and param.requires_grad:
-                self.writer.add_histogram(name + '_grad', param.grad, trainer.state.step)
+                self.writer.add_histogram(f'{name}_grad', param.grad, trainer.state.step)
 
     def __call__(self, trainer):
         for name, loss in trainer.state.last_train_loss.items():

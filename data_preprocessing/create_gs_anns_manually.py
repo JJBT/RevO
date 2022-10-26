@@ -36,7 +36,7 @@ def main(coco, path_to_anns, path_to_images):
     img_metas = coco.loadImgs(ids=coco.getImgIds())
 
     img_ids_to_keep = []
-    for i, img_meta in enumerate(img_metas):
+    for img_meta in img_metas:
         img_id = img_meta['id']
         anns = coco.loadAnns(coco.getAnnIds(img_id))
         for ann in anns:
@@ -47,9 +47,9 @@ def main(coco, path_to_anns, path_to_images):
             img = cv2.imread(os.path.join(path_to_images, img_name))
             show_image(img, anns)
             k = cv2.waitKey(0)
-            if k == ord('n') or k == ord('N'):
+            if k in [ord('n'), ord('N')]:
                 print(f'Passing image {img_id}')
-            elif k == ord('y') or k == ord('Y'):
+            elif k in [ord('y'), ord('Y')]:
                 img_ids_to_keep.append(img_id)
                 print(f'Saving image {img_id}')
             elif k == ord('e') or ord('E') or ord('q') or ord('Q'):
@@ -66,14 +66,13 @@ def main(coco, path_to_anns, path_to_images):
         save_licenses = dataset['licenses']
         save_categories = dataset['categories']
 
-    gs_coco = {
+    return {
         'info': save_info,
         'licenses': save_licenses,
         'images': imgs_to_keep,
         'annotations': anns_to_keep,
-        'categories': save_categories
+        'categories': save_categories,
     }
-    return gs_coco
 
 
 if __name__ == '__main__':

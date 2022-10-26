@@ -57,16 +57,29 @@ class DarkNet(nn.Module):
                 m.bias.data.zero_()
 
     def _make_layer(self, planes, blocks, norm_layer):
-        layers = []
-        #  downsample
-        layers.append(("ds_conv", nn.Conv2d(self.inplanes, planes[1], kernel_size=3,
-                                stride=2, padding=1, bias=False)))
+        layers = [
+            (
+                "ds_conv",
+                nn.Conv2d(
+                    self.inplanes,
+                    planes[1],
+                    kernel_size=3,
+                    stride=2,
+                    padding=1,
+                    bias=False,
+                ),
+            )
+        ]
+
         layers.append(("ds_bn", norm_layer(planes[1])))
         layers.append(("ds_relu", nn.LeakyReLU(0.1)))
         #  blocks
         self.inplanes = planes[1]
-        for i in range(0, blocks):
-            layers.append(("residual_{}".format(i), BasicBlock(self.inplanes, planes, norm_layer)))
+        layers.extend(
+            (f"residual_{i}", BasicBlock(self.inplanes, planes, norm_layer))
+            for i in range(blocks)
+        )
+
         return nn.Sequential(OrderedDict(layers))
 
     def forward(self, x):
@@ -89,8 +102,7 @@ def darknet21(norm_layer=None):
     if norm_layer is None:
         norm_layer = nn.BatchNorm2d
 
-    model = DarkNet([1, 1, 2, 2, 1], norm_layer=norm_layer)
-    return model
+    return DarkNet([1, 1, 2, 2, 1], norm_layer=norm_layer)
 
 
 def darknet53(norm_layer=None):
@@ -99,6 +111,5 @@ def darknet53(norm_layer=None):
     if norm_layer is None:
         norm_layer = nn.BatchNorm2d
 
-    model = DarkNet([1, 2, 8, 8, 4], norm_layer=norm_layer)
-    return model
+    return DarkNet([1, 2, 8, 8, 4], norm_layer=norm_layer)
 

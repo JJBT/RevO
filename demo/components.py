@@ -10,12 +10,7 @@ class ImageInput:
         self.name = name
 
     def get_context(self):
-        context = {
-            'image_mode': 'RGB',
-            'shape': self.shape,
-            'name': self.name
-        }
-        return context
+        return {'image_mode': 'RGB', 'shape': self.shape, 'name': self.name}
 
     def preprocess(self, input):
         input = base64_to_image(input)

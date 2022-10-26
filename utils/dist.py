@@ -4,21 +4,19 @@ import os
 
 
 def is_dist_available_and_initialized():
-    if not distributed.is_available():
-        return False
-    if not distributed.is_initialized():
-        return False
-    return True
+    return (
+        bool(distributed.is_initialized())
+        if distributed.is_available()
+        else False
+    )
 
 
 def get_rank():
-    initialized = is_dist_available_and_initialized()
-    if initialized:
-        rank = distributed.get_rank()
-    else:
-        rank = 0
-
-    return rank
+    return (
+        distributed.get_rank()
+        if (initialized := is_dist_available_and_initialized())
+        else 0
+    )
 
 
 def is_master():
@@ -26,10 +24,8 @@ def is_master():
 
 
 def get_world_size():
-    initialized = is_dist_available_and_initialized()
-    if initialized:
-        world_size = distributed.get_world_size()
-    else:
-        world_size = 1
-
-    return world_size
+    return (
+        distributed.get_world_size()
+        if (initialized := is_dist_available_and_initialized())
+        else 1
+    )

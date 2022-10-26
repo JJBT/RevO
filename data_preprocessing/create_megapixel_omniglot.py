@@ -24,9 +24,9 @@ class RandomResize(DualTransform):
             assert 0. <= h_resize_limit <= 1.
             self.h_resize_limit = 1 - abs(h_resize_limit), 1 + abs(h_resize_limit)
 
-        elif isinstance(h_resize_limit, tuple) or isinstance(h_resize_limit, list):
+        elif isinstance(h_resize_limit, (tuple, list)):
             assert all(list(map(lambda x: isinstance(x, float), h_resize_limit)))
-            assert all(list(map(lambda x: 0. <= x, h_resize_limit)))
+            assert all(list(map(lambda x: x >= 0., h_resize_limit)))
             assert h_resize_limit[0] < h_resize_limit[1]
             self.h_resize_limit = h_resize_limit
         else:
@@ -36,9 +36,9 @@ class RandomResize(DualTransform):
             assert 0. <= w_resize_limit <= 1.
             self.w_resize_limit = 1 - abs(w_resize_limit), 1 + abs(w_resize_limit)
 
-        elif isinstance(w_resize_limit, tuple) or isinstance(w_resize_limit, list):
+        elif isinstance(w_resize_limit, (tuple, list)):
             assert all(list(map(lambda x: isinstance(x, float), w_resize_limit)))
-            assert all(list(map(lambda x: 0. <= x, w_resize_limit)))
+            assert all(list(map(lambda x: x >= 0., w_resize_limit)))
             assert w_resize_limit[0] < w_resize_limit[1]
             self.w_resize_limit = w_resize_limit
         else:
@@ -85,9 +85,7 @@ class MegapixelOmniglot:
 
                 if x < 0 or x + w > self.dataset.W:
                     return False
-                if y < 0 or y + h > self.dataset.H:
-                    return False
-                return True
+                return y >= 0 and y + h <= self.dataset.H
 
             def overlap(bboxes, bbox):
                 # bboxes in coco format [x_l, y_t, w, h]
@@ -153,7 +151,7 @@ class MegapixelOmniglot:
                     colour = 255
 
                 image[self._get_slice(*bbox)] = \
-                    colour * np.stack((patch,) * self.n_channels, axis=2)
+                            colour * np.stack((patch,) * self.n_channels, axis=2)
 
             target = coco_target(bboxes, bbox_cats)
             return image, target
@@ -166,7 +164,7 @@ class MegapixelOmniglot:
         if cat_ids is None:
             cat_ids = []
 
-        data = list(map(list, zip(*[elem for elem in omniglot])))
+        data = list(map(list, zip(*list(omniglot))))
         x = np.array(data[0])
         y = np.array(data[1])
         x = x.astype(np.float32) / 255.
@@ -195,9 +193,7 @@ class MegapixelOmniglot:
     def _get_sample(self):
         n_patches = np.random.randint(low=1, high=5)
         idxs = np.random.choice(self.all_idxs, size=n_patches)
-        sample = self.Sample(self, idxs).get_sample()
-
-        return sample
+        return self.Sample(self, idxs).get_sample()
 
     def __len__(self):
         return self.N
@@ -225,7 +221,7 @@ def transform_to_coco_format(dataset, root, phase=''):
 
     anns_counter = 0
     for i, (img, anns) in tqdm(enumerate(dataset), total=len(dataset)):
-        filename = phase + f'{i:05d}.png'
+        filename = f'{phase}{i:05d}.png'
         width = int(img.shape[0])
         height = int(img.shape[1])
         image_id = i
@@ -250,12 +246,7 @@ def transform_to_coco_format(dataset, root, phase=''):
             anns_counter += 1
             annotations.append(ann_dict)
 
-    annotaion = {
-        'images': images,
-        'annotations': annotations,
-        'categories': cats
-    }
-    return annotaion
+    return {'images': images, 'annotations': annotations, 'categories': cats}
 
 
 def save_image(img, filename_to_save):
@@ -274,7 +265,7 @@ def main(omniglot_path, megapixel_omniglot_path):
     novel_cat_ids = list(range(659))
     width = 420
     height = 420
-    
+
     train = MegapixelOmniglot(
         root=omniglot_path,
         N=n_train,

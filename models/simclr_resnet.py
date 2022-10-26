@@ -98,15 +98,25 @@ class Stem(nn.Sequential):
         ops = []
         channels = 64 * width_multiplier // 2
         if sk_ratio > 0:
-            ops.append(conv(3, channels, stride=2))
-            ops.append(BatchNormRelu(channels, frozen=frozen_bn))
-            ops.append(conv(channels, channels))
-            ops.append(BatchNormRelu(channels, frozen=frozen_bn))
-            ops.append(conv(channels, channels * 2))
+            ops.extend(
+                (
+                    conv(3, channels, stride=2),
+                    BatchNormRelu(channels, frozen=frozen_bn),
+                    conv(channels, channels),
+                    BatchNormRelu(channels, frozen=frozen_bn),
+                    conv(channels, channels * 2),
+                )
+            )
+
         else:
             ops.append(conv(3, channels * 2, kernel_size=7, stride=2))
-        ops.append(BatchNormRelu(channels * 2, frozen=frozen_bn))
-        ops.append(nn.MaxPool2d(kernel_size=3, stride=2, padding=1))
+        ops.extend(
+            (
+                BatchNormRelu(channels * 2, frozen=frozen_bn),
+                nn.MaxPool2d(kernel_size=3, stride=2, padding=1),
+            )
+        )
+
         super().__init__(*ops)
 
 
@@ -139,10 +149,7 @@ class ContrastiveHead(nn.Module):
         super().__init__()
         self.layers = nn.ModuleList()
         for i in range(num_layers):
-            if i != num_layers - 1:
-                dim, relu = channels_in, True
-            else:
-                dim, relu = out_dim, False
+            dim, relu = (channels_in, True) if i != num_layers - 1 else (out_dim, False)
             self.layers.append(nn.Linear(channels_in, dim, bias=False))
             bn = nn.BatchNorm1d(dim, eps=BATCH_NORM_EPSILON, affine=True)
             if i == num_layers - 1:

@@ -76,11 +76,7 @@ def simclr_backbone(pretrained,
     :param returned_layer: layer of the network to return.
     """
     assert isinstance(pretrained, str)
-    if norm_layer == 'frozen_bn':
-        frozen_bn = True
-    else:
-        frozen_bn = False
-
+    frozen_bn = norm_layer == 'frozen_bn'
     depth = int(''.join(filter(str.isdigit, name)))
 
     backbone, _ = get_resnet(depth=depth, width_multiplier=width_multiplier, sk_ratio=sk_ration, frozen_bn=frozen_bn)
@@ -114,10 +110,10 @@ def resnet_backbone_headed(name='resnet50',
 
     def _extract_layers(model, returned_layer):
         cutoff = 6 - returned_layer
-        layers = nn.Sequential(OrderedDict([
-            (name, child)
-            for name, child in list(model.named_children())[:-cutoff]
-        ]))
+        layers = nn.Sequential(
+            OrderedDict(list(list(model.named_children())[:-cutoff]))
+        )
+
         return layers
 
     if norm_layer is None:
@@ -158,7 +154,7 @@ def resnet_backbone_headed(name='resnet50',
         ('feat_extr', feat_extr),
         ('head', head)
     ]))
-    return_layer = {f'head': 'output'}
+    return_layer = {'head': 'output'}
     return IntermediateLayerGetter(model=backbone, return_layers=return_layer)
 
 

@@ -11,11 +11,7 @@ class Callback:
         if frequency < 0:
             raise ValueError("Frequency argument should be positive.")
 
-        if attributes is None:
-            self._attributes = dict()
-        else:
-            self._attributes = attributes
-
+        self._attributes = {} if attributes is None else attributes
         self.frequency = frequency
         self.before = before
         self.after = after

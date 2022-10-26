@@ -44,9 +44,7 @@ class WarmUp(_LRScheduler):
         if not self._get_lr_called_within_step:
             warnings.warn("To get the last learning rate computed by the scheduler, "
                           "please use `get_last_lr()`.", UserWarning)
-        if self.last_epoch == 0:
+        if self.last_epoch == 0 or self.last_epoch > self.W_steps:
             return self.base_lrs
-        elif self.last_epoch <= self.W_steps:
-            return [base_lr * (self.last_epoch / self.W_steps) for base_lr in self.base_lrs]
         else:
-            return self.base_lrs
+            return [base_lr * (self.last_epoch / self.W_steps) for base_lr in self.base_lrs]

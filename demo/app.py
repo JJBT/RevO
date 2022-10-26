@@ -63,7 +63,6 @@ def url_request(url):
         req = urllib.request.Request(
             url=url, headers={"content-type": "application/json"}
         )
-        res = urllib.request.urlopen(req, timeout=10)
-        return res
+        return urllib.request.urlopen(req, timeout=10)
     except Exception as e:
         raise RuntimeError(str(e))

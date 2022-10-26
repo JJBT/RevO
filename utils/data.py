@@ -15,10 +15,7 @@ def get_coco_img_ids(coco):
     Return a list of image ids according to annotations
     (use in case annotations were changed after coco loading).
     """
-    img_ids = set()
-    for ann in coco.loadAnns(coco.getAnnIds()):
-        img_ids.add(ann['image_id'])
-
+    img_ids = {ann['image_id'] for ann in coco.loadAnns(coco.getAnnIds())}
     return list(img_ids)
 
 
@@ -51,16 +48,15 @@ def save_coco_anns(anns, filename_to_save):
 
 
 def check_bbox_validity(bbox, format='coco'):
-    if format == 'coco':
-        is_valid = True
-        if bbox[0] < 0 or bbox[1] < 0:
-            is_valid = False
-
-        if bbox[1] <= 0 or bbox[2] <= 0:
-            is_valid = False
-
-    else:
+    if format != 'coco':
         raise NotImplementedError('unknown bbox format')
+
+    is_valid = True
+    if bbox[0] < 0 or bbox[1] < 0:
+        is_valid = False
+
+    if bbox[1] <= 0 or bbox[2] <= 0:
+        is_valid = False
 
     return is_valid
 
@@ -95,7 +91,7 @@ def get_category_based_anns(coco):
             category_id = ann['category_id']
             category_dict[category_id].append(ann)
 
-        for key, item in category_dict.items():
+        for item in category_dict.values():
             instance_ann = {
                 'image_id': sample['image_id'],
                 'file_name': file_name,
@@ -121,7 +117,7 @@ def get_anns_info_df(coco, save=None):
     cats = coco.cats
 
     anns_info = defaultdict(list)
-    for i, ann in enumerate(anns):
+    for ann in anns:
         id = ann['id']
         image_id = ann['image_id']
         is_crowd = ann['iscrowd']

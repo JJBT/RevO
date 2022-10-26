@@ -16,7 +16,7 @@ def array_to_base64(image_array):
         PIL_image.save(output_bytes, 'PNG')
         bytes_data = output_bytes.getvalue()
     base64_str = str(base64.b64encode(bytes_data), 'utf-8')
-    return "data:image/png;base64," + base64_str
+    return f"data:image/png;base64,{base64_str}"
 
 
 def _convert(image, dtype, force_copy=False, uniform=False):
@@ -42,10 +42,7 @@ def _convert(image, dtype, force_copy=False, uniform=False):
         kind = a.dtype.kind
         if n > m and a.max() < 2 ** m:
             mnew = int(np.ceil(m / 2) * 2)
-            if mnew > m:
-                dtype = "int{}".format(mnew)
-            else:
-                dtype = "uint{}".format(mnew)
+            dtype = "int{}".format(mnew) if mnew > m else "uint{}".format(mnew)
             n = int(np.ceil(n / 2) * 2)
             return a.astype(_dtype_bits(kind, m))
         elif n == m:
@@ -87,10 +84,7 @@ def _convert(image, dtype, force_copy=False, uniform=False):
 
     image = np.asarray(image)
     dtypeobj_in = image.dtype
-    if dtype is np.floating:
-        dtypeobj_out = np.dtype('float64')
-    else:
-        dtypeobj_out = np.dtype(dtype)
+    dtypeobj_out = np.dtype('float64') if dtype is np.floating else np.dtype(dtype)
     dtype_in = dtypeobj_in.type
     dtype_out = dtypeobj_out.type
     kind_in = dtypeobj_in.kind

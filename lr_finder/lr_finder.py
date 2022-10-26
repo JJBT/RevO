@@ -31,10 +31,9 @@ class DataLoaderIter(object):
     def inputs_labels_from_batch(self, batch_data):
         if not isinstance(batch_data, list) and not isinstance(batch_data, tuple):
             raise ValueError(
-                "Your batch type is not supported: {}. Please inherit from "
-                "`TrainDataLoaderIter` or `ValDataLoaderIter` and override the "
-                "`inputs_labels_from_batch` method.".format(type(batch_data))
+                f"Your batch type is not supported: {type(batch_data)}. Please inherit from `TrainDataLoaderIter` or `ValDataLoaderIter` and override the `inputs_labels_from_batch` method."
             )
+
 
         inputs, labels, *_ = batch_data
 
@@ -167,10 +166,7 @@ class LRFinder(object):
         self.state_cacher.store("optimizer", self.optimizer.state_dict())
 
         # If device is None, use the same as the model
-        if device:
-            self.device = device
-        else:
-            self.device = self.model_device
+        self.device = device or self.model_device
 
     def reset(self):
         """Restores the model and optimizer to their initial states."""
@@ -283,7 +279,7 @@ class LRFinder(object):
         elif step_mode.lower() == "linear":
             lr_schedule = LinearLR(self.optimizer, end_lr, num_iter)
         else:
-            raise ValueError("expected one of (exp, linear), got {}".format(step_mode))
+            raise ValueError(f"expected one of (exp, linear), got {step_mode}")
 
         if smooth_f < 0 or smooth_f >= 1:
             raise ValueError("smooth_f is outside the range [0, 1[")
@@ -295,10 +291,9 @@ class LRFinder(object):
             train_iter = train_loader
         else:
             raise ValueError(
-                "`train_loader` has unsupported type: {}."
-                "Expected types are `torch.utils.data.DataLoader`"
-                "or child of `TrainDataLoaderIter`.".format(type(train_loader))
+                f"`train_loader` has unsupported type: {type(train_loader)}.Expected types are `torch.utils.data.DataLoader`or child of `TrainDataLoaderIter`."
             )
+
 
         if val_loader:
             if isinstance(val_loader, DataLoader):
@@ -307,10 +302,9 @@ class LRFinder(object):
                 val_iter = val_loader
             else:
                 raise ValueError(
-                    "`val_loader` has unsupported type: {}."
-                    "Expected types are `torch.utils.data.DataLoader`"
-                    "or child of `ValDataLoaderIter`.".format(type(val_loader))
+                    f"`val_loader` has unsupported type: {type(val_loader)}.Expected types are `torch.utils.data.DataLoader`or child of `ValDataLoaderIter`."
                 )
+
 
         for iteration in tqdm(range(num_iter)):
             # Train on batch and retrieve loss
@@ -538,10 +532,7 @@ class LRFinder(object):
         if fig is not None:
             plt.show()
 
-        if suggest_lr and min_grad_idx:
-            return ax, lrs[min_grad_idx]
-        else:
-            return ax
+        return (ax, lrs[min_grad_idx]) if suggest_lr and min_grad_idx else ax
 
 
 class LinearLR(_LRScheduler):
@@ -619,9 +610,8 @@ class StateCacher(object):
             import tempfile
 
             self.cache_dir = tempfile.gettempdir()
-        else:
-            if not os.path.isdir(self.cache_dir):
-                raise ValueError("Given `cache_dir` is not a valid directory.")
+        elif not os.path.isdir(self.cache_dir):
+            raise ValueError("Given `cache_dir` is not a valid directory.")
 
         self.cached = {}
 
@@ -629,24 +619,23 @@ class StateCacher(object):
         if self.in_memory:
             self.cached.update({key: copy.deepcopy(state_dict)})
         else:
-            fn = os.path.join(self.cache_dir, "state_{}_{}.pt".format(key, id(self)))
+            fn = os.path.join(self.cache_dir, f"state_{key}_{id(self)}.pt")
             self.cached.update({key: fn})
             torch.save(state_dict, fn)
 
     def retrieve(self, key):
         if key not in self.cached:
-            raise KeyError("Target {} was not cached.".format(key))
+            raise KeyError(f"Target {key} was not cached.")
 
         if self.in_memory:
             return self.cached.get(key)
-        else:
-            fn = self.cached.get(key)
-            if not os.path.exists(fn):
-                raise RuntimeError(
-                    "Failed to load state in {}. File doesn't exist anymore.".format(fn)
-                )
-            state_dict = torch.load(fn, map_location=lambda storage, location: storage)
-            return state_dict
+        fn = self.cached.get(key)
+        if not os.path.exists(fn):
+            raise RuntimeError(
+                f"Failed to load state in {fn}. File doesn't exist anymore."
+            )
+
+        return torch.load(fn, map_location=lambda storage, location: storage)
 
     def __del__(self):
         """Check whether there are unused cached files existing in `cache_dir` before

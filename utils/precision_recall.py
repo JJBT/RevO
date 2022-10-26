@@ -22,11 +22,7 @@ def binary_clf_curve(
     preds = preds[desc_score_indices]
     target = target[desc_score_indices]
 
-    if sample_weights is not None:
-        weight = sample_weights[desc_score_indices]
-    else:
-        weight = 1.
-
+    weight = 1. if sample_weights is None else sample_weights[desc_score_indices]
     # pred typically has many tied values. Here we extract
     # the indices associated with the distinct values. We also
     # concatenate a value for the end of the curve.

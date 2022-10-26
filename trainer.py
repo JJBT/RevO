@@ -18,7 +18,7 @@ class State:
         self.step = 0
         self.last_train_loss = None
 
-        self.validation_metrics = dict()
+        self.validation_metrics = {}
 
     def get(self, attribute_name: str):
         return getattr(self, attribute_name)
@@ -54,7 +54,7 @@ class State:
         logger.info(msg)
 
     def log_validation(self):
-        msg = f'Validation '
+        msg = 'Validation '
         for name, value in self.validation_metrics.items():
             msg += f'{name} - {value:.7f} '
 
@@ -83,10 +83,10 @@ class Trainer:
         self.cfg = cfg
         self.stop_validation = False
         self.grad_scaler_kwargs = GradScalerKwargs(init_scale=2048, enabled=cfg.amp)
-        self.accelerator = Accelerator(cpu=bool(cfg.device == 'cpu'), fp16=cfg.amp)
+        self.accelerator = Accelerator(cpu=cfg.device == 'cpu', fp16=cfg.amp)
         self.model, self.optimizer = self.accelerator.prepare(self.model, self.optimizer)
         self.train_dataloader_dict, self.val_dataloader_dict = \
-            self.prepare_dataloader_dict(self.train_dataloader_dict, self.val_dataloader_dict)
+                self.prepare_dataloader_dict(self.train_dataloader_dict, self.val_dataloader_dict)
 
     def get_train_batch(self):
         if not getattr(self, 'train_data_iter', False):
@@ -178,7 +178,7 @@ class Trainer:
         return flatten_dict(metrics_computed)
 
     def prepare_dataloader_dict(self, *args):
-        result = list()
+        result = []
         for dataloader_dict in args:
             d = copy.deepcopy(dataloader_dict)
             for name in d:
