@@ -1,4 +1,4 @@
-# Few-Shot Object Detection (4rd year coursework & diploma work)
+# Few-Shot Object Detection
 ## Запуск тренировки на синтетическом MegapixelMNIST
 Чтобы сгенерировать данные и создать конфиг под них, необходимо из корневой директории запустить `generate_synthetic_data.py`
 * `--mnist_path` - путь к папке, в которой находится датасет MNIST (если датасет не установлен, то он скачается в папку, указанную в параметре)
