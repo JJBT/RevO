@@ -1,18 +1,30 @@
+<div align="center">
+
 # Few-Shot Object Detection
-## Запуск тренировки на синтетическом MegapixelMNIST
-Чтобы сгенерировать данные и создать конфиг под них, необходимо из корневой директории запустить `generate_synthetic_data.py`
-* `--mnist_path` - путь к папке, в которой находится датасет MNIST (если датасет не установлен, то он скачается в папку, указанную в параметре)
-* `--megapixel_mnist_path` - путь к папке, в которую будет сохранен сгенерированный датасет (если уже существует, то перезапишется)
 
-Чтобы начать тренировку, необходимо из корневой директории запустить `train.py`. Результаты, включающие текущую версию конфига, чекпоинты, файл логгирования, файл тензорборд объекта, сохранятся в папку `outputs/текущая_дата/текущее_время`.
-Чтобы изменить параметры тренировки, необходимо передать их в качестве параметров скрипта `train.py` или изменить напрямую в конфиге `conf/config.yaml`.  
-Некоторые базовые параметры тренировки:
-* `n_steps` - количество шагов 
-* `bs` - размер батча
-* `hooks` - хуки
-    * `type`- тип хука. `LogCallback` инициирует логгирование, `ValidationCallback` инициирует валидацию, `TensorBoardCallback` инициирует запись в тензорборд, `SaveCheckpointCallback` инициируется сохранения чекпоинта
-    * `frequency` - частота вызова хука
+<a href="https://pytorch.org/get-started/locally/"><img alt="PyTorch" src="https://img.shields.io/badge/PyTorch-ee4c2c?logo=pytorch&logoColor=white"></a>
 
-По умолчанию валидация проводится на валидационных данных, содержащих классы картинок, отличных от тех, что встречаются
-в тренировчных данных, а также на валидационных данных содержащих ислючительно классы, совпадающие с тренировочными.
- 
+</div>
+
+## Description
+
+In this project, we address the challenge of detecting objects from new categories without fine-tuning and in conditions of minimal labeled data.
+<p align="center">
+  <img src="https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExMnBxMDFmajc0MGZvam1yNmE5eHh6ZmdraHltbXRheG9oNmQyY3RreiZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/NhUL5T9uuuMDsfDKRV/giphy.gif" />
+</p>
+
+To tackle this, we propose a simple yet effective model architecture comprising two main components — a fully convolutional neural network extracting feature descriptions and a transformer-based model associating information from several annotated examples with the extracted representations for making predictions. 
+
+<p align="center">
+  <img src="./assets/pipeline.png" />
+</p>
+
+The proposed model leverages information from multiple annotated examples and performs one-stage detection. We train and evaluate the model using our custom synthetic dataset.
+<p align="center">
+  <img src="./assets/omniglot_prediction.png" height="220" />
+  <img src="./assets/fsod_prediction.png" height="220"/>
+
+</p>
+
+## Contributors 
+This project was completed by [Stanislav Mikhaylevskiy](https://github.com/lqrhy3) and [Vladimir Chernyavskiy](https://github.com/JJBT). If you have any questions or suggestions regarding this project, please feel free to contact us.
