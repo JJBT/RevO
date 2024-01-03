@@ -8,18 +8,18 @@
 
 ## Description
 
-In this project, we address the challenge of detecting objects from new categories without fine-tuning and in conditions of minimal labeled data.
+In this project, the challenge of detecting objects from new categories without fine-tuning and in conditions of minimal labeled data was addressed.
 <p align="center">
   <img src="https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExMnBxMDFmajc0MGZvam1yNmE5eHh6ZmdraHltbXRheG9oNmQyY3RreiZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/NhUL5T9uuuMDsfDKRV/giphy.gif" />
 </p>
 
-To tackle this, we propose a simple yet effective model architecture comprising two main components — a fully convolutional neural network extracting feature descriptions and a transformer-based model associating information from several annotated examples with the extracted representations for making predictions. 
+To tackle this, a simple yet effective model architecture was proposed. It comprises two main components — a fully convolutional neural network extracting feature descriptions and a transformer-based model associating information from several annotated examples with the extracted representations for making predictions. 
 
 <p align="center">
   <img src="./assets/pipeline.png" />
 </p>
 
-The proposed model leverages information from multiple annotated examples and performs one-stage detection. We train and evaluate the model using our custom synthetic dataset.
+The proposed model leverages information from multiple annotated examples and performs one-stage detection. The model was trained and evaluated both on a custom synthetic dataset and FSOD dataset.
 <p align="center">
   <img src="./assets/omniglot_prediction.png" height="220" />
   <img src="./assets/fsod_prediction.png" height="220"/>
