@@ -32,15 +32,12 @@ class CustomValIter(ValDataLoaderIter):
 def net_optimizer(optimizer, model):
     params = model.parameters()
     defaults = optimizer.__getstate__()['defaults']
-    net_optimizer = optimizer.__class__(params, **defaults)
-
-    return net_optimizer
+    return optimizer.__class__(params, **defaults)
 
 
 def auto_num_iter(data_iter):
     epoch_size = len(data_iter.data_loader)
-    num_iter = 4 * epoch_size
-    return num_iter
+    return 4 * epoch_size
 
 
 def find_lr(cfg):

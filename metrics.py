@@ -11,10 +11,13 @@ class Metric:
     def __init__(self, name: str, default_value=None, target_transform=None, prediction_transform=None):
         self.name = name.replace(' ', '_')
         self.default_value = default_value
-        self.target_transform = target_transform if target_transform else \
-            transforms_dict.get(f'{self.name}_target', lambda x: x)
-        self.prediction_transform = prediction_transform if prediction_transform else \
-            transforms_dict.get(f'{self.name}_prediction', lambda x: x)
+        self.target_transform = target_transform or transforms_dict.get(
+            f'{self.name}_target', lambda x: x
+        )
+
+        self.prediction_transform = prediction_transform or transforms_dict.get(
+            f'{self.name}_prediction', lambda x: x
+        )
 
     def prepare(self, y: torch.Tensor, y_pred: torch.Tensor):
         y = self.target_transform(y)
@@ -53,10 +56,9 @@ class APAccumulator:
     def compute(self):
         if len(self.labels) == 0 or len(self.confs) == 0:
             return 0
-        else:
-            labels = torch.cat(self.labels)
-            confs = torch.cat(self.confs)
-            return average_precision_compute(preds=confs, target=labels).item()
+        labels = torch.cat(self.labels)
+        confs = torch.cat(self.confs)
+        return average_precision_compute(preds=confs, target=labels).item()
 
 
 class AveragePrecision(Metric):
@@ -88,11 +90,10 @@ class AveragePrecision(Metric):
                 accumulator.step(mask, pred_bboxes)
 
     def compute(self):
-        result = dict()
-        for name, accumulator in self.accumulators.items():
-            result[name] = accumulator.compute()
-
-        return result
+        return {
+            name: accumulator.compute()
+            for name, accumulator in self.accumulators.items()
+        }
 
     def reset(self):
         for name, accumulator in self.accumulators.items():
@@ -127,12 +128,7 @@ class IoU(Metric):
     def compute(self):
         numerator = self.total_score
         denominator = self.total_samples
-        if denominator == 0:
-            result = 0.
-        else:
-            result = numerator / denominator
-
-        return result
+        return 0. if denominator == 0 else numerator / denominator
 
     def reset(self):
         self.total_samples = 0
@@ -160,12 +156,7 @@ class Recall(Metric):
     def compute(self):
         numerator = self._true_positives
         denominator = self._total_positives
-        if denominator == 0:
-            result = 0.
-        else:
-            result = numerator / denominator
-
-        return result
+        return 0. if denominator == 0 else numerator / denominator
 
     def reset(self):
         self._true_positives = 0
@@ -193,12 +184,7 @@ class Precision(Metric):
     def compute(self):
         numerator = self._true_positives
         denominator = self._true_positives + self._false_postitives
-        if denominator == 0:
-            result = 0.
-        else:
-            result = numerator / denominator
-
-        return result
+        return 0. if denominator == 0 else numerator / denominator
 
     def reset(self):
         self._true_positives = 0
@@ -225,14 +211,14 @@ class TorchLoss(Metric):
         self._total += 1
 
     def compute(self):
-        if self._total == 0:
-            result = dict.fromkeys(self._loss_sum_dict.keys(), 0)
-        else:
-            result = dict()
-            for loss_name, loss_value in self._loss_sum_dict.items():
-                result[loss_name] = loss_value / self._total
-
-        return result
+        return (
+            dict.fromkeys(self._loss_sum_dict.keys(), 0)
+            if self._total == 0
+            else {
+                loss_name: loss_value / self._total
+                for loss_name, loss_value in self._loss_sum_dict.items()
+            }
+        )
 
     def reset(self):
         self._loss_sum_dict = defaultdict(lambda: 0)

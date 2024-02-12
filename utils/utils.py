@@ -49,16 +49,13 @@ def flatten_dict(d, parent_key='', sep='_'):
 
 
 def loss_to_dict(loss):
-    if not isinstance(loss, dict):
-        return {'loss': loss}
-    else:
-        return loss
+    return loss if isinstance(loss, dict) else {'loss': loss}
 
 
 def freeze_layers(model, layers_to_train):
     """Freeze layers not included in layers_to_train"""
     for name, parameter in model.named_parameters():
-        if all([not name.startswith(layer) for layer in layers_to_train]):
+        if all(not name.startswith(layer) for layer in layers_to_train):
             parameter.requires_grad_(False)
 
 
@@ -80,17 +77,11 @@ def data2device(data, device):
 
 
 def get_state_dict(model):
-    if model is None:
-        return None
-    else:
-        return unwrap_model(model).state_dict()
+    return None if model is None else unwrap_model(model).state_dict()
 
 
 def load_state_dict(model, state_dict):
-    if model is None:
-        return None
-    else:
-        return model.load_state_dict(state_dict)
+    return None if model is None else model.load_state_dict(state_dict)
 
 
 def get_timestamp():
@@ -130,8 +121,7 @@ def _smallest_enclosing_box(bboxes1: torch.Tensor, bboxes2: torch.Tensor, bbox_t
     lt = torch.min(bboxes1[:, :2], bboxes2[:, :2])
     rb = torch.max(bboxes1[:, 2:], bboxes2[:, 2:])
 
-    box = torch.cat([lt, rb], dim=1)
-    return box
+    return torch.cat([lt, rb], dim=1)
 
 
 def compute_effective_iou(bboxes1: torch.Tensor, bboxes2: torch.Tensor, bbox_transform=lambda x: x, pc_iou=None):

@@ -102,11 +102,7 @@ class MegapixelMNISTGrided:
         def valid(pos):
             x, y = pos
 
-            if x < 0 or x + 28 > self._W:
-                return False
-            if y < 0 or y + 28 > self._H:
-                return False
-            return True
+            return False if x < 0 or x + 28 > self._W else y >= 0 and y + 28 <= self._H
 
         def overlap(positions, pos):
             if len(positions) == 0:
@@ -176,7 +172,7 @@ def transform_to_coco_format(dataset, root, phase=''):
 
     anns_counter = 0
     for i, (img, anns) in enumerate(dataset):
-        filename = phase + f'{i:05d}.png'
+        filename = f'{phase}{i:05d}.png'
         width = int(img.shape[0])
         height = int(img.shape[1])
         image_id = i
@@ -200,12 +196,7 @@ def transform_to_coco_format(dataset, root, phase=''):
             anns_counter += 1
             annotations.append(ann_dict)
 
-    annotaion = {
-        'images': images,
-        'annotations': annotations,
-        'categories': cats
-    }
-    return annotaion
+    return {'images': images, 'annotations': annotations, 'categories': cats}
 
 
 def save_image(img, filename_to_save):
@@ -223,7 +214,7 @@ def main(mnist_path, megapixel_mnist_path):
     novel_cat_ids = [1, 3, 6]
     width = 112
     height = 112
-    
+
     train = MegapixelMNISTGrided(
         root=mnist_path,
         N=n_train,

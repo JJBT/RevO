@@ -23,12 +23,11 @@ def filter_coco_by_cats(coco):
     anns_to_keep = coco.loadAnns(ann_ids_to_keep)
     imgs_to_keep = coco.loadImgs(list(img_ids_to_keep))
 
-    filtered_coco = {
+    return {
         'images': imgs_to_keep,
         'annotations': anns_to_keep,
-        'categories': cats_to_keep
+        'categories': cats_to_keep,
     }
-    return filtered_coco
 
 
 if __name__ == '__main__':

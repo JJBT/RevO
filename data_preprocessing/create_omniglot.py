@@ -26,10 +26,9 @@ def transform_to_coco_format(dataset, root, phase=''):
     cats_dict = [{'id': i, 'name': label} for i, label in enumerate(dataset._characters)]
     cats = [cats_dict[cat_id] for cat_id in cat_ids]
 
-    anns_counter = 0
-    for i, (img, anns) in tqdm(enumerate(dataset), total=len(dataset)):
+    for anns_counter, (i, (img, anns)) in enumerate(tqdm(enumerate(dataset), total=len(dataset))):
         img = np.array(img)
-        filename = phase + f'{i:05d}.png'
+        filename = f'{phase}{i:05d}.png'
         width = int(img.shape[0])
         height = int(img.shape[1])
         image_id = i
@@ -49,15 +48,9 @@ def transform_to_coco_format(dataset, root, phase=''):
             'image_id': image_id,
             'category_id': anns
         }
-        anns_counter += 1
         annotations.append(ann_dict)
 
-    annotaion = {
-        'images': images,
-        'annotations': annotations,
-        'categories': cats
-    }
-    return annotaion
+    return {'images': images, 'annotations': annotations, 'categories': cats}
 
 
 def save_image(img, filename_to_save):

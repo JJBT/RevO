@@ -31,10 +31,7 @@ def filter_coco_csv(anns_df, coco, path_to_anns, thr_x_scale=0., thr_y_scale=0.)
     ids = anns_df['id'].values
     anns_to_keep = coco.loadAnns(ids=ids)
 
-    img_ids_to_keep = set()
-    for ann in anns_to_keep:
-        img_ids_to_keep.add(ann['image_id'])
-
+    img_ids_to_keep = {ann['image_id'] for ann in anns_to_keep}
     img_ids_to_keep = list(img_ids_to_keep)
 
     imgs_to_keep = coco.loadImgs(ids=img_ids_to_keep)
@@ -45,14 +42,13 @@ def filter_coco_csv(anns_df, coco, path_to_anns, thr_x_scale=0., thr_y_scale=0.)
         save_licenses = dataset['licenses']
         save_categories = dataset['categories']
 
-    filtered_coco = {
+    return {
         'info': save_info,
         'licenses': save_licenses,
         'images': imgs_to_keep,
         'annotations': anns_to_keep,
-        'categories': save_categories
+        'categories': save_categories,
     }
-    return filtered_coco
 
 
 if __name__ == '__main__':

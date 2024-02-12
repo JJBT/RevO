@@ -6,8 +6,7 @@ import numpy as np
 
 
 def create_backbone(cfg):
-    backbone = object_from_dict(cfg)
-    return backbone
+    return object_from_dict(cfg)
 
 
 def create_model(cfg):
@@ -33,7 +32,7 @@ def create_loss(cfg):
 
 
 def create_train_dataloader(cfg):
-    train_dataloaders = dict()
+    train_dataloaders = {}
     for dataset_cfg in cfg.data.train_dataset:
         dataset = create_dataset(dataset_cfg)
         dataloader_dict = create_dataloader(dataset_cfg, dataset)
@@ -42,7 +41,7 @@ def create_train_dataloader(cfg):
 
 
 def create_val_dataloader(cfg):
-    val_dataloaders = dict()
+    val_dataloaders = {}
     for dataset_cfg in cfg.data.validation_dataset:
         dataset = create_dataset(dataset_cfg)
         dataloader_dict = create_dataloader(dataset_cfg, dataset)
@@ -51,30 +50,30 @@ def create_val_dataloader(cfg):
 
 
 def create_dataset(cfg):
-    params = dict()
-    params['type'] = cfg.type
-    params['q_root'] = cfg.query.root
-    params['s_root'] = cfg.support.root
-    params['q_ann_filename'] = cfg.query.annotations
-    params['s_ann_filename'] = cfg.support.annotations
-    params['k_shot'] = cfg.k_shot
-    params['q_img_size'] = cfg.input_size
-    params['backbone_stride'] = cfg.backbone_stride
+    params = {
+        'type': cfg.type,
+        'q_root': cfg.query.root,
+        's_root': cfg.support.root,
+        'q_ann_filename': cfg.query.annotations,
+        's_ann_filename': cfg.support.annotations,
+        'k_shot': cfg.k_shot,
+        'q_img_size': cfg.input_size,
+        'backbone_stride': cfg.backbone_stride,
+    }
+
     q_transform = create_augmentations(cfg.transforms)
     s_transform = create_augmentations(cfg.transforms)
     params['q_transform'] = q_transform
     params['s_transform'] = s_transform
 
-    dataset = object_from_dict(params)
-    return dataset
+    return object_from_dict(params)
 
 
 def create_dataloader(cfg, dataset):
     batch_size = cfg.bs
-    dataset_length = cfg.len
     shuffle = cfg.shuffle
 
-    if dataset_length:
+    if dataset_length := cfg.len:
         if shuffle:
             idx = np.random.choice(len(dataset), dataset_length, replace=False)
             shuffle = False
@@ -88,13 +87,11 @@ def create_dataloader(cfg, dataset):
     collate_fn = object_from_dict(cfg.collate_fn)
     dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=shuffle,
                             sampler=sampler, collate_fn=collate_fn)
-    dataloader_dict = {
+    return {
         'name': cfg.name,
         'dataloader': dataloader,
         'draw': cfg.draw,
     }
-
-    return dataloader_dict
 
 
 def create_metrics(cfg):
@@ -117,10 +114,10 @@ def create_callbacks(cfg, trainer):
 
 
 def create_augmentations(cfg):
-    augmentations = []
-    for augm in cfg:
-        augmentations.append(object_from_dict(augm))
-
-    transform = albu.Compose(augmentations,
-                             bbox_params=albu.BboxParams(format='coco', label_fields=['bboxes_cats']))
-    return transform
+    augmentations = [object_from_dict(augm) for augm in cfg]
+    return albu.Compose(
+        augmentations,
+        bbox_params=albu.BboxParams(
+            format='coco', label_fields=['bboxes_cats']
+        ),
+    )

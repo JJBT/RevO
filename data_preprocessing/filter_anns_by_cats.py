@@ -23,14 +23,13 @@ def filter_coco_by_cats(coco, cat_ids_to_keep):
         save_licenses = dataset['licenses']
         save_categories = dataset['categories']
 
-    filtered_coco = {
+    return {
         'info': save_info,
         'licenses': save_licenses,
         'images': imgs_to_keep,
         'annotations': anns_to_keep,
-        'categories': cats_to_keep
+        'categories': cats_to_keep,
     }
-    return filtered_coco
 
 
 if __name__ == '__main__':

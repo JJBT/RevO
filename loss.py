@@ -188,7 +188,7 @@ class YOLOLoss(torch.nn.Module):
         loss_obj = self.conf_criterion(obj_pred[obj_responsible_mask][..., 0], obj_target[..., 0])
 
         loss = self.lambda_obj * loss_obj + self.lambda_bbox * loss_bbox + \
-               self.lambda_noobj * loss_noobj
+                   self.lambda_noobj * loss_noobj
 
         return {
             'loss': loss,
@@ -274,7 +274,7 @@ class CustomYOLOLoss(torch.nn.Module):
         loss_obj = self.conf_criterion(obj_pred[obj_responsible_mask][..., 0], obj_target[..., 0])
 
         loss = self.lambda_obj * loss_obj + self.lambda_bbox * loss_bbox + \
-               self.lambda_noobj * loss_noobj
+                   self.lambda_noobj * loss_noobj
 
         return {
             'loss': loss,

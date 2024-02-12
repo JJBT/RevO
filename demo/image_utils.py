@@ -15,9 +15,9 @@ class RandomResize(DualTransform):
             assert 0. <= h_resize_limit <= 1.
             self.h_resize_limit = 1 - abs(h_resize_limit), 1 + abs(h_resize_limit)
 
-        elif isinstance(h_resize_limit, tuple) or isinstance(h_resize_limit, list):
+        elif isinstance(h_resize_limit, (tuple, list)):
             assert all(list(map(lambda x: isinstance(x, float), h_resize_limit)))
-            assert all(list(map(lambda x: 0. <= x, h_resize_limit)))
+            assert all(list(map(lambda x: x >= 0., h_resize_limit)))
             assert h_resize_limit[0] < h_resize_limit[1]
             self.h_resize_limit = h_resize_limit
         else:
@@ -27,9 +27,9 @@ class RandomResize(DualTransform):
             assert 0. <= w_resize_limit <= 1.
             self.w_resize_limit = 1 - abs(w_resize_limit), 1 + abs(w_resize_limit)
 
-        elif isinstance(w_resize_limit, tuple) or isinstance(w_resize_limit, list):
+        elif isinstance(w_resize_limit, (tuple, list)):
             assert all(list(map(lambda x: isinstance(x, float), w_resize_limit)))
-            assert all(list(map(lambda x: 0. <= x, w_resize_limit)))
+            assert all(list(map(lambda x: x >= 0., w_resize_limit)))
             assert w_resize_limit[0] < w_resize_limit[1]
             self.w_resize_limit = w_resize_limit
         else:
@@ -68,7 +68,7 @@ class Patch:
             ], bbox_params=albu.BboxParams(format='coco', label_fields=['bbox_cats']))
 
         self.cats_dict = [{'id': i, 'name': label} for i, label in enumerate(self.dataset._characters)]
-        data = list(map(list, zip(*[elem for elem in self.dataset])))
+        data = list(map(list, zip(*list(self.dataset))))
         x = np.array(data[0])
         y = np.array(data[1])
         x = x.astype(np.float32) / 255.
@@ -98,7 +98,7 @@ class Patch:
                 colour = 255
 
             image[self._get_slice(*bbox)] = \
-                colour * np.stack((patch,) * self.n_channels, axis=2)
+                    colour * np.stack((patch,) * self.n_channels, axis=2)
 
         target = coco_target(bboxes, bbox_cats)
         return image, target
@@ -107,11 +107,7 @@ class Patch:
         def valid(bbox):
             x, y, w, h = bbox
 
-            if x < 0 or x + w > self.W:
-                return False
-            if y < 0 or y + h > self.H:
-                return False
-            return True
+            return False if x < 0 or x + w > self.W else y >= 0 and y + h <= self.H
 
         def overlap(bboxes, bbox):
             # bboxes in coco format [x_l, y_t, w, h]
@@ -197,13 +193,8 @@ def preprocess_input(image_list):
     q_img = torch.unsqueeze(q_img, dim=0)
     s_imgs = torch.stack(s_imgs)
     s_imgs = torch.unsqueeze(s_imgs, dim=0)
-    s_bboxes = [[[s_bbox for s_bbox in b_s_bbox] for b_s_bbox in s_bboxes]]
-    result = {
-        'q_img': q_img,
-        's_imgs': s_imgs,
-        's_bboxes': s_bboxes
-    }
-    return result
+    s_bboxes = [[list(b_s_bbox) for b_s_bbox in s_bboxes]]
+    return {'q_img': q_img, 's_imgs': s_imgs, 's_bboxes': s_bboxes}
 
 
 

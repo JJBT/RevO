@@ -10,15 +10,13 @@ def parse_log_file(path_to_file, writer):
     cur_step = 0
     with open(path_to_file, 'r') as file:
         for line in file:
-            trn_match = trn_pattern.findall(line)
-            if trn_match:
+            if trn_match := trn_pattern.findall(line):
                 trn_match = trn_match[0]
                 cur_step = int(trn_match[0])
                 cur_loss = float(trn_match[1])
                 writer.add_scalar('trn/loss', cur_loss, global_step=cur_step)
                 continue
-            vld_match = vld_pattern.findall(line)
-            if vld_match:
+            if vld_match := vld_pattern.findall(line):
                 for match in vld_match:
                     metric_name = match[0]
                     metric_value = float(match[1])

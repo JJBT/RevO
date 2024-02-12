@@ -46,11 +46,7 @@ class LoadCheckpointCallback(Callback):
         super().__init__(frequency=0, before=True, after=False)
         self.directory = os.path.join(BASE_DIR, directory)
 
-        if filename is not None:
-            self.filename = filename
-        else:
-            self.filename = self._search_checkpoint()
-
+        self.filename = filename if filename is not None else self._search_checkpoint()
         self.filename_to_load = os.path.join(self.directory, self.filename)
 
     def __call__(self, trainer):

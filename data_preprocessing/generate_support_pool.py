@@ -80,20 +80,21 @@ def gen_support_pool(coco_path, ann_path, support_path):
         image = cv2.imread(os.path.join(coco_path, image_meta['file_name']))
         support_image, support_bbox, support_kps = crop_support(image, bbox, keypoints)
 
-        support_image_meta = {}
-        support_image_meta['file_name'] = str(i).rjust(5, '0') + '.jpg'
+        support_image_meta = {'file_name': str(i).rjust(5, '0') + '.jpg'}
         support_image_meta['height'] = support_image.shape[0]
         support_image_meta['weight'] = support_image.shape[1]
         support_image_meta['id'] = i
         support_images.append(support_image_meta)
 
-        support_ann = {}
-        support_ann['num_keypoints'] = ann['num_keypoints']
-        support_ann['keypoints'] = support_kps
-        support_ann['image_id'] = support_image_meta['id']
-        support_ann['bbox'] = support_bbox
-        support_ann['category_id'] = ann['category_id']
-        support_ann['id'] = i
+        support_ann = {
+            'num_keypoints': ann['num_keypoints'],
+            'keypoints': support_kps,
+            'image_id': support_image_meta['id'],
+            'bbox': support_bbox,
+            'category_id': ann['category_id'],
+            'id': i,
+        }
+
         support_anns.append(support_ann)
 
         cv2.imwrite(os.path.join(support_path, 'support_pool', support_image_meta['file_name']), support_image)

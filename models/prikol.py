@@ -232,5 +232,4 @@ class LabelFuser(nn.Module):
         self.linear = nn.Linear(in_dim, out_dim)
 
     def forward(self, feature_vector, label):
-        out = feature_vector + self.linear(label)
-        return out
+        return feature_vector + self.linear(label)
